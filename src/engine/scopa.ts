@@ -1,4 +1,4 @@
-import { contains, without, range } from 'ramda'
+import { contains, without, splitAt, splitEvery } from 'ramda'
 import { Either, right, left } from 'fp-ts/lib/Either'
 import { Deck, Card } from './cards'
 import { findMatches } from './match'
@@ -29,47 +29,59 @@ const DEFAULT_OPTIONS: Required<Options> = {
   players: 2
 }
 
-const createPlayer = (hand: Deck): Player => ({ hand, pile: [], scope: 0 })
-
 const createPlayers = (cards: Deck, n: number): ReadonlyArray<Player> =>
-  range(0, n).map(i => {
-    return createPlayer(cards.slice(i * 3 + 4, i * 3 + 7))
-  })
+  splitEvery(3, cards).map(hand => ({ hand, pile: [], scope: 0 }))
 
 export function deal(cards: Deck, options?: Options): Either<Error, Game> {
   const { players } = { ...DEFAULT_OPTIONS, ...options }
-  const table = cards.slice(0, 4)
+  const [table, rest] = splitAt(4, cards)
   const isValid = table.filter(([value]) => value === 10).length <= 2
+
+  const [playerCards, pile] = splitAt(players * 3, rest)
 
   return isValid
     ? right({
         turn: Math.floor(Math.random() * players),
-        players: createPlayers(cards, players),
-        pile: cards.slice(players * 3 + 4),
+        players: createPlayers(playerCards, players),
+        pile,
         table
       })
     : left(Error())
 }
 
 function next({ card, targets = [] }: Move, game: Game): Game {
-  const { turn, table, players } = game
+  const { turn, table, players, pile } = game
 
-  const nextTable = targets.length ? without(targets, table) : [...table, card]
-  const nextTurn = turn < players.length - 1 ? turn + 1 : 0
+  const tableAfterMove = targets.length
+    ? without(targets, table)
+    : [...table, card]
+
+  const handAfterMove = without([card], players[turn].hand)
+
+  const [nextHand, pileAfterDeal] = handAfterMove.length
+    ? [handAfterMove, pile]
+    : splitAt(3, pile)
 
   const nextPlayers = players.map((player, idx) =>
     idx === turn
       ? {
           ...player,
-          hand: without([card], player.hand),
+          hand: nextHand,
           pile: [...player.pile, ...targets, ...(targets.length ? [card] : [])],
-          scope: nextTable.length ? player.scope : player.scope + 1
+          scope: tableAfterMove.length ? player.scope : player.scope + 1
         }
       : player
   )
 
+  const [nextTable, nextPile] = tableAfterMove.length
+    ? [tableAfterMove, pileAfterDeal]
+    : splitAt(4, pileAfterDeal)
+
+  const nextTurn = turn < players.length - 1 ? turn + 1 : 0
+
   return {
     ...game,
+    pile: nextPile,
     table: nextTable,
     players: nextPlayers,
     turn: nextTurn

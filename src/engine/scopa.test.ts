@@ -227,7 +227,7 @@ test(`a player scores a scopa when they capture all the cards on the table`, () 
   expect(next.players[0].scope).toBe(1)
 })
 
-test.skip(`four cards are drawn from the pile when the table is empty`, () => {
+test(`four cards are drawn from the pile when the table is empty`, () => {
   const card: Card = [3, Suit.DENARI]
 
   const topOfPile: Deck = [
@@ -251,5 +251,27 @@ test.skip(`four cards are drawn from the pile when the table is empty`, () => {
 
   const next = rightOf(play({ card }, game))
   expect(next.table).toEqual(topOfPile)
+  expect(next.pile).toEqual(restOfPile)
+})
+
+test(`three cards are drawn from the pile when the player's hand is empty`, () => {
+  const card: Card = [3, Suit.DENARI]
+
+  const topOfPile: Deck = [[4, Suit.COPPE], [4, Suit.BASTONI], [4, Suit.SPADE]]
+
+  const restOfPile: Deck = [[8, Suit.COPPE]]
+
+  const game: Game = {
+    turn: 0,
+    players: [
+      { hand: [card], pile: [], scope: 0 },
+      { hand: [[5, Suit.DENARI]], pile: [], scope: 0 }
+    ],
+    pile: [...topOfPile, ...restOfPile],
+    table: [[1, Suit.COPPE]]
+  }
+
+  const next = rightOf(play({ card }, game))
+  expect(next.players[0].hand).toEqual(topOfPile)
   expect(next.pile).toEqual(restOfPile)
 })
