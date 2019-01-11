@@ -232,8 +232,23 @@ describe('play', () => {
     expect(next.state).toBe('play')
   })
 
-  test.skip(`a player may only capture the least number of cards when multiple combinations exist`, () => {
-    // TODO
+  test(`a player may only capture the least number of cards when multiple combinations exist`, () => {
+    const card: Card = [2, Suit.DENARI]
+    const targets: Deck = [[1, Suit.COPPE], [1, Suit.BASTONI]]
+    const game: Game = {
+      state: 'play',
+      turn: 0,
+      players: [
+        { hand: [card], pile: [], scope: 0 },
+        { hand: [[10, Suit.DENARI]], pile: [], scope: 0 }
+      ],
+      pile: [],
+      table: [[2, Suit.COPPE], ...targets]
+    }
+
+    const next = play({ card, targets }, game)
+
+    expect(next.isLeft()).toBe(true)
   })
 
   test(`a player scores a scopa when they capture all the cards on the table`, () => {
@@ -381,8 +396,8 @@ describe('prime', () => {
   })
 })
 
-describe('score', () => {
-  test(`a player's base score is the number of scope they achieved'`, () => {
+describe('single player score', () => {
+  test(`a player's base score is the number of scope they achieved`, () => {
     const game: Game = {
       state: 'stop',
       turn: 0,
@@ -405,7 +420,7 @@ describe('score', () => {
           turn: 0,
           players: [
             { hand: [], pile: [[7, Suit.DENARI], [1, Suit.COPPE]], scope: s1 },
-            { hand: [], pile: [[1, Suit.DENARI], [1, Suit.SPADE]], scope: s2 }
+            { hand: [], pile: [[7, Suit.COPPE], [1, Suit.DENARI]], scope: s2 }
           ],
           pile: [],
           table: []
@@ -423,8 +438,12 @@ describe('score', () => {
           state: 'stop',
           turn: 0,
           players: [
-            { hand: [], pile: [[1, Suit.COPPE]], scope: s1 },
-            { hand: [], pile: [[2, Suit.COPPE], [3, Suit.COPPE]], scope: s2 }
+            { hand: [], pile: [[5, Suit.SPADE], [5, Suit.COPPE]], scope: s1 },
+            {
+              hand: [],
+              pile: [[10, Suit.COPPE], [10, Suit.BASTONI], [10, Suit.SPADE]],
+              scope: s2
+            }
           ],
           pile: [],
           table: []
@@ -443,7 +462,7 @@ describe('score', () => {
           turn: 0,
           players: [
             { hand: [], pile: [[1, Suit.DENARI], [2, Suit.DENARI]], scope: s1 },
-            { hand: [], pile: [[1, Suit.COPPE], [3, Suit.DENARI]], scope: s2 }
+            { hand: [], pile: [[1, Suit.COPPE], [2, Suit.COPPE]], scope: s2 }
           ],
           pile: [],
           table: []
@@ -454,11 +473,28 @@ describe('score', () => {
     )
   })
 
-  test.skip(`the player who captured the primiera gets +1 point`, () => {
-    // TODO
-  })
+  test(`the player who captured the highest prime (primiera) gets +1 point`, () => {
+    assert(
+      property(integer(0, 20), integer(0, 20), (s1, s2) => {
+        const game: Game = {
+          state: 'stop',
+          turn: 0,
+          players: [
+            { hand: [], pile: [[7, Suit.SPADE]], scope: s1 },
+            { hand: [], pile: [[6, Suit.COPPE]], scope: s2 }
+          ],
+          pile: [],
+          table: []
+        }
 
-  test.skip(`a team's base score is the number of scope each of its players achieved'`, () => {
+        expect(score(game)).toEqual([s1 + 1, s2])
+      })
+    )
+  })
+})
+
+describe('team score', () => {
+  test.skip(`a team's base score is the number of scope each of its players achieved`, () => {
     // TODO
   })
 

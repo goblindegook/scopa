@@ -103,12 +103,16 @@ export function play(
 
   const hasCard = contains(card, players[turn].hand)
 
-  const validTargets = findMatches(card[0], table)
-  const defaultTargets = validTargets.length < 2 ? validTargets[0] || [] : null
-  const hasTarget = defaultTargets || contains(targets, validTargets)
+  const possibleTargets = findMatches(card[0], table)
+  const mustPick = Math.min(...possibleTargets.map(t => t.length))
+  const validTargets = possibleTargets.filter(t => t.length === mustPick)
+
+  const autoTargets =
+    !targets.length && validTargets.length < 2 ? validTargets[0] || [] : null
+  const hasTarget = autoTargets || contains(targets, validTargets)
 
   return hasCard && hasTarget
-    ? right(next({ card, targets: defaultTargets || targets }, game))
+    ? right(next({ card, targets: autoTargets || targets }, game))
     : left(Error())
 }
 
@@ -121,42 +125,43 @@ export function score(game: Game): Score {
   )
   const denariTie = uniq(denari).length === 1
 
+  const primes = game.players.map(({ pile }) => prime(pile))
+  const primeTie = uniq(primes).length === 1
+
+  // console.log(primes)
+
   return game.players.map(
     ({ scope, pile }, idx) =>
       scope +
       (contains([7, Suit.DENARI], pile) ? 1 : 0) +
       (!cardTie && cards[idx] === Math.max(...cards) ? 1 : 0) +
-      (!denariTie && denari[idx] === Math.max(...denari) ? 1 : 0)
+      (!denariTie && denari[idx] === Math.max(...denari) ? 1 : 0) +
+      (!primeTie && primes[idx] === Math.max(...primes) ? 1 : 0)
   )
 }
 
-function replaceMaxAt(value: number, index: number, list: number[]): number[] {
-  return list.map((v, i) => (i === index ? Math.max(value, v) : v))
+function replaceMaxAt(value: number, suit: number, points: number[]): number[] {
+  return points.map((v, i) => (i === suit ? Math.max(value, v) : v))
+}
+
+const PRIME_POINTS: { [value: number]: number } = {
+  1: 16,
+  2: 12,
+  3: 13,
+  4: 14,
+  5: 15,
+  6: 18,
+  7: 21,
+  8: 10,
+  9: 10,
+  10: 10
 }
 
 export function prime(cards: Deck): number {
   return sum(
     cards.reduce<number[]>(
       (points, [value, suit]) =>
-        replaceMaxAt(
-          value === 7
-            ? 21
-            : value === 6
-            ? 18
-            : value === 1
-            ? 16
-            : value === 5
-            ? 15
-            : value === 4
-            ? 14
-            : value === 3
-            ? 13
-            : value === 2
-            ? 12
-            : 10,
-          suit,
-          points
-        ),
+        replaceMaxAt(PRIME_POINTS[value], suit, points),
       [0, 0, 0, 0]
     )
   )
