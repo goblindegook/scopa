@@ -3,6 +3,8 @@ import { Either, right, left } from 'fp-ts/lib/Either'
 import { Deck, Card } from './cards'
 import { findMatches } from './match'
 
+type State = 'play' | 'stop'
+
 type Player = {
   hand: Deck
   pile: Deck
@@ -10,6 +12,7 @@ type Player = {
 }
 
 export type Game = {
+  state: State
   turn: number
   pile: Deck
   players: ReadonlyArray<Player>
@@ -40,7 +43,8 @@ export function deal(cards: Deck, options?: Options): Either<Error, Game> {
   const [playerCards, pile] = splitAt(players * 3, rest)
 
   return isValid
-    ? right({
+    ? right<Error, Game>({
+        state: 'play',
         turn: Math.floor(Math.random() * players),
         players: createPlayers(playerCards, players),
         pile,
@@ -62,6 +66,10 @@ function next({ card, targets = [] }: Move, game: Game): Game {
     ? [handAfterMove, pile]
     : splitAt(3, pile)
 
+  const [nextTable, nextPile] = tableAfterMove.length
+    ? [tableAfterMove, pileAfterDeal]
+    : splitAt(4, pileAfterDeal)
+
   const nextPlayers = players.map((player, idx) =>
     idx === turn
       ? {
@@ -73,14 +81,11 @@ function next({ card, targets = [] }: Move, game: Game): Game {
       : player
   )
 
-  const [nextTable, nextPile] = tableAfterMove.length
-    ? [tableAfterMove, pileAfterDeal]
-    : splitAt(4, pileAfterDeal)
-
   const nextTurn = turn < players.length - 1 ? turn + 1 : 0
+  const nextState: State = nextPlayers[nextTurn].hand.length ? 'play' : 'stop'
 
   return {
-    ...game,
+    state: nextState,
     pile: nextPile,
     table: nextTable,
     players: nextPlayers,
