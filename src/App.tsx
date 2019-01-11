@@ -1,14 +1,11 @@
 import React, { Component } from 'react'
-import { Suit } from './engine/cards'
-import { Card } from './ui/Card'
+import { deck, shuffle } from './engine/cards'
+import { deal } from './engine/scopa'
+import { Game } from './ui/Game'
 
 class App extends Component {
   render() {
-    return (
-      <>
-        <Card suit={Suit.DENARI} value={7} />
-      </>
-    )
+    return <Game onStart={() => deal(shuffle(deck()), { players: 2 })} />
   }
 }
 

@@ -1,4 +1,5 @@
 import React from 'react'
+import styled from '@emotion/styled'
 import { Suit } from '../engine/cards'
 
 type CardProps = {
@@ -30,8 +31,12 @@ function name(value: number, suit: Suit) {
   return `${VALUES[value]} di ${SUITS[suit]}`
 }
 
+const Image = styled('img')`
+  max-height: 30vh;
+`
+
 export const Card = ({ value, suit }: CardProps) => (
-  <img
+  <Image
     src={require(`./assets/${SUITS[suit]}/${value}.jpg`)}
     title={name(value, suit)}
   />
