@@ -1,6 +1,6 @@
-import { contains, without, splitAt, splitEvery } from 'ramda'
+import { contains, without, splitAt, splitEvery, uniq, sum } from 'ramda'
 import { Either, right, left } from 'fp-ts/lib/Either'
-import { Deck, Card } from './cards'
+import { Deck, Card, Suit } from './cards'
 import { findMatches } from './match'
 
 type State = 'play' | 'stop'
@@ -23,6 +23,8 @@ type Move = {
   card: Card
   targets?: Deck
 }
+
+type Score = ReadonlyArray<number>
 
 type Options = {
   players?: 2 | 3 | 4 | 6
@@ -71,14 +73,14 @@ function next({ card, targets = [] }: Move, game: Game): Game {
     : splitAt(4, pileAfterDeal)
 
   const nextPlayers = players.map((player, idx) =>
-    idx === turn
-      ? {
+    idx !== turn
+      ? player
+      : {
           ...player,
           hand: nextHand,
           pile: [...player.pile, ...targets, ...(targets.length ? [card] : [])],
           scope: tableAfterMove.length ? player.scope : player.scope + 1
         }
-      : player
   )
 
   const nextTurn = turn < players.length - 1 ? turn + 1 : 0
@@ -108,4 +110,54 @@ export function play(
   return hasCard && hasTarget
     ? right(next({ card, targets: defaultTargets || targets }, game))
     : left(Error())
+}
+
+export function score(game: Game): Score {
+  const cards = game.players.map(({ pile }) => pile.length)
+  const cardTie = uniq(cards).length === 1
+
+  const denari = game.players.map(
+    ({ pile }) => pile.filter(([value, suit]) => suit === Suit.DENARI).length
+  )
+  const denariTie = uniq(denari).length === 1
+
+  return game.players.map(
+    ({ scope, pile }, idx) =>
+      scope +
+      (contains([7, Suit.DENARI], pile) ? 1 : 0) +
+      (!cardTie && cards[idx] === Math.max(...cards) ? 1 : 0) +
+      (!denariTie && denari[idx] === Math.max(...denari) ? 1 : 0)
+  )
+}
+
+function replaceMaxAt(value: number, index: number, list: number[]): number[] {
+  return list.map((v, i) => (i === index ? Math.max(value, v) : v))
+}
+
+export function prime(cards: Deck): number {
+  return sum(
+    cards.reduce<number[]>(
+      (points, [value, suit]) =>
+        replaceMaxAt(
+          value === 7
+            ? 21
+            : value === 6
+            ? 18
+            : value === 1
+            ? 16
+            : value === 5
+            ? 15
+            : value === 4
+            ? 14
+            : value === 3
+            ? 13
+            : value === 2
+            ? 12
+            : 10,
+          suit,
+          points
+        ),
+      [0, 0, 0, 0]
+    )
+  )
 }
