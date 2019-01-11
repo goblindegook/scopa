@@ -5,37 +5,48 @@ import { Deck } from '../engine/cards'
 import { Card } from './Card'
 import styled from '@emotion/styled'
 
+const Header = styled('header')`
+  background-color: black;
+  padding: 1rem;
+`
+
+const Button = styled('button')`
+  font-size: 1rem;
+  border-radius: 0.25rem;
+  padding: 0.25rem 1rem;
+`
+
 type TableProps = {
   cards: Deck
 }
 
-const TableCards = ({ cards }: TableProps) => (
-  <section>
-    {cards.map(([value, suit]) => (
-      <Card key={`${value}-${suit}`} value={value} suit={suit} />
-    ))}
-  </section>
-)
-
-const Table = styled(TableCards)`
+const TableArea = styled('section')`
   background-color: darkgreen;
 `
 
-type HandProps = {
-  cards: Deck
-}
-
-const HandCards = ({ cards }: HandProps) => (
-  <section>
+const Table = ({ cards }: TableProps) => (
+  <TableArea>
     {cards.map(([value, suit]) => (
       <Card key={`${value}-${suit}`} value={value} suit={suit} />
     ))}
-  </section>
+  </TableArea>
 )
 
-const Hand = styled(HandCards)`
+type PlayerProps = {
+  hand: Deck
+}
+
+const PlayerArea = styled('section')`
   background-color: green;
 `
+
+const Player = ({ hand }: PlayerProps) => (
+  <PlayerArea>
+    {hand.map(([value, suit]) => (
+      <Card key={`${value}-${suit}`} value={value} suit={suit} />
+    ))}
+  </PlayerArea>
+)
 
 type GameProps = {
   onStart: () => Either<Error, State>
@@ -55,11 +66,13 @@ export class Game extends React.Component<GameProps, GameState> {
   render() {
     return (
       <>
-        <button onClick={this.start}>Start new game</button>
+        <Header>
+          <Button onClick={this.start}>Start new game</Button>
+        </Header>
         {this.state.game && isRight(this.state.game) ? (
           <>
             <Table cards={this.state.game.value.table} />
-            <Hand cards={this.state.game.value.players[0].hand} />
+            <Player hand={this.state.game.value.players[0].hand} />
           </>
         ) : (
           <div />

@@ -33,6 +33,8 @@ function name(value: number, suit: Suit) {
 
 const Image = styled('img')`
   max-height: 30vh;
+  border-radius: 1rem;
+  margin: 1rem;
 `
 
 export const Card = ({ value, suit }: CardProps) => (
