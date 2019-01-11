@@ -20,8 +20,8 @@
     "not op_mini all"
   ],
   "dependencies": {
-    "@emotion/core": "^10.0.5",
-    "@emotion/styled": "^10.0.5",
+    "@emotion/core": "^10.0.6",
+    "@emotion/styled": "^10.0.6",
     "fp-ts": "^1.12.1",
     "ramda": "^0.26.1",
     "react": "^16.7.0",
@@ -37,6 +37,7 @@
     "dom-testing-library": "^3.16.1",
     "fast-check": "^1.9.0",
     "prettier": "^1.15.3",
+    "react-testing-library": "^5.4.4",
     "tslint": "^5.12.0",
     "tslint-config-prettier": "^1.17.0",
     "tslint-config-standard": "^8.0.1",
