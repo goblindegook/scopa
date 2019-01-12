@@ -1,6 +1,6 @@
 import React from 'react'
-import { Either, isRight } from 'fp-ts/lib/Either'
-import { Game as State, Move } from '../engine/scopa'
+import { Either } from 'fp-ts/lib/Either'
+import { State, Move } from '../engine/scopa'
 import { Deck, Card } from '../engine/cards'
 import { Card as CardComponent } from './Card'
 import styled from '@emotion/styled'
@@ -99,25 +99,12 @@ type GameState = {
 export class Game extends React.Component<GameProps, GameState> {
   state: GameState = { alert: '' }
 
-  start = () => {
-    const result = this.props.onStart()
-    if (isRight(result)) {
+  handleResult = (result: Either<Error, State>) => {
+    if (result.isRight()) {
       this.setState({ game: result.value, alert: '' })
       this.opponentPlay(result.value)
     } else {
       this.setState({ alert: result.value.message })
-    }
-  }
-
-  play = (card: Card) => {
-    if (this.state.game) {
-      const result = this.props.onPlay({ card }, this.state.game)
-      if (isRight(result)) {
-        this.setState({ game: result.value, alert: '' })
-        this.opponentPlay(result.value)
-      } else {
-        this.setState({ alert: result.value.message })
-      }
     }
   }
 
@@ -130,20 +117,26 @@ export class Game extends React.Component<GameProps, GameState> {
   }
 
   render() {
+    const { onStart, onPlay, onScore } = this.props
+    const { alert, game } = this.state
+
     return (
       <>
         <Header>
-          <Button onClick={this.start}>Start new game</Button>
-          <Alert>{this.state.alert}</Alert>
-          <Turn>{this.state.game && `Player ${this.state.game.turn + 1}`}</Turn>
+          <Button onClick={() => this.handleResult(onStart())}>
+            Start new game
+          </Button>
+          <Alert>{alert}</Alert>
+          <Turn>{game && `Player ${game.turn + 1}`}</Turn>
         </Header>
-        {this.state.game && (
+        {game && (
           <>
-            <Table cards={this.state.game.table} />
-            <Player hand={this.state.game.players[0].hand} onPlay={this.play} />
-            {this.state.game.state === 'stop' && (
-              <GameOver scores={this.props.onScore(this.state.game)} />
-            )}
+            <Table cards={game.table} />
+            <Player
+              hand={game.players[0].hand}
+              onPlay={card => this.handleResult(onPlay({ card }, game))}
+            />
+            {game.state === 'stop' && <GameOver scores={onScore(game)} />}
           </>
         )}
       </>

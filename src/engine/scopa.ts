@@ -3,16 +3,14 @@ import { Either, right, left } from 'fp-ts/lib/Either'
 import { Deck, Card, Suit } from './cards'
 import { findMatches } from './match'
 
-type State = 'play' | 'stop'
-
 type Player = {
   hand: Deck
   pile: Deck
   scope: number
 }
 
-export type Game = {
-  state: State
+export type State = {
+  state: 'play' | 'stop'
   turn: number
   pile: Deck
   players: ReadonlyArray<Player>
@@ -37,7 +35,7 @@ const DEFAULT_OPTIONS: Required<Options> = {
 const createPlayers = (cards: Deck, n: number): ReadonlyArray<Player> =>
   splitEvery(3, cards).map(hand => ({ hand, pile: [], scope: 0 }))
 
-export function deal(cards: Deck, options?: Options): Either<Error, Game> {
+export function deal(cards: Deck, options?: Options): Either<Error, State> {
   const { players } = { ...DEFAULT_OPTIONS, ...options }
   const [table, rest] = splitAt(4, cards)
   const isValid = table.filter(([value]) => value === 10).length <= 2
@@ -45,7 +43,7 @@ export function deal(cards: Deck, options?: Options): Either<Error, Game> {
   const [playerCards, pile] = splitAt(players * 3, rest)
 
   return isValid
-    ? right<Error, Game>({
+    ? right<Error, State>({
         state: 'play',
         turn: Math.floor(Math.random() * players),
         players: createPlayers(playerCards, players),
@@ -55,7 +53,7 @@ export function deal(cards: Deck, options?: Options): Either<Error, Game> {
     : left(Error())
 }
 
-function next({ card, targets = [] }: Move, game: Game): Game {
+function next({ card, targets = [] }: Move, game: State): State {
   const { turn, table, players, pile } = game
 
   const tableAfterMove = targets.length
@@ -84,7 +82,7 @@ function next({ card, targets = [] }: Move, game: Game): Game {
   )
 
   const nextTurn = turn < players.length - 1 ? turn + 1 : 0
-  const nextState: State = nextPlayers[nextTurn].hand.length ? 'play' : 'stop'
+  const nextState = nextPlayers[nextTurn].hand.length ? 'play' : 'stop'
 
   return {
     state: nextState,
@@ -97,8 +95,8 @@ function next({ card, targets = [] }: Move, game: Game): Game {
 
 export function play(
   { card, targets = [] }: Move,
-  game: Game
-): Either<Error, Game> {
+  game: State
+): Either<Error, State> {
   const { table, turn, players } = game
 
   const hasCard = contains(card, players[turn].hand)
@@ -120,7 +118,7 @@ export function play(
     : left(Error('Choose the cards to capture.'))
 }
 
-export function score(game: Game): Score {
+export function score(game: State): Score {
   const cards = game.players.map(({ pile }) => pile.length)
   const cardTie = uniq(cards).length === 1
 

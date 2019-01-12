@@ -1,5 +1,5 @@
 import { deck, Suit, Deck, Card } from './cards'
-import { deal, Game, play, score, prime } from './scopa'
+import { deal, State, play, score, prime } from './scopa'
 import { assert, property, constantFrom, integer, Arbitrary } from 'fast-check'
 import { Either } from 'fp-ts/lib/Either'
 
@@ -89,7 +89,7 @@ describe('deal', () => {
 describe('play', () => {
   test(`player one plays a card from their hand on the table`, () => {
     const card: Card = [1, Suit.DENARI]
-    const game: Game = {
+    const game: State = {
       state: 'play',
       turn: 0,
       players: [
@@ -110,7 +110,7 @@ describe('play', () => {
 
   test(`player two plays a card from their hand on the table`, () => {
     const card: Card = [2, Suit.DENARI]
-    const game: Game = {
+    const game: State = {
       state: 'play',
       turn: 1,
       players: [
@@ -129,7 +129,7 @@ describe('play', () => {
 
   test(`a player cannot play a card they don't have`, () => {
     const card: Card = [1, Suit.DENARI]
-    const game: Game = {
+    const game: State = {
       state: 'play',
       turn: 0,
       players: [
@@ -148,7 +148,7 @@ describe('play', () => {
   test(`a player captures a card from the table if it's the same value as the card played`, () => {
     const card: Card = [1, Suit.DENARI]
     const target: Card = [1, Suit.COPPE]
-    const game: Game = {
+    const game: State = {
       state: 'play',
       turn: 0,
       players: [
@@ -170,7 +170,7 @@ describe('play', () => {
 
   test(`a player must choose a card from the table if more than one possible capture exists`, () => {
     const card: Card = [1, Suit.DENARI]
-    const game: Game = {
+    const game: State = {
       state: 'play',
       turn: 0,
       players: [
@@ -189,7 +189,7 @@ describe('play', () => {
   test(`a player chooses a card from the table that is the same value as the card played`, () => {
     const card: Card = [1, Suit.DENARI]
     const target: Card = [1, Suit.COPPE]
-    const game: Game = {
+    const game: State = {
       state: 'play',
       turn: 0,
       players: [
@@ -212,7 +212,7 @@ describe('play', () => {
   test(`a player captures multiple cards from the table if their cumulative value is the same as the card played`, () => {
     const card: Card = [3, Suit.DENARI]
     const targets: Deck = [[1, Suit.COPPE], [1, Suit.BASTONI], [1, Suit.SPADE]]
-    const game: Game = {
+    const game: State = {
       state: 'play',
       turn: 0,
       players: [
@@ -235,7 +235,7 @@ describe('play', () => {
   test(`a player may only capture the least number of cards when multiple combinations exist`, () => {
     const card: Card = [2, Suit.DENARI]
     const targets: Deck = [[1, Suit.COPPE], [1, Suit.BASTONI]]
-    const game: Game = {
+    const game: State = {
       state: 'play',
       turn: 0,
       players: [
@@ -254,7 +254,7 @@ describe('play', () => {
   test(`a player scores a scopa when they capture all the cards on the table`, () => {
     const card: Card = [3, Suit.DENARI]
     const table: Deck = [[1, Suit.COPPE], [1, Suit.BASTONI], [1, Suit.SPADE]]
-    const game: Game = {
+    const game: State = {
       state: 'play',
       turn: 0,
       players: [
@@ -282,7 +282,7 @@ describe('play', () => {
 
     const restOfPile: Deck = [[8, Suit.COPPE]]
 
-    const game: Game = {
+    const game: State = {
       state: 'play',
       turn: 0,
       players: [
@@ -310,7 +310,7 @@ describe('play', () => {
 
     const restOfPile: Deck = [[8, Suit.COPPE]]
 
-    const game: Game = {
+    const game: State = {
       state: 'play',
       turn: 0,
       players: [
@@ -329,7 +329,7 @@ describe('play', () => {
 
   test(`the game ends when the next player's hand is empty and they can't draw any more cards`, () => {
     const card: Card = [3, Suit.DENARI]
-    const game: Game = {
+    const game: State = {
       state: 'play',
       turn: 1,
       players: [
@@ -398,7 +398,7 @@ describe('prime', () => {
 
 describe('single player score', () => {
   test(`a player's base score is the number of scope they achieved`, () => {
-    const game: Game = {
+    const game: State = {
       state: 'stop',
       turn: 0,
       players: [
@@ -415,7 +415,7 @@ describe('single player score', () => {
   test(`the player who captured the sette bello gets +1 point`, () => {
     assert(
       property(integer(0, 20), integer(0, 20), (s1, s2) => {
-        const game: Game = {
+        const game: State = {
           state: 'stop',
           turn: 0,
           players: [
@@ -434,7 +434,7 @@ describe('single player score', () => {
   test(`the player who captured the most cards gets +1 point`, () => {
     assert(
       property(integer(0, 20), integer(0, 20), (s1, s2) => {
-        const game: Game = {
+        const game: State = {
           state: 'stop',
           turn: 0,
           players: [
@@ -457,7 +457,7 @@ describe('single player score', () => {
   test(`the player who captured the most cards in the suit of coins gets +1 point`, () => {
     assert(
       property(integer(0, 20), integer(0, 20), (s1, s2) => {
-        const game: Game = {
+        const game: State = {
           state: 'stop',
           turn: 0,
           players: [
@@ -476,7 +476,7 @@ describe('single player score', () => {
   test(`the player who captured the highest prime (primiera) gets +1 point`, () => {
     assert(
       property(integer(0, 20), integer(0, 20), (s1, s2) => {
-        const game: Game = {
+        const game: State = {
           state: 'stop',
           turn: 0,
           players: [

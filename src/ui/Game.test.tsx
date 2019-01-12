@@ -1,6 +1,6 @@
 import React from 'react'
 import { cleanup, render, fireEvent } from 'react-testing-library'
-import { Game as State } from '../engine/scopa'
+import { State } from '../engine/scopa'
 import { Game } from './Game'
 import { Suit } from '../engine/cards'
 import { right, left } from 'fp-ts/lib/Either'
