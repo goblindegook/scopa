@@ -14,13 +14,9 @@ const expectMatchNone = <T extends any>(
 ) => expect(superset).not.toMatchObject(expect.arrayContaining(actual as T[]))
 
 const rightOf = <L, R>(actual: Either<L, R>): R => {
-  expect(actual.isRight()).toBe(true)
-
-  if (actual.isRight()) {
-    return actual.value
-  } else {
+  return actual.getOrElseL(() => {
     throw Error()
-  }
+  })
 }
 
 describe('deal', () => {

@@ -6,7 +6,7 @@ import { Card as CardComponent } from './Card'
 import styled from '@emotion/styled'
 
 const Header = styled('header')`
-  background-color: black;
+  background-color: rgba(0, 0, 0, 0.5);
   padding: 1rem;
   font-size: 1rem;
   color: white;
@@ -36,7 +36,7 @@ type GameOverProps = {
   scores: ReadonlyArray<number>
 }
 
-const GameOver = ({ scores }: GameOverProps) => (
+const GameOver = ({ scores = [] }: GameOverProps) => (
   <aside>
     <h2>Game Over</h2>
     <ul>
@@ -60,10 +60,21 @@ const TableArea = styled('section')`
 const Table = ({ cards }: TableProps) => (
   <TableArea>
     {cards.map(([value, suit]) => (
-      <CardComponent key={`${value}-${suit}`} value={value} suit={suit} />
+      <CardComponent key={`${value}:${suit}`} value={value} suit={suit} />
     ))}
   </TableArea>
 )
+
+const PlayerCard = styled('button')`
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  &:focus {
+    border: 3px solid red;
+    border-radius: 1rem;
+    margin: -3px;
+  }
+`
 
 type PlayerProps = {
   hand: Deck
@@ -77,9 +88,12 @@ const PlayerArea = styled('section')`
 const Player = ({ hand, onPlay }: PlayerProps) => (
   <PlayerArea>
     {hand.map(([value, suit]) => (
-      <button key={`${value}-${suit}`} onClick={() => onPlay([value, suit])}>
+      <PlayerCard
+        key={`${value}:${suit}`}
+        onClick={() => onPlay([value, suit])}
+      >
         <CardComponent value={value} suit={suit} />
-      </button>
+      </PlayerCard>
     ))}
   </PlayerArea>
 )
@@ -92,20 +106,26 @@ type GameProps = {
 }
 
 type GameState = {
-  game?: State
+  game: State
+  targets: ReadonlyArray<Card>
   alert: string
 }
 
 export class Game extends React.Component<GameProps, GameState> {
-  state: GameState = { alert: '' }
+  state: GameState = {
+    game: { state: 'stop', turn: 0, table: [], pile: [], players: [] },
+    targets: [],
+    alert: ''
+  }
 
   handleResult = (result: Either<Error, State>) => {
-    if (result.isRight()) {
-      this.setState({ game: result.value, alert: '' })
-      this.opponentPlay(result.value)
-    } else {
-      this.setState({ alert: result.value.message })
-    }
+    result.bimap(
+      ({ message }) => this.setState({ alert: message }),
+      game => {
+        this.setState({ game, alert: '' })
+        this.opponentPlay(game)
+      }
+    )
   }
 
   opponentPlay = (game: State) => {
@@ -118,7 +138,7 @@ export class Game extends React.Component<GameProps, GameState> {
 
   render() {
     const { onStart, onPlay, onScore } = this.props
-    const { alert, game } = this.state
+    const { alert, targets, game } = this.state
 
     return (
       <>
@@ -127,16 +147,20 @@ export class Game extends React.Component<GameProps, GameState> {
             Start new game
           </Button>
           <Alert>{alert}</Alert>
-          <Turn>{game && `Player ${game.turn + 1}`}</Turn>
+          {game.state === 'play' && (
+            <Turn>{game && `Player ${game.turn + 1}`}</Turn>
+          )}
         </Header>
-        {game && (
+        {game.state === 'stop' && <GameOver scores={onScore(game)} />}
+        {game.players.length && (
           <>
             <Table cards={game.table} />
             <Player
               hand={game.players[0].hand}
-              onPlay={card => this.handleResult(onPlay({ card }, game))}
+              onPlay={card =>
+                this.handleResult(onPlay({ card, targets }, game))
+              }
             />
-            {game.state === 'stop' && <GameOver scores={onScore(game)} />}
           </>
         )}
       </>

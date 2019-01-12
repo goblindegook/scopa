@@ -19,7 +19,7 @@ class App extends Component {
             t => t.length === mustPick
           )
           const next = play({ card, targets: validTargets[0] || [] }, game)
-          return next.isRight() ? next.value : { ...game, state: 'stop' }
+          return next.getOrElse({ ...game, state: 'stop' })
         }}
         onScore={score}
       />

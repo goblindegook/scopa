@@ -103,7 +103,10 @@ test('allow playing a card', () => {
   fireEvent.click(getByText('Start new game'))
   fireEvent.click(getByTitle('Asso di denari'))
 
-  expect(onPlay).toHaveBeenCalledWith({ card: [1, Suit.DENARI] }, initialState)
+  expect(onPlay).toHaveBeenCalledWith(
+    { card: [1, Suit.DENARI], targets: [] },
+    initialState
+  )
   expect(getByTitle('Due di denari')).toBeTruthy()
 })
 
