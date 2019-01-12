@@ -7,27 +7,31 @@ import { right, left } from 'fp-ts/lib/Either'
 
 beforeEach(cleanup)
 
-test('deal new game on start', () => {
-  const turn = 0
-  const state: State = {
+function testGame(overrides: Partial<State> = {}): State {
+  return {
     state: 'play',
-    turn,
+    turn: 0,
     players: [
       { hand: [], pile: [], scope: 0 },
       { hand: [], pile: [], scope: 0 }
     ],
     pile: [],
-    table: []
+    table: [],
+    ...overrides
   }
+}
 
-  const onStart = jest.fn(() => right(state))
+test('deal new game on start', () => {
+  const turn = 0
+  const onStart = jest.fn(() => right(testGame({ turn })))
+  const onOpponentPlay = () => testGame({ state: 'stop' })
 
   const { getByText } = render(
     <Game
       onStart={onStart}
       onPlay={jest.fn()}
-      onOpponentPlay={jest.fn(() => ({ ...state, state: 'stop' }))}
-      onScore={jest.fn(() => [])}
+      onOpponentPlay={onOpponentPlay}
+      onScore={() => []}
     />
   )
   fireEvent.click(getByText('Start new game'))
@@ -37,16 +41,16 @@ test('deal new game on start', () => {
 
 test('card visibility', () => {
   const onStart = () =>
-    right<Error, State>({
-      state: 'play',
-      turn: 0,
-      players: [
-        { hand: [[1, Suit.DENARI]], pile: [[2, Suit.DENARI]], scope: 0 },
-        { hand: [[3, Suit.DENARI]], pile: [[4, Suit.DENARI]], scope: 0 }
-      ],
-      table: [[5, Suit.DENARI]],
-      pile: [[6, Suit.DENARI]]
-    })
+    right<Error, State>(
+      testGame({
+        players: [
+          { hand: [[1, Suit.DENARI]], pile: [[2, Suit.DENARI]], scope: 0 },
+          { hand: [[3, Suit.DENARI]], pile: [[4, Suit.DENARI]], scope: 0 }
+        ],
+        table: [[5, Suit.DENARI]],
+        pile: [[6, Suit.DENARI]]
+      })
+    )
 
   const { getByText, getByTitle, queryByTitle } = render(
     <Game
@@ -67,36 +71,32 @@ test('card visibility', () => {
 })
 
 test('allow playing a card', () => {
-  const initialState: State = {
-    state: 'play',
-    turn: 0,
+  const initialState = testGame({
     players: [
       { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
       { hand: [], pile: [], scope: 0 }
-    ],
-    table: [],
-    pile: []
-  }
+    ]
+  })
 
-  const nextState: State = {
-    state: 'stop',
-    turn: 0,
-    players: [
-      { hand: [], pile: [], scope: 0 },
-      { hand: [], pile: [], scope: 0 }
-    ],
-    table: [[2, Suit.DENARI]],
-    pile: []
-  }
-
-  const onPlay = jest.fn(() => right(nextState))
+  const onPlay = jest.fn(() =>
+    right(
+      testGame({
+        state: 'stop',
+        players: [
+          { hand: [], pile: [], scope: 0 },
+          { hand: [], pile: [], scope: 0 }
+        ],
+        table: [[2, Suit.DENARI]]
+      })
+    )
+  )
 
   const { getByText, getByTitle } = render(
     <Game
       onStart={() => right(initialState)}
       onPlay={onPlay}
       onOpponentPlay={jest.fn()}
-      onScore={jest.fn(() => [])}
+      onScore={() => []}
     />
   )
 
@@ -107,24 +107,26 @@ test('allow playing a card', () => {
   expect(getByTitle('Due di denari')).toBeTruthy()
 })
 
-test('handles invalid move', () => {
-  const initialState: State = {
-    state: 'play',
-    turn: 0,
-    players: [
-      { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
-      { hand: [], pile: [], scope: 0 }
-    ],
-    table: [],
-    pile: []
-  }
+test.skip('select targets to capture', () => {
+  // TODO
+})
 
+test('invalid move handling', () => {
   const message = 'test error message'
   const onPlay = jest.fn(() => left(Error(message)))
 
   const { getByText, getByTitle } = render(
     <Game
-      onStart={() => right(initialState)}
+      onStart={() =>
+        right(
+          testGame({
+            players: [
+              { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+              { hand: [], pile: [], scope: 0 }
+            ]
+          })
+        )
+      }
       onPlay={onPlay}
       onOpponentPlay={jest.fn()}
       onScore={jest.fn()}
@@ -138,47 +140,44 @@ test('handles invalid move', () => {
 })
 
 test('computer opponent plays a card', () => {
-  const initialState: State = {
-    state: 'play',
-    turn: 0,
-    players: [
-      { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
-      { hand: [[2, Suit.DENARI]], pile: [], scope: 0 }
-    ],
-    table: [],
-    pile: []
-  }
+  const onStart = jest.fn(() =>
+    right(
+      testGame({
+        players: [
+          { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+          { hand: [[2, Suit.DENARI]], pile: [], scope: 0 }
+        ]
+      })
+    )
+  )
 
-  const nextState: State = {
-    state: 'play',
-    turn: 1,
-    players: [
-      { hand: [], pile: [], scope: 0 },
-      { hand: [[2, Suit.DENARI]], pile: [], scope: 0 }
-    ],
-    table: [[1, Suit.DENARI]],
-    pile: []
-  }
+  const onPlay = jest.fn(() =>
+    right(
+      testGame({
+        turn: 1,
+        players: [
+          { hand: [], pile: [], scope: 0 },
+          { hand: [[2, Suit.DENARI]], pile: [], scope: 0 }
+        ],
+        table: [[1, Suit.DENARI]]
+      })
+    )
+  )
 
-  const finalState: State = {
-    state: 'play',
-    turn: 0,
-    players: [
-      { hand: [], pile: [], scope: 0 },
-      { hand: [], pile: [], scope: 0 }
-    ],
-    table: [[1, Suit.DENARI], [2, Suit.DENARI]],
-    pile: []
-  }
-
-  const onPlay = jest.fn(() => right(nextState))
-  const onOpponnentPlay = jest.fn(() => finalState)
+  const onOpponentPlay = () =>
+    testGame({
+      players: [
+        { hand: [], pile: [], scope: 0 },
+        { hand: [], pile: [], scope: 0 }
+      ],
+      table: [[1, Suit.DENARI], [2, Suit.DENARI]]
+    })
 
   const { getByText, getByTitle } = render(
     <Game
-      onStart={() => right(initialState)}
+      onStart={onStart}
       onPlay={onPlay}
-      onOpponentPlay={onOpponnentPlay}
+      onOpponentPlay={onOpponentPlay}
       onScore={jest.fn()}
     />
   )
@@ -191,16 +190,13 @@ test('computer opponent plays a card', () => {
 })
 
 test('end game and show scores', () => {
-  const state: State = {
+  const state = testGame({
     state: 'stop',
-    turn: 0,
     players: [
       { hand: [], pile: [], scope: 1 },
       { hand: [], pile: [], scope: 2 }
-    ],
-    table: [],
-    pile: []
-  }
+    ]
+  })
 
   const onScore = jest.fn(() => [3, 4])
 
