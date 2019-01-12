@@ -19,7 +19,7 @@ export type Game = {
   table: Deck
 }
 
-type Move = {
+export type Move = {
   card: Card
   targets?: Deck
 }
@@ -103,6 +103,10 @@ export function play(
 
   const hasCard = contains(card, players[turn].hand)
 
+  if (!hasCard) {
+    return left(Error('Not your turn.'))
+  }
+
   const possibleTargets = findMatches(card[0], table)
   const mustPick = Math.min(...possibleTargets.map(t => t.length))
   const validTargets = possibleTargets.filter(t => t.length === mustPick)
@@ -111,9 +115,9 @@ export function play(
     !targets.length && validTargets.length < 2 ? validTargets[0] || [] : null
   const hasTarget = autoTargets || contains(targets, validTargets)
 
-  return hasCard && hasTarget
+  return hasTarget
     ? right(next({ card, targets: autoTargets || targets }, game))
-    : left(Error())
+    : left(Error('Choose the cards to capture.'))
 }
 
 export function score(game: Game): Score {
@@ -127,8 +131,6 @@ export function score(game: Game): Score {
 
   const primes = game.players.map(({ pile }) => prime(pile))
   const primeTie = uniq(primes).length === 1
-
-  // console.log(primes)
 
   return game.players.map(
     ({ scope, pile }, idx) =>

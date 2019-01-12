@@ -331,10 +331,10 @@ describe('play', () => {
     const card: Card = [3, Suit.DENARI]
     const game: Game = {
       state: 'play',
-      turn: 0,
+      turn: 1,
       players: [
-        { hand: [card], pile: [], scope: 0 },
-        { hand: [], pile: [], scope: 0 }
+        { hand: [], pile: [], scope: 0 },
+        { hand: [card], pile: [], scope: 0 }
       ],
       pile: [],
       table: []

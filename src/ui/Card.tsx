@@ -35,6 +35,7 @@ const Image = styled('img')`
   max-height: 30vh;
   border-radius: 1rem;
   margin: 1rem;
+  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
 `
 
 export const Card = ({ value, suit }: CardProps) => (
