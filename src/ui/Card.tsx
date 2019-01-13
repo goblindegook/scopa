@@ -2,11 +2,6 @@ import React from 'react'
 import styled from '@emotion/styled'
 import { Suit } from '../engine/cards'
 
-type CardProps = {
-  value: number
-  suit: Suit
-}
-
 const VALUES: { [key: number]: string } = {
   1: 'Asso',
   2: 'Due',
@@ -31,7 +26,7 @@ function name(value: number, suit: Suit) {
   return `${VALUES[value]} di ${SUITS[suit]}`
 }
 
-const Image = styled('img')`
+const Face = styled('img')`
   max-height: 30vh;
   max-width: 10vw;
   border-radius: 1rem;
@@ -39,9 +34,35 @@ const Image = styled('img')`
   box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
 `
 
-export const Card = ({ value, suit }: CardProps) => (
-  <Image
-    src={require(`./assets/${SUITS[suit]}/${value}.jpg`)}
-    title={name(value, suit)}
-  />
-)
+const Back = styled('img')`
+  max-height: 30vh;
+  max-width: 10vw;
+  border-radius: 1rem;
+  margin: 1rem;
+  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+`
+
+type CardProps = {
+  className?: string
+} & (
+  | {
+      hidden?: false
+      suit: Suit
+      value: number
+    }
+  | {
+      hidden: true
+      suit?: Suit
+      value?: number
+    })
+
+export const Card = ({ className, hidden = false, value, suit }: CardProps) =>
+  hidden || value === undefined || suit === undefined ? (
+    <Back className={className} />
+  ) : (
+    <Face
+      className={className}
+      src={require(`./assets/${SUITS[suit]}/${value}.jpg`)}
+      title={name(value, suit)}
+    />
+  )
