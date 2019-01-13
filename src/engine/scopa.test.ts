@@ -275,6 +275,23 @@ describe('play', () => {
     expect(next.isLeft()).toBe(true)
   })
 
+  test(`target order should not be considered when playing`, () => {
+    const card: Card = [2, Suit.DENARI]
+    const targets: Deck = [[1, Suit.COPPE], [1, Suit.BASTONI]]
+    const game: State = {
+      state: 'play',
+      turn: 0,
+      players: [
+        { hand: [card], pile: [], scope: 0 },
+        { hand: [], pile: [], scope: 0 }
+      ],
+      pile: [],
+      table: [[1, Suit.BASTONI], [1, Suit.SPADE], [1, Suit.COPPE]]
+    }
+
+    rightOf(play({ card, targets }, game))
+  })
+
   test(`a player scores a scopa when they capture all the cards on the table`, () => {
     const card: Card = [3, Suit.DENARI]
     const table: Deck = [[1, Suit.COPPE], [1, Suit.BASTONI], [1, Suit.SPADE]]

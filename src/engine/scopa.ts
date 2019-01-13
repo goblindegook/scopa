@@ -1,4 +1,4 @@
-import { contains, without, splitAt, splitEvery, uniq, sum } from 'ramda'
+import { contains, without, splitAt, splitEvery, uniq, sum, sort } from 'ramda'
 import { Either, right, left } from 'fp-ts/lib/Either'
 import { Deck, Card, Suit } from './cards'
 import { findMatches } from './match'
@@ -93,6 +93,10 @@ function next({ card, targets = [] }: Move, game: State): State {
   }
 }
 
+const sortCards = sort<Card>(
+  ([va, sa], [vb, sb]) => sb * 10 + vb - (sa * 10 + va)
+)
+
 export function play(
   { card, targets = [] }: Move,
   game: State
@@ -101,13 +105,13 @@ export function play(
 
   const hasCard = contains(card, players[turn].hand)
 
-  const possibleTargets = findMatches(card[0], table)
+  const possibleTargets = findMatches(card[0], sortCards(table))
   const mustPick = Math.min(...possibleTargets.map(t => t.length))
   const validTargets = possibleTargets.filter(t => t.length === mustPick)
 
   const autoTargets =
     !targets.length && validTargets.length < 2 ? validTargets[0] || [] : null
-  const hasTarget = autoTargets || contains(targets, validTargets)
+  const hasTarget = autoTargets || contains(sortCards(targets), validTargets)
 
   return hasCard
     ? hasTarget
