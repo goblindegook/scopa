@@ -19,6 +19,12 @@ const rightOf = <L, R>(actual: Either<L, R>): R => {
   })
 }
 
+const leftOf = <L, R>(actual: Either<L, R>): L => {
+  return actual.swap().getOrElseL(() => {
+    throw Error()
+  })
+}
+
 describe('deal', () => {
   test(`deal sets state`, () => {
     const game = rightOf(deal(deck()))
@@ -38,7 +44,9 @@ describe('deal', () => {
       [7, Suit.DENARI]
     ])
 
-    expect(game.isLeft()).toBe(true)
+    expect(leftOf(game).message).toBe(
+      'More than two kings on the table. Deal again.'
+    )
   })
 
   test(`Scopa is a game for 2, 3, 4 or 6 players`, () => {
@@ -138,7 +146,7 @@ describe('play', () => {
 
     const next = play({ card }, game)
 
-    expect(next.isLeft()).toBe(true)
+    expect(leftOf(next).message).toBe('Not your turn.')
   })
 
   test(`a player captures a card from the table if it's the same value as the card played`, () => {
@@ -179,7 +187,27 @@ describe('play', () => {
 
     const next = play({ card }, game)
 
-    expect(next.isLeft()).toBe(true)
+    expect(leftOf(next).message).toBe('Choose the cards to capture.')
+  })
+
+  test(`a player must choose a valid capture`, () => {
+    const card: Card = [4, Suit.DENARI]
+    const game: State = {
+      state: 'play',
+      turn: 0,
+      players: [
+        { hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
+        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 }
+      ],
+      pile: [],
+      table: [[1, Suit.BASTONI], [1, Suit.COPPE]]
+    }
+
+    const next = play({ card, targets: [[1, Suit.BASTONI]] }, game)
+
+    expect(leftOf(next).message).toBe(
+      'The targetted cards may not be captured.'
+    )
   })
 
   test(`a player chooses a card from the table that is the same value as the card played`, () => {

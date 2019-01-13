@@ -1,5 +1,6 @@
 import React from 'react'
 import { Either } from 'fp-ts/lib/Either'
+import { contains, without } from 'ramda'
 import { State, Move } from '../engine/scopa'
 import { Deck, Card } from '../engine/cards'
 import { Card as CardComponent } from './Card'
@@ -51,16 +52,26 @@ const GameOver = ({ scores = [] }: GameOverProps) => (
 
 type TableProps = {
   cards: Deck
+  selected: Deck
+  onSelect: (card: Card) => void
 }
 
 const TableArea = styled('section')`
   background-color: darkgreen;
+  padding: 1rem;
 `
 
-const Table = ({ cards }: TableProps) => (
+const Table = ({ cards, onSelect, selected }: TableProps) => (
   <TableArea>
     {cards.map(([value, suit]) => (
-      <CardComponent key={`${value}:${suit}`} value={value} suit={suit} />
+      <label key={`${value}:${suit}`}>
+        <input
+          type="checkbox"
+          checked={contains([value, suit], selected)}
+          onChange={() => onSelect([value, suit])}
+        />
+        <CardComponent value={value} suit={suit} />
+      </label>
     ))}
   </TableArea>
 )
@@ -83,6 +94,7 @@ type PlayerProps = {
 
 const PlayerArea = styled('section')`
   background-color: green;
+  padding: 1rem;
 `
 
 const Player = ({ hand, onPlay }: PlayerProps) => (
@@ -118,11 +130,18 @@ export class Game extends React.Component<GameProps, GameState> {
     alert: ''
   }
 
+  handleSelection = (card: Card) => {
+    const targets = contains(card, this.state.targets)
+      ? without([card], this.state.targets)
+      : this.state.targets.concat([card])
+    this.setState({ targets })
+  }
+
   handleResult = (result: Either<Error, State>) => {
     result.bimap(
       ({ message }) => this.setState({ alert: message }),
       game => {
-        this.setState({ game, alert: '' })
+        this.setState({ game, targets: [], alert: '' })
         this.opponentPlay(game)
       }
     )
@@ -154,7 +173,11 @@ export class Game extends React.Component<GameProps, GameState> {
         {game.state === 'stop' && <GameOver scores={onScore(game)} />}
         {game.players.length && (
           <>
-            <Table cards={game.table} />
+            <Table
+              cards={game.table}
+              selected={targets}
+              onSelect={this.handleSelection}
+            />
             <Player
               hand={game.players[0].hand}
               onPlay={card =>

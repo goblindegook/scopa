@@ -33,6 +33,7 @@ function name(value: number, suit: Suit) {
 
 const Image = styled('img')`
   max-height: 30vh;
+  max-width: 10vw;
   border-radius: 1rem;
   margin: 1rem;
   box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);

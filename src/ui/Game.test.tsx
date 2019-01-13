@@ -110,8 +110,49 @@ test('allow playing a card', () => {
   expect(getByTitle('Due di denari')).toBeTruthy()
 })
 
-test.skip('select targets to capture', () => {
-  // TODO
+test('select targets to capture', () => {
+  const initialState = testGame({
+    players: [
+      { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+      { hand: [], pile: [], scope: 0 }
+    ],
+    table: [[1, Suit.COPPE], [1, Suit.SPADE]]
+  })
+
+  const onPlay = jest.fn(() =>
+    right(
+      testGame({
+        state: 'stop',
+        players: [
+          { hand: [], pile: [], scope: 0 },
+          { hand: [], pile: [], scope: 0 }
+        ],
+        table: [[1, Suit.SPADE]]
+      })
+    )
+  )
+
+  const { getByText, getByTitle } = render(
+    <Game
+      onStart={() => right(initialState)}
+      onPlay={onPlay}
+      onOpponentPlay={jest.fn()}
+      onScore={() => []}
+    />
+  )
+
+  fireEvent.click(getByText('Start new game'))
+  fireEvent.click(
+    getByTitle('Asso di coppe')
+      .closest('label')!
+      .querySelector('input')!
+  )
+  fireEvent.click(getByTitle('Asso di denari'))
+
+  expect(onPlay).toHaveBeenCalledWith(
+    { card: [1, Suit.DENARI], targets: [[1, Suit.COPPE]] },
+    initialState
+  )
 })
 
 test('invalid move handling', () => {

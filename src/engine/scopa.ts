@@ -50,7 +50,7 @@ export function deal(cards: Deck, options?: Options): Either<Error, State> {
         pile,
         table
       })
-    : left(Error())
+    : left(Error('More than two kings on the table. Deal again.'))
 }
 
 function next({ card, targets = [] }: Move, game: State): State {
@@ -112,7 +112,11 @@ export function play(
   return hasCard
     ? hasTarget
       ? right(next({ card, targets: autoTargets || targets }, game))
-      : left(Error('Choose the cards to capture.'))
+      : left(
+          targets.length
+            ? Error('The targetted cards may not be captured.')
+            : Error('Choose the cards to capture.')
+        )
     : left(Error('Not your turn.'))
 }
 
