@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import { Either } from 'fp-ts/lib/Either'
-import { contains, without } from 'ramda'
+import { contains, without, concat } from 'ramda'
 import styled from '@emotion/styled'
 import { State, Move } from '../engine/state'
 import { Card } from '../engine/cards'
 import { Table } from './Table'
 import { Player } from './Player'
 import { ScoreBoard } from './ScoreBoard'
+
+const HUMAN_PLAYER = 0
 
 const Header = styled('header')`
   background-color: rgba(0, 0, 0, 0.5);
@@ -38,14 +40,14 @@ const Button = styled('button')`
 type GameProps = {
   onStart: () => Either<Error, State>
   onPlay: (move: Move, game: State) => Either<Error, State>
-  onOpponentPlay: (game: State) => State
+  onOpponentTurn: (game: State) => State
   onScore: (game: State) => ReadonlyArray<number>
 }
 
 export const Game = ({
   onStart,
   onPlay,
-  onOpponentPlay,
+  onOpponentTurn,
   onScore
 }: GameProps) => {
   const [alert, setAlert] = useState('')
@@ -58,42 +60,38 @@ export const Game = ({
     players: []
   })
 
-  const opponentPlay = (game: State) => {
-    if (game.state === 'play' && game.turn !== 0) {
-      const next = onOpponentPlay(game)
+  const nextTurn = (game: State) => {
+    if (game.state === 'play' && game.turn !== HUMAN_PLAYER) {
+      const next = onOpponentTurn(game)
       setGame(next)
-      opponentPlay(next)
+      nextTurn(next)
     }
   }
 
-  const handleSelection = (card: Card) => {
+  const toggleTarget = (card: Card) =>
     setTargets(
       contains(card, targets)
         ? without([card], targets)
-        : targets.concat([card])
+        : concat([card], targets)
     )
-  }
 
-  const handleResult = (result: Either<Error, State>) => {
+  const handle = (result: Either<Error, State>) =>
     result.bimap(
       ({ message }) => setAlert(message),
       game => {
         setGame(game)
         setTargets([])
         setAlert('')
-        opponentPlay(game)
+        nextTurn(game)
       }
     )
-  }
 
   return (
     <>
       <Header>
-        <Button onClick={() => handleResult(onStart())}>Start new game</Button>
+        <Button onClick={() => handle(onStart())}>Start new game</Button>
         <Alert>{alert}</Alert>
-        {game.state === 'play' && (
-          <Turn>{game && `Player ${game.turn + 1}`}</Turn>
-        )}
+        {game.state === 'play' && <Turn>Player {game.turn + 1}</Turn>}
       </Header>
       {game.state === 'stop' && (
         <aside>
@@ -106,11 +104,11 @@ export const Game = ({
           <Table
             cards={game.table}
             selected={targets}
-            onSelect={handleSelection}
+            onSelect={toggleTarget}
           />
           <Player
-            hand={game.players[0].hand}
-            onPlay={card => handleResult(onPlay({ card, targets }, game))}
+            hand={game.players[HUMAN_PLAYER].hand}
+            onPlay={card => handle(onPlay({ card, targets }, game))}
           />
         </>
       )}

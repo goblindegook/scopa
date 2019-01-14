@@ -30,7 +30,7 @@ test('deal new game on start', () => {
     <Game
       onStart={onStart}
       onPlay={jest.fn()}
-      onOpponentPlay={onOpponentPlay}
+      onOpponentTurn={onOpponentPlay}
       onScore={() => []}
     />
   )
@@ -57,7 +57,7 @@ test('card visibility', () => {
     <Game
       onStart={onStart}
       onPlay={jest.fn()}
-      onOpponentPlay={jest.fn()}
+      onOpponentTurn={jest.fn()}
       onScore={jest.fn()}
     />
   )
@@ -96,7 +96,7 @@ test('allow playing a card', () => {
     <Game
       onStart={() => right(initialState)}
       onPlay={onPlay}
-      onOpponentPlay={jest.fn()}
+      onOpponentTurn={jest.fn()}
       onScore={() => []}
     />
   )
@@ -137,7 +137,7 @@ test('select targets to capture', () => {
     <Game
       onStart={() => right(initialState)}
       onPlay={onPlay}
-      onOpponentPlay={jest.fn()}
+      onOpponentTurn={jest.fn()}
       onScore={() => []}
     />
   )
@@ -173,7 +173,7 @@ test('invalid move handling', () => {
         )
       }
       onPlay={onPlay}
-      onOpponentPlay={jest.fn()}
+      onOpponentTurn={jest.fn()}
       onScore={jest.fn()}
     />
   )
@@ -222,7 +222,7 @@ test('computer opponent plays a card', () => {
     <Game
       onStart={onStart}
       onPlay={onPlay}
-      onOpponentPlay={onOpponentPlay}
+      onOpponentTurn={onOpponentPlay}
       onScore={jest.fn()}
     />
   )
@@ -249,7 +249,7 @@ test('end game and show scores', () => {
     <Game
       onStart={() => right(state)}
       onPlay={jest.fn()}
-      onOpponentPlay={jest.fn()}
+      onOpponentTurn={jest.fn()}
       onScore={onScore}
     />
   )

@@ -4,22 +4,27 @@ import { deal, play, score } from './engine/scopa'
 import { Game } from './ui/Game'
 import { findMatches } from './engine/match'
 
+const dealShuffledDeck = () => deal(shuffle(deck()), { players: 2 })
+
 class App extends Component {
   render() {
     return (
       <Game
-        onStart={() => deal(shuffle(deck()), { players: 2 })}
+        onStart={dealShuffledDeck}
         onPlay={play}
-        onOpponentPlay={game => {
+        onOpponentTurn={game => {
           // SPIKE
           const card = game.players[game.turn].hand[0]
-          const possibleTargets = findMatches(card[0], game.table)
-          const mustPick = Math.min(...possibleTargets.map(t => t.length))
-          const validTargets = possibleTargets.filter(
-            t => t.length === mustPick
-          )
-          const next = play({ card, targets: validTargets[0] || [] }, game)
-          return next.getOrElse({ ...game, state: 'stop' })
+
+          const available = findMatches(card[0], game.table)
+          const mustPick = Math.min(...available.map(t => t.length))
+          const valid = available.filter(t => t.length === mustPick)
+          const targets = valid[0] || []
+
+          return play({ card, targets }, game).getOrElse({
+            ...game,
+            state: 'stop'
+          })
         }}
         onScore={score}
       />
