@@ -1,6 +1,6 @@
 import React from 'react'
 import { cleanup, render, fireEvent } from 'react-testing-library'
-import { State } from '../engine/scopa'
+import { State } from '../engine/state'
 import { Game } from './Game'
 import { Suit } from '../engine/cards'
 import { right, left } from 'fp-ts/lib/Either'
@@ -12,8 +12,8 @@ function testGame(overrides: Partial<State> = {}): State {
     state: 'play',
     turn: 0,
     players: [
-      { hand: [], pile: [], scope: 0 },
-      { hand: [], pile: [], scope: 0 }
+      { hand: [], pile: [], score: 0 },
+      { hand: [], pile: [], score: 0 }
     ],
     pile: [],
     table: [],
@@ -26,7 +26,7 @@ test('deal new game on start', () => {
   const onStart = jest.fn(() => right(testGame({ turn })))
   const onOpponentPlay = () => testGame({ state: 'stop' })
 
-  const { getByText } = render(
+  const { getByText, queryByText } = render(
     <Game
       onStart={onStart}
       onPlay={jest.fn()}
@@ -34,6 +34,7 @@ test('deal new game on start', () => {
       onScore={() => []}
     />
   )
+  expect(queryByText('Game Over')).toBeNull()
   fireEvent.click(getByText('Start new game'))
   expect(onStart).toHaveBeenCalled()
   expect(getByText(`Player ${turn + 1}`)).toBeTruthy()
@@ -44,8 +45,8 @@ test('card visibility', () => {
     right<Error, State>(
       testGame({
         players: [
-          { hand: [[1, Suit.DENARI]], pile: [[2, Suit.DENARI]], scope: 0 },
-          { hand: [[3, Suit.DENARI]], pile: [[4, Suit.DENARI]], scope: 0 }
+          { hand: [[1, Suit.DENARI]], pile: [[2, Suit.DENARI]], score: 0 },
+          { hand: [[3, Suit.DENARI]], pile: [[4, Suit.DENARI]], score: 0 }
         ],
         table: [[5, Suit.DENARI]],
         pile: [[6, Suit.DENARI]]
@@ -73,8 +74,8 @@ test('card visibility', () => {
 test('allow playing a card', () => {
   const initialState = testGame({
     players: [
-      { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
-      { hand: [], pile: [], scope: 0 }
+      { hand: [[1, Suit.DENARI]], pile: [], score: 0 },
+      { hand: [], pile: [], score: 0 }
     ]
   })
 
@@ -83,8 +84,8 @@ test('allow playing a card', () => {
       testGame({
         state: 'stop',
         players: [
-          { hand: [], pile: [], scope: 0 },
-          { hand: [], pile: [], scope: 0 }
+          { hand: [], pile: [], score: 0 },
+          { hand: [], pile: [], score: 0 }
         ],
         table: [[2, Suit.DENARI]]
       })
@@ -113,8 +114,8 @@ test('allow playing a card', () => {
 test('select targets to capture', () => {
   const initialState = testGame({
     players: [
-      { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
-      { hand: [], pile: [], scope: 0 }
+      { hand: [[1, Suit.DENARI]], pile: [], score: 0 },
+      { hand: [], pile: [], score: 0 }
     ],
     table: [[1, Suit.COPPE], [1, Suit.SPADE]]
   })
@@ -124,8 +125,8 @@ test('select targets to capture', () => {
       testGame({
         state: 'stop',
         players: [
-          { hand: [], pile: [], scope: 0 },
-          { hand: [], pile: [], scope: 0 }
+          { hand: [], pile: [], score: 0 },
+          { hand: [], pile: [], score: 0 }
         ],
         table: [[1, Suit.SPADE]]
       })
@@ -165,8 +166,8 @@ test('invalid move handling', () => {
         right(
           testGame({
             players: [
-              { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
-              { hand: [], pile: [], scope: 0 }
+              { hand: [[1, Suit.DENARI]], pile: [], score: 0 },
+              { hand: [], pile: [], score: 0 }
             ]
           })
         )
@@ -188,8 +189,8 @@ test('computer opponent plays a card', () => {
     right(
       testGame({
         players: [
-          { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
-          { hand: [[2, Suit.DENARI]], pile: [], scope: 0 }
+          { hand: [[1, Suit.DENARI]], pile: [], score: 0 },
+          { hand: [[2, Suit.DENARI]], pile: [], score: 0 }
         ]
       })
     )
@@ -200,8 +201,8 @@ test('computer opponent plays a card', () => {
       testGame({
         turn: 1,
         players: [
-          { hand: [], pile: [], scope: 0 },
-          { hand: [[2, Suit.DENARI]], pile: [], scope: 0 }
+          { hand: [], pile: [], score: 0 },
+          { hand: [[2, Suit.DENARI]], pile: [], score: 0 }
         ],
         table: [[1, Suit.DENARI]]
       })
@@ -211,8 +212,8 @@ test('computer opponent plays a card', () => {
   const onOpponentPlay = () =>
     testGame({
       players: [
-        { hand: [], pile: [], scope: 0 },
-        { hand: [], pile: [], scope: 0 }
+        { hand: [], pile: [], score: 0 },
+        { hand: [], pile: [], score: 0 }
       ],
       table: [[1, Suit.DENARI], [2, Suit.DENARI]]
     })
@@ -237,8 +238,8 @@ test('end game and show scores', () => {
   const state = testGame({
     state: 'stop',
     players: [
-      { hand: [], pile: [], scope: 1 },
-      { hand: [], pile: [], scope: 2 }
+      { hand: [], pile: [], score: 1 },
+      { hand: [], pile: [], score: 2 }
     ]
   })
 

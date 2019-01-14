@@ -2,27 +2,7 @@ import { contains, without, splitAt, splitEvery, uniq, sum, sort } from 'ramda'
 import { Either, right, left } from 'fp-ts/lib/Either'
 import { Deck, Card, Suit } from './cards'
 import { findMatches } from './match'
-
-type Player = {
-  hand: Deck
-  pile: Deck
-  scope: number
-}
-
-export type State = {
-  state: 'play' | 'stop'
-  turn: number
-  pile: Deck
-  players: ReadonlyArray<Player>
-  table: Deck
-}
-
-export type Move = {
-  card: Card
-  targets?: Deck
-}
-
-type Score = ReadonlyArray<number>
+import { Player, State, Move } from './state'
 
 type Options = {
   players?: 2 | 3 | 4 | 6
@@ -33,7 +13,7 @@ const DEFAULT_OPTIONS: Required<Options> = {
 }
 
 const createPlayers = (cards: Deck, n: number): ReadonlyArray<Player> =>
-  splitEvery(3, cards).map(hand => ({ hand, pile: [], scope: 0 }))
+  splitEvery(3, cards).map(hand => ({ hand, pile: [], score: 0 }))
 
 export function deal(cards: Deck, options?: Options): Either<Error, State> {
   const { players } = { ...DEFAULT_OPTIONS, ...options }
@@ -77,7 +57,7 @@ function next({ card, targets = [] }: Move, game: State): State {
           ...player,
           hand: nextHand,
           pile: [...player.pile, ...targets, ...(targets.length ? [card] : [])],
-          scope: tableAfterMove.length ? player.scope : player.scope + 1
+          score: tableAfterMove.length ? player.score : player.score + 1
         }
   )
 
@@ -124,7 +104,7 @@ export function play(
     : left(Error('Not your turn.'))
 }
 
-export function score(game: State): Score {
+export function score(game: State): ReadonlyArray<number> {
   const cards = game.players.map(({ pile }) => pile.length)
   const cardTie = uniq(cards).length === 1
 
@@ -137,8 +117,8 @@ export function score(game: State): Score {
   const primeTie = uniq(primes).length === 1
 
   return game.players.map(
-    ({ scope, pile }, idx) =>
-      scope +
+    ({ score, pile }, idx) =>
+      score +
       (contains([7, Suit.DENARI], pile) ? 1 : 0) +
       (!cardTie && cards[idx] === Math.max(...cards) ? 1 : 0) +
       (!denariTie && denari[idx] === Math.max(...denari) ? 1 : 0) +

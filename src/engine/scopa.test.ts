@@ -1,5 +1,6 @@
 import { deck, Suit, Deck, Card } from './cards'
-import { deal, State, play, score, prime } from './scopa'
+import { deal, play, score, prime } from './scopa'
+import { State } from "./state";
 import { assert, property, constantFrom, integer, Arbitrary } from 'fast-check'
 import { Either } from 'fp-ts/lib/Either'
 
@@ -73,7 +74,7 @@ describe('deal', () => {
 
   test(`each player begins with no score`, () => {
     const game = rightOf(deal(deck()))
-    game.players.forEach(p => expect(p.scope).toBe(0))
+    game.players.forEach(p => expect(p.score).toBe(0))
   })
 
   test(`table pile contains remaining cards`, () => {
@@ -97,8 +98,8 @@ describe('play', () => {
       state: 'play',
       turn: 0,
       players: [
-        { hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [card, [2, Suit.DENARI]], pile: [], score: 0 },
+        { hand: [[3, Suit.DENARI]], pile: [], score: 0 }
       ],
       pile: [],
       table: [[4, Suit.DENARI]]
@@ -118,8 +119,8 @@ describe('play', () => {
       state: 'play',
       turn: 1,
       players: [
-        { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [card, [3, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [[1, Suit.DENARI]], pile: [], score: 0 },
+        { hand: [card, [3, Suit.DENARI]], pile: [], score: 0 }
       ],
       pile: [],
       table: [[4, Suit.DENARI]]
@@ -137,8 +138,8 @@ describe('play', () => {
       state: 'play',
       turn: 0,
       players: [
-        { hand: [[2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [[2, Suit.DENARI]], pile: [], score: 0 },
+        { hand: [[3, Suit.DENARI]], pile: [], score: 0 }
       ],
       pile: [],
       table: [[4, Suit.DENARI]]
@@ -156,8 +157,8 @@ describe('play', () => {
       state: 'play',
       turn: 0,
       players: [
-        { hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [card, [2, Suit.DENARI]], pile: [], score: 0 },
+        { hand: [[3, Suit.DENARI]], pile: [], score: 0 }
       ],
       pile: [],
       table: [[4, Suit.DENARI], target]
@@ -178,8 +179,8 @@ describe('play', () => {
       state: 'play',
       turn: 0,
       players: [
-        { hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [card, [2, Suit.DENARI]], pile: [], score: 0 },
+        { hand: [[3, Suit.DENARI]], pile: [], score: 0 }
       ],
       pile: [],
       table: [[1, Suit.BASTONI], [1, Suit.COPPE]]
@@ -196,8 +197,8 @@ describe('play', () => {
       state: 'play',
       turn: 0,
       players: [
-        { hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [card, [2, Suit.DENARI]], pile: [], score: 0 },
+        { hand: [[3, Suit.DENARI]], pile: [], score: 0 }
       ],
       pile: [],
       table: [[1, Suit.BASTONI], [1, Suit.COPPE]]
@@ -217,8 +218,8 @@ describe('play', () => {
       state: 'play',
       turn: 0,
       players: [
-        { hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [card, [2, Suit.DENARI]], pile: [], score: 0 },
+        { hand: [[3, Suit.DENARI]], pile: [], score: 0 }
       ],
       pile: [],
       table: [[1, Suit.BASTONI], target]
@@ -240,8 +241,8 @@ describe('play', () => {
       state: 'play',
       turn: 0,
       players: [
-        { hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[5, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [card, [2, Suit.DENARI]], pile: [], score: 0 },
+        { hand: [[5, Suit.DENARI]], pile: [], score: 0 }
       ],
       pile: [],
       table: [[4, Suit.DENARI], ...targets]
@@ -263,8 +264,8 @@ describe('play', () => {
       state: 'play',
       turn: 0,
       players: [
-        { hand: [card], pile: [], scope: 0 },
-        { hand: [[10, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [card], pile: [], score: 0 },
+        { hand: [[10, Suit.DENARI]], pile: [], score: 0 }
       ],
       pile: [],
       table: [[2, Suit.COPPE], ...targets]
@@ -282,8 +283,8 @@ describe('play', () => {
       state: 'play',
       turn: 0,
       players: [
-        { hand: [card], pile: [], scope: 0 },
-        { hand: [], pile: [], scope: 0 }
+        { hand: [card], pile: [], score: 0 },
+        { hand: [], pile: [], score: 0 }
       ],
       pile: [],
       table: [[1, Suit.BASTONI], [1, Suit.SPADE], [1, Suit.COPPE]]
@@ -299,15 +300,15 @@ describe('play', () => {
       state: 'play',
       turn: 0,
       players: [
-        { hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[5, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [card, [2, Suit.DENARI]], pile: [], score: 0 },
+        { hand: [[5, Suit.DENARI]], pile: [], score: 0 }
       ],
       pile: [],
       table
     }
 
     const next = rightOf(play({ card }, game))
-    expect(next.players[0].scope).toBe(1)
+    expect(next.players[0].score).toBe(1)
     expect(next.state).toBe('play')
   })
 
@@ -327,8 +328,8 @@ describe('play', () => {
       state: 'play',
       turn: 0,
       players: [
-        { hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[5, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [card, [2, Suit.DENARI]], pile: [], score: 0 },
+        { hand: [[5, Suit.DENARI]], pile: [], score: 0 }
       ],
       pile: [...topOfPile, ...restOfPile],
       table: [[1, Suit.COPPE], [1, Suit.BASTONI], [1, Suit.SPADE]]
@@ -355,8 +356,8 @@ describe('play', () => {
       state: 'play',
       turn: 0,
       players: [
-        { hand: [card], pile: [], scope: 0 },
-        { hand: [[5, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [card], pile: [], score: 0 },
+        { hand: [[5, Suit.DENARI]], pile: [], score: 0 }
       ],
       pile: [...topOfPile, ...restOfPile],
       table: [[1, Suit.COPPE]]
@@ -374,8 +375,8 @@ describe('play', () => {
       state: 'play',
       turn: 1,
       players: [
-        { hand: [], pile: [], scope: 0 },
-        { hand: [card], pile: [], scope: 0 }
+        { hand: [], pile: [], score: 0 },
+        { hand: [card], pile: [], score: 0 }
       ],
       pile: [],
       table: []
@@ -443,8 +444,8 @@ describe('single player score', () => {
       state: 'stop',
       turn: 0,
       players: [
-        { hand: [], pile: [], scope: 1 },
-        { hand: [], pile: [], scope: 2 }
+        { hand: [], pile: [], score: 1 },
+        { hand: [], pile: [], score: 2 }
       ],
       pile: [],
       table: []
@@ -460,8 +461,8 @@ describe('single player score', () => {
           state: 'stop',
           turn: 0,
           players: [
-            { hand: [], pile: [[7, Suit.DENARI], [1, Suit.COPPE]], scope: s1 },
-            { hand: [], pile: [[7, Suit.COPPE], [1, Suit.DENARI]], scope: s2 }
+            { hand: [], pile: [[7, Suit.DENARI], [1, Suit.COPPE]], score: s1 },
+            { hand: [], pile: [[7, Suit.COPPE], [1, Suit.DENARI]], score: s2 }
           ],
           pile: [],
           table: []
@@ -479,11 +480,11 @@ describe('single player score', () => {
           state: 'stop',
           turn: 0,
           players: [
-            { hand: [], pile: [[5, Suit.SPADE], [5, Suit.COPPE]], scope: s1 },
+            { hand: [], pile: [[5, Suit.SPADE], [5, Suit.COPPE]], score: s1 },
             {
               hand: [],
               pile: [[10, Suit.COPPE], [10, Suit.BASTONI], [10, Suit.SPADE]],
-              scope: s2
+              score: s2
             }
           ],
           pile: [],
@@ -502,8 +503,8 @@ describe('single player score', () => {
           state: 'stop',
           turn: 0,
           players: [
-            { hand: [], pile: [[1, Suit.DENARI], [2, Suit.DENARI]], scope: s1 },
-            { hand: [], pile: [[1, Suit.COPPE], [2, Suit.COPPE]], scope: s2 }
+            { hand: [], pile: [[1, Suit.DENARI], [2, Suit.DENARI]], score: s1 },
+            { hand: [], pile: [[1, Suit.COPPE], [2, Suit.COPPE]], score: s2 }
           ],
           pile: [],
           table: []
@@ -521,8 +522,8 @@ describe('single player score', () => {
           state: 'stop',
           turn: 0,
           players: [
-            { hand: [], pile: [[7, Suit.SPADE]], scope: s1 },
-            { hand: [], pile: [[6, Suit.COPPE]], scope: s2 }
+            { hand: [], pile: [[7, Suit.SPADE]], score: s1 },
+            { hand: [], pile: [[6, Suit.COPPE]], score: s2 }
           ],
           pile: [],
           table: []

@@ -1,10 +1,9 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Either } from 'fp-ts/lib/Either'
 import { contains, without } from 'ramda'
-import { State, Move } from '../engine/scopa'
-import { Deck, Card } from '../engine/cards'
-import { Card as CardComponent } from './Card'
 import styled from '@emotion/styled'
+import { State, Move } from '../engine/state'
+import { Card } from '../engine/cards'
 import { Table } from './Table'
 import { Player } from './Player'
 import { ScoreBoard } from './ScoreBoard'
@@ -43,81 +42,78 @@ type GameProps = {
   onScore: (game: State) => ReadonlyArray<number>
 }
 
-type GameState = {
-  game: State
-  targets: ReadonlyArray<Card>
-  alert: string
-}
+export const Game = ({
+  onStart,
+  onPlay,
+  onOpponentPlay,
+  onScore
+}: GameProps) => {
+  const [alert, setAlert] = useState('')
+  const [targets, setTargets] = useState<ReadonlyArray<Card>>([])
+  const [game, setGame] = useState<State>({
+    state: 'initial',
+    turn: 0,
+    table: [],
+    pile: [],
+    players: []
+  })
 
-export class Game extends React.Component<GameProps, GameState> {
-  state: GameState = {
-    game: { state: 'stop', turn: 0, table: [], pile: [], players: [] },
-    targets: [],
-    alert: ''
+  const opponentPlay = (game: State) => {
+    if (game.state === 'play' && game.turn !== 0) {
+      const next = onOpponentPlay(game)
+      setGame(next)
+      opponentPlay(next)
+    }
   }
 
-  handleSelection = (card: Card) => {
-    const targets = contains(card, this.state.targets)
-      ? without([card], this.state.targets)
-      : this.state.targets.concat([card])
-    this.setState({ targets })
+  const handleSelection = (card: Card) => {
+    setTargets(
+      contains(card, targets)
+        ? without([card], targets)
+        : targets.concat([card])
+    )
   }
 
-  handleResult = (result: Either<Error, State>) => {
+  const handleResult = (result: Either<Error, State>) => {
     result.bimap(
-      ({ message }) => this.setState({ alert: message }),
+      ({ message }) => setAlert(message),
       game => {
-        this.setState({ game, targets: [], alert: '' })
-        this.opponentPlay(game)
+        setGame(game)
+        setTargets([])
+        setAlert('')
+        opponentPlay(game)
       }
     )
   }
 
-  opponentPlay = (game: State) => {
-    if (game.state === 'play' && game.turn !== 0) {
-      const next = this.props.onOpponentPlay(game)
-      this.setState({ game: next })
-      this.opponentPlay(next)
-    }
-  }
-
-  render() {
-    const { onStart, onPlay, onScore } = this.props
-    const { alert, targets, game } = this.state
-
-    return (
-      <>
-        <Header>
-          <Button onClick={() => this.handleResult(onStart())}>
-            Start new game
-          </Button>
-          <Alert>{alert}</Alert>
-          {game.state === 'play' && (
-            <Turn>{game && `Player ${game.turn + 1}`}</Turn>
-          )}
-        </Header>
-        {game.state === 'stop' && (
-          <aside>
-            <h2>Game Over</h2>
-            <ScoreBoard scores={onScore(game)} />
-          </aside>
+  return (
+    <>
+      <Header>
+        <Button onClick={() => handleResult(onStart())}>Start new game</Button>
+        <Alert>{alert}</Alert>
+        {game.state === 'play' && (
+          <Turn>{game && `Player ${game.turn + 1}`}</Turn>
         )}
-        {game.players.length && (
-          <>
-            <Table
-              cards={game.table}
-              selected={targets}
-              onSelect={this.handleSelection}
-            />
-            <Player
-              hand={game.players[0].hand}
-              onPlay={card =>
-                this.handleResult(onPlay({ card, targets }, game))
-              }
-            />
-          </>
-        )}
-      </>
-    )
-  }
+      </Header>
+      {game.state === 'stop' && (
+        <aside>
+          <h2>Game Over</h2>
+          <ScoreBoard scores={onScore(game)} />
+        </aside>
+      )}
+      {game.players.length > 0 && (
+        <>
+          <Table
+            cards={game.table}
+            selected={targets}
+            onSelect={handleSelection}
+          />
+          <Player
+            hand={game.players[0].hand}
+            onPlay={card => handleResult(onPlay({ card, targets }, game))}
+          />
+        </>
+      )}
+    </>
+  )
 }
