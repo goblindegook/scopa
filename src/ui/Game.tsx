@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Either } from 'fp-ts/lib/Either'
 import { contains, without, concat } from 'ramda'
 import styled from '@emotion/styled'
@@ -40,7 +40,7 @@ const Button = styled('button')`
 type GameProps = {
   onStart: () => Either<Error, State>
   onPlay: (move: Move, game: State) => Either<Error, State>
-  onOpponentTurn: (game: State) => State
+  onOpponentTurn: (game: State) => Promise<State>
   onScore: (game: State) => ReadonlyArray<number>
 }
 
@@ -60,13 +60,16 @@ export const Game = ({
     players: []
   })
 
-  const nextTurn = (game: State) => {
-    if (game.state === 'play' && game.turn !== HUMAN_PLAYER) {
-      const next = onOpponentTurn(game)
-      setGame(next)
-      nextTurn(next)
-    }
-  }
+  useEffect(
+    () => {
+      if (game.state === 'play' && game.turn !== HUMAN_PLAYER) {
+        onOpponentTurn(game)
+          .then(setGame)
+          .catch(console.error)
+      }
+    },
+    [game.state, game.turn]
+  )
 
   const toggleTarget = (card: Card) =>
     setTargets(
@@ -82,7 +85,6 @@ export const Game = ({
         setGame(game)
         setTargets([])
         setAlert('')
-        nextTurn(game)
       }
     )
 

@@ -1,5 +1,5 @@
 import React from 'react'
-import { cleanup, render, fireEvent } from 'react-testing-library'
+import { cleanup, render, fireEvent, wait } from 'react-testing-library'
 import { State } from '../engine/state'
 import { Game } from './Game'
 import { Suit } from '../engine/cards'
@@ -24,7 +24,7 @@ function testGame(overrides: Partial<State> = {}): State {
 test('deal new game on start', () => {
   const turn = 0
   const onStart = jest.fn(() => right(testGame({ turn })))
-  const onOpponentPlay = () => testGame({ state: 'stop' })
+  const onOpponentPlay = async () => testGame({ state: 'stop' })
 
   const { getByText, queryByText } = render(
     <Game
@@ -184,7 +184,7 @@ test('invalid move handling', () => {
   expect(getByText(message)).toBeTruthy()
 })
 
-test('computer opponent plays a card', () => {
+test('computer opponent plays a card', async () => {
   const onStart = jest.fn(() =>
     right(
       testGame({
@@ -209,7 +209,7 @@ test('computer opponent plays a card', () => {
     )
   )
 
-  const onOpponentPlay = () =>
+  const onOpponentPlay = async () =>
     testGame({
       players: [
         { hand: [], pile: [], score: 0 },
@@ -231,7 +231,7 @@ test('computer opponent plays a card', () => {
   fireEvent.click(getByTitle('Asso di denari'))
 
   expect(getByTitle('Asso di denari')).toBeTruthy()
-  expect(getByTitle('Due di denari')).toBeTruthy()
+  await wait(() => getByTitle('Due di denari'))
 })
 
 test('end game and show scores', () => {

@@ -1,6 +1,7 @@
 {
   "name": "scopa",
   "version": "0.1.0",
+  "homepage": "https://scopa.netlify.com",
   "private": true,
   "scripts": {
     "start": "react-scripts start",

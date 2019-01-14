@@ -12,8 +12,10 @@ class App extends Component {
       <Game
         onStart={dealShuffledDeck}
         onPlay={play}
-        onOpponentTurn={game => {
+        onOpponentTurn={async game => {
           // SPIKE
+          await new Promise(resolve => setTimeout(resolve, 500))
+
           const card = game.players[game.turn].hand[0]
 
           const available = findMatches(card[0], game.table)
