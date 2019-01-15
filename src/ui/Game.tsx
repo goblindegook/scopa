@@ -62,10 +62,14 @@ export const Game = ({
 
   useEffect(
     () => {
+      let active = true
       if (game.state === 'play' && game.turn !== HUMAN_PLAYER) {
         onOpponentTurn(game)
-          .then(setGame)
+          .then(game => active && setGame(game))
           .catch(console.error)
+      }
+      return () => {
+        active = false
       }
     },
     [game.state, game.turn]
@@ -109,6 +113,7 @@ export const Game = ({
             onSelect={toggleTarget}
           />
           <Player
+            disabled={game.state !== 'play' || game.turn !== HUMAN_PLAYER}
             hand={game.players[HUMAN_PLAYER].hand}
             onPlay={card => handle(onPlay({ card, targets }, game))}
           />

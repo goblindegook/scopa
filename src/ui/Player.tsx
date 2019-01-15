@@ -7,7 +7,9 @@ const PlayerCard = styled('button')`
   background-color: transparent;
   border: none;
   padding: 0;
+
   &:focus {
+    outline: 0;
     border: 3px solid red;
     border-radius: 1rem;
     margin: -3px;
@@ -21,13 +23,15 @@ const PlayerArea = styled('section')`
 
 type PlayerProps = {
   hand: Deck
+  disabled?: boolean
   onPlay: (card: CardType) => void
 }
 
-export const Player = ({ hand, onPlay }: PlayerProps) => (
+export const Player = ({ disabled, hand, onPlay }: PlayerProps) => (
   <PlayerArea>
     {hand.map(([value, suit]) => (
       <PlayerCard
+        disabled={disabled}
         key={`${value}:${suit}`}
         onClick={() => onPlay([value, suit])}
       >

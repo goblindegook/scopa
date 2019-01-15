@@ -14,7 +14,7 @@ class App extends Component {
         onPlay={play}
         onOpponentTurn={async game => {
           // SPIKE
-          await new Promise(resolve => setTimeout(resolve, 500))
+          await new Promise(resolve => setTimeout(resolve, 1000))
 
           const card = game.players[game.turn].hand[0]
 

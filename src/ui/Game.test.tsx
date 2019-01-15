@@ -111,6 +111,66 @@ test('allow playing a card', () => {
   expect(getByTitle('Due di denari')).toBeTruthy()
 })
 
+test(`block interaction when not a player's turn`, async () => {
+  const initialState = testGame({
+    state: 'play',
+    turn: 1,
+    players: [
+      { hand: [[1, Suit.DENARI]], pile: [], score: 0 },
+      { hand: [], pile: [], score: 0 }
+    ]
+  })
+
+  const onPlay = jest.fn()
+
+  const { getByText, getByTitle } = render(
+    <Game
+      onStart={() => right(initialState)}
+      onOpponentTurn={() =>
+        new Promise(resolve =>
+          setTimeout(() => resolve({ ...initialState, turn: 0 }), 10)
+        )
+      }
+      onPlay={onPlay}
+      onScore={() => []}
+    />
+  )
+
+  fireEvent.click(getByText('Start new game'))
+  const card = getByTitle('Asso di denari') as HTMLButtonElement
+
+  fireEvent.click(card)
+  expect(onPlay).not.toHaveBeenCalled()
+
+  await wait(() => expect(card.disabled).toBeFalsy())
+})
+
+test(`block interaction when game has stopped`, async () => {
+  const initial = testGame({
+    state: 'stop',
+    turn: 0,
+    players: [
+      { hand: [[1, Suit.DENARI]], pile: [], score: 0 },
+      { hand: [], pile: [], score: 0 }
+    ]
+  })
+
+  const onPlay = jest.fn()
+
+  const { getByText, getByTitle } = render(
+    <Game
+      onStart={() => right(initial)}
+      onOpponentTurn={jest.fn()}
+      onPlay={onPlay}
+      onScore={() => []}
+    />
+  )
+
+  fireEvent.click(getByText('Start new game'))
+  fireEvent.click(getByTitle('Asso di denari'))
+  expect(onPlay).not.toHaveBeenCalled()
+})
+
 test('select targets to capture', () => {
   const initialState = testGame({
     players: [
