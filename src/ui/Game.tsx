@@ -108,6 +108,7 @@ export const Game = ({
       {game.players.length > 0 && (
         <>
           <Table
+            disabled={game.state !== 'play' || game.turn !== HUMAN_PLAYER}
             cards={game.table}
             selected={targets}
             onSelect={toggleTarget}

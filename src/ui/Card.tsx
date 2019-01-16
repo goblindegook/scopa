@@ -30,7 +30,6 @@ const Face = styled('img')`
   max-height: 30vh;
   max-width: 10vw;
   border-radius: 1rem;
-  margin: 1rem;
   box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
 `
 
@@ -38,13 +37,12 @@ const Back = styled('img')`
   max-height: 30vh;
   max-width: 10vw;
   border-radius: 1rem;
-  margin: 1rem;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 `
 
 type CardProps = {
   className?: string
-  hidden?: false
+  hidden?: boolean
   suit?: Suit
   value?: number
 }
@@ -57,5 +55,6 @@ export const Card = ({ className, hidden = false, value, suit }: CardProps) =>
       className={className}
       src={require(`./assets/${SUITS[suit]}/${value}.jpg`)}
       title={name(value, suit)}
+      alt={name(value, suit)}
     />
   )

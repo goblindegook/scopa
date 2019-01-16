@@ -6,13 +6,20 @@ import { Card } from './Card'
 const PlayerCard = styled('button')`
   background-color: transparent;
   border: none;
-  padding: 0;
+  padding: 1rem;
+  margin: 0.25rem;
+  transition: transform 0.2s ease-in;
+
+  &:focus,
+  &:hover {
+    outline: 0;
+    transform: translateY(-20px);
+    border-radius: 1rem;
+  }
 
   &:focus {
-    outline: 0;
-    border: 3px solid red;
-    border-radius: 1rem;
-    margin: -3px;
+    border: 2px solid red;
+    padding: calc(1rem - 2px);
   }
 `
 

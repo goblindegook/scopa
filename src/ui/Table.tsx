@@ -4,12 +4,6 @@ import { Card as CardType, Deck } from '../engine/cards'
 import { contains } from 'ramda'
 import { Card } from './Card'
 
-type TableProps = {
-  cards: Deck
-  selected: Deck
-  onSelect: (card: CardType) => void
-}
-
 const TableArea = styled('section')`
   background-color: darkgreen;
   padding: 1rem;
@@ -19,7 +13,19 @@ const TableArea = styled('section')`
 `
 
 const TableCard = styled(Card)`
+  margin: 1rem;
   transition: transform 0.2s ease-in, box-shadow 0.2s ease-in;
+
+  input:focus + &,
+  input + &:hover {
+    box-shadow: 0 5px 5px rgba(0, 0, 0, 0.5);
+    transform: translateY(-10px) scale(1.1);
+  }
+
+  input:focus + & {
+    border: 2px solid red;
+    margin: calc(1rem - 2px);
+  }
 
   input:checked + & {
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.5);
@@ -32,11 +38,24 @@ const Checkbox = styled('input')`
   left: -9999px;
 `
 
-export const Table = ({ cards, onSelect, selected }: TableProps) => (
+type TableProps = {
+  cards: Deck
+  disabled?: boolean
+  selected: Deck
+  onSelect: (card: CardType) => void
+}
+
+export const Table = ({
+  cards,
+  disabled = false,
+  selected,
+  onSelect
+}: TableProps) => (
   <TableArea>
     {cards.map(([value, suit]) => (
       <label key={`${value}:${suit}`}>
         <Checkbox
+          disabled={disabled}
           type="checkbox"
           checked={contains([value, suit], selected)}
           onChange={() => onSelect([value, suit])}

@@ -53,7 +53,7 @@ test(`card visibility`, () => {
       })
     )
 
-  const { getByText, getByTitle, queryByTitle } = render(
+  const { getByText, getByAltText, queryByTitle } = render(
     <Game
       onStart={onStart}
       onPlay={jest.fn()}
@@ -63,8 +63,8 @@ test(`card visibility`, () => {
   )
   fireEvent.click(getByText('Start new game'))
 
-  expect(getByTitle('Asso di denari')).toBeTruthy()
-  expect(getByTitle('Cinque di denari')).toBeTruthy()
+  expect(getByAltText('Asso di denari')).toBeTruthy()
+  expect(getByAltText('Cinque di denari')).toBeTruthy()
   expect(queryByTitle('Sei di denari')).toBeFalsy()
   expect(queryByTitle('Tre di denari')).toBeFalsy()
   expect(queryByTitle('Due di denari')).toBeFalsy()
@@ -92,7 +92,7 @@ test(`allow playing a card`, () => {
     )
   )
 
-  const { getByText, getByTitle } = render(
+  const { getByText, getByAltText } = render(
     <Game
       onStart={() => right(initialState)}
       onPlay={onPlay}
@@ -102,13 +102,13 @@ test(`allow playing a card`, () => {
   )
 
   fireEvent.click(getByText('Start new game'))
-  fireEvent.click(getByTitle('Asso di denari'))
+  fireEvent.click(getByAltText('Asso di denari'))
 
   expect(onPlay).toHaveBeenCalledWith(
     { card: [1, Suit.DENARI], targets: [] },
     initialState
   )
-  expect(getByTitle('Due di denari')).toBeTruthy()
+  expect(getByAltText('Due di denari')).toBeTruthy()
 })
 
 test(`block interaction when not a player's turn`, async () => {
@@ -118,12 +118,13 @@ test(`block interaction when not a player's turn`, async () => {
     players: [
       { hand: [[1, Suit.DENARI]], pile: [], score: 0 },
       { hand: [], pile: [], score: 0 }
-    ]
+    ],
+    table: [[7, Suit.DENARI]]
   })
 
   const onPlay = jest.fn()
 
-  const { getByText, getByTitle } = render(
+  const { getByText, getByAltText } = render(
     <Game
       onStart={() => right(initialState)}
       onOpponentTurn={() =>
@@ -137,8 +138,12 @@ test(`block interaction when not a player's turn`, async () => {
   )
 
   fireEvent.click(getByText('Start new game'))
-  const card = getByTitle('Asso di denari') as HTMLButtonElement
 
+  const checkbox = getByAltText('Sette di denari')
+    .previousSibling as HTMLInputElement
+  expect(checkbox.disabled).toBeTruthy()
+
+  const card = getByAltText('Asso di denari') as HTMLButtonElement
   fireEvent.click(card)
   expect(onPlay).not.toHaveBeenCalled()
 
@@ -152,12 +157,13 @@ test(`block interaction when game has stopped`, async () => {
     players: [
       { hand: [[1, Suit.DENARI]], pile: [], score: 0 },
       { hand: [], pile: [], score: 0 }
-    ]
+    ],
+    table: [[7, Suit.DENARI]]
   })
 
   const onPlay = jest.fn()
 
-  const { getByText, getByTitle } = render(
+  const { getByText, getByAltText } = render(
     <Game
       onStart={() => right(initial)}
       onOpponentTurn={jest.fn()}
@@ -167,7 +173,12 @@ test(`block interaction when game has stopped`, async () => {
   )
 
   fireEvent.click(getByText('Start new game'))
-  fireEvent.click(getByTitle('Asso di denari'))
+
+  const checkbox = getByAltText('Sette di denari')
+    .previousSibling as HTMLInputElement
+  expect(checkbox.disabled).toBeTruthy()
+
+  fireEvent.click(getByAltText('Asso di denari'))
   expect(onPlay).not.toHaveBeenCalled()
 })
 
@@ -193,7 +204,7 @@ test(`select targets to capture`, () => {
     )
   )
 
-  const { getByText, getByTitle } = render(
+  const { getByText, getByAltText } = render(
     <Game
       onStart={() => right(initialState)}
       onPlay={onPlay}
@@ -204,11 +215,11 @@ test(`select targets to capture`, () => {
 
   fireEvent.click(getByText('Start new game'))
   fireEvent.click(
-    getByTitle('Asso di coppe')
+    getByAltText('Asso di coppe')
       .closest('label')!
       .querySelector('input')!
   )
-  fireEvent.click(getByTitle('Asso di denari'))
+  fireEvent.click(getByAltText('Asso di denari'))
 
   expect(onPlay).toHaveBeenCalledWith(
     { card: [1, Suit.DENARI], targets: [[1, Suit.COPPE]] },
@@ -220,7 +231,7 @@ test('invalid move handling', () => {
   const message = 'test error message'
   const onPlay = jest.fn(() => left(Error(message)))
 
-  const { getByText, getByTitle } = render(
+  const { getByText, getByAltText } = render(
     <Game
       onStart={() =>
         right(
@@ -239,7 +250,7 @@ test('invalid move handling', () => {
   )
 
   fireEvent.click(getByText('Start new game'))
-  fireEvent.click(getByTitle('Asso di denari'))
+  fireEvent.click(getByAltText('Asso di denari'))
 
   expect(getByText(message)).toBeTruthy()
 })
@@ -278,7 +289,7 @@ test(`computer opponent plays a card`, async () => {
       table: [[1, Suit.DENARI], [2, Suit.DENARI]]
     })
 
-  const { getByText, getByTitle } = render(
+  const { getByText, getByAltText } = render(
     <Game
       onStart={onStart}
       onPlay={onPlay}
@@ -288,10 +299,10 @@ test(`computer opponent plays a card`, async () => {
   )
 
   fireEvent.click(getByText('Start new game'))
-  fireEvent.click(getByTitle('Asso di denari'))
+  fireEvent.click(getByAltText('Asso di denari'))
 
-  expect(getByTitle('Asso di denari')).toBeTruthy()
-  await wait(() => getByTitle('Due di denari'))
+  expect(getByAltText('Asso di denari')).toBeTruthy()
+  await wait(() => getByAltText('Due di denari'))
 })
 
 test(`end game and show scores`, () => {
@@ -305,7 +316,7 @@ test(`end game and show scores`, () => {
 
   const onScore = jest.fn(() => [3, 4])
 
-  const { getByText, getByTitle } = render(
+  const { getByText, getByAltText } = render(
     <Game
       onStart={() => right(state)}
       onPlay={jest.fn()}

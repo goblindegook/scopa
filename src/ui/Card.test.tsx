@@ -52,10 +52,10 @@ test.each([
 })
 
 test('hidden cards have no title', () => {
-  const { queryByTitle } = render(
+  const { queryByAltText } = render(
     <Card hidden={true} value={1} suit={Suit.DENARI} />
   )
-  expect(queryByTitle('Asso di denari')).toBeNull()
+  expect(queryByAltText('Asso di denari')).toBeNull()
 })
 
 test(`hidden cards don't require a value`, () => {
