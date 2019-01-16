@@ -19,6 +19,8 @@ const PlayerCard = styled('button')`
 const PlayerArea = styled('section')`
   background-color: green;
   padding: 1rem;
+  display: grid;
+  justify-items: center;
 `
 
 type PlayerProps = {
@@ -29,14 +31,16 @@ type PlayerProps = {
 
 export const Player = ({ disabled, hand, onPlay }: PlayerProps) => (
   <PlayerArea>
-    {hand.map(([value, suit]) => (
-      <PlayerCard
-        disabled={disabled}
-        key={`${value}:${suit}`}
-        onClick={() => onPlay([value, suit])}
-      >
-        <Card value={value} suit={suit} />
-      </PlayerCard>
-    ))}
+    <div>
+      {hand.map(([value, suit]) => (
+        <PlayerCard
+          disabled={disabled}
+          key={`${value}:${suit}`}
+          onClick={() => onPlay([value, suit])}
+        >
+          <Card value={value} suit={suit} />
+        </PlayerCard>
+      ))}
+    </div>
   </PlayerArea>
 )

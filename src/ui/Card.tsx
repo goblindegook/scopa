@@ -39,22 +39,15 @@ const Back = styled('img')`
   max-width: 10vw;
   border-radius: 1rem;
   margin: 1rem;
-  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 `
 
 type CardProps = {
   className?: string
-} & (
-  | {
-      hidden?: false
-      suit: Suit
-      value: number
-    }
-  | {
-      hidden: true
-      suit?: Suit
-      value?: number
-    })
+  hidden?: false
+  suit?: Suit
+  value?: number
+}
 
 export const Card = ({ className, hidden = false, value, suit }: CardProps) =>
   hidden || value === undefined || suit === undefined ? (

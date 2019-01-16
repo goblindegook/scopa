@@ -21,7 +21,7 @@ function testGame(overrides: Partial<State> = {}): State {
   }
 }
 
-test('deal new game on start', () => {
+test(`deal new game on start`, () => {
   const turn = 0
   const onStart = jest.fn(() => right(testGame({ turn })))
   const onOpponentPlay = async () => testGame({ state: 'stop' })
@@ -40,7 +40,7 @@ test('deal new game on start', () => {
   expect(getByText(`Player ${turn + 1}`)).toBeTruthy()
 })
 
-test('card visibility', () => {
+test(`card visibility`, () => {
   const onStart = () =>
     right<Error, State>(
       testGame({
@@ -71,7 +71,7 @@ test('card visibility', () => {
   expect(queryByTitle('Quattro di denari')).toBeFalsy()
 })
 
-test('allow playing a card', () => {
+test(`allow playing a card`, () => {
   const initialState = testGame({
     players: [
       { hand: [[1, Suit.DENARI]], pile: [], score: 0 },
@@ -171,7 +171,7 @@ test(`block interaction when game has stopped`, async () => {
   expect(onPlay).not.toHaveBeenCalled()
 })
 
-test('select targets to capture', () => {
+test(`select targets to capture`, () => {
   const initialState = testGame({
     players: [
       { hand: [[1, Suit.DENARI]], pile: [], score: 0 },
@@ -244,7 +244,7 @@ test('invalid move handling', () => {
   expect(getByText(message)).toBeTruthy()
 })
 
-test('computer opponent plays a card', async () => {
+test(`computer opponent plays a card`, async () => {
   const onStart = jest.fn(() =>
     right(
       testGame({
@@ -294,7 +294,7 @@ test('computer opponent plays a card', async () => {
   await wait(() => getByTitle('Due di denari'))
 })
 
-test('end game and show scores', () => {
+test(`end game and show scores`, () => {
   const state = testGame({
     state: 'stop',
     players: [
