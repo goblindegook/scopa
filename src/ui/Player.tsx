@@ -1,8 +1,17 @@
 import React from 'react'
 import styled from '@emotion/styled'
-import { range } from 'ramda'
 import { Deck, Card as CardType } from '../engine/cards'
 import { Card } from './Card'
+import { Stack } from './Stack'
+
+const PlayerPile = styled(Stack)`
+  transform: perspective(1500px) rotateX(30deg) rotateY(0deg) rotateZ(0deg)
+    scale(1);
+  justify-self: center;
+  align-self: center;
+  width: 15vw;
+  height: 15vw;
+`
 
 const PlayerCard = styled('button')`
   background-color: transparent;
@@ -33,36 +42,6 @@ const PlayerArea = styled('section')`
   justify-items: center;
 `
 
-const StackedCard = styled(Card)`
-  position: absolute;
-  z-index: ${({ index = 1 }) => index};
-  top: -${({ index = 0 }) => index * 2}px;
-  left: 0;
-`
-
-const StackArea = styled('aside')`
-  transform: perspective(1500px) rotateX(30deg) rotateY(0deg) rotateZ(0deg)
-    scale(1);
-  position: relative;
-  justify-self: center;
-  align-self: center;
-  width: 15vw;
-  height: 15vw;
-`
-
-type StackProps = {
-  size: number
-  title: string
-}
-
-const Stack = ({ size, title }: StackProps) => (
-  <StackArea title={title}>
-    {range(0, size).map(i => (
-      <StackedCard hidden={true} index={i} key={`player-pile-${i}`} />
-    ))}
-  </StackArea>
-)
-
 type PlayerProps = {
   hand: Deck
   pile: number
@@ -90,6 +69,6 @@ export const Player = ({
         </PlayerCard>
       ))}
     </div>
-    <Stack size={pile} title={`Player ${index + 1} pile: ${pile} cards`} />
+    <PlayerPile size={pile} title={`Player ${index + 1} pile: ${pile} cards`} />
   </PlayerArea>
 )
