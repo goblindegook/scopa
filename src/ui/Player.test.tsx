@@ -1,8 +1,8 @@
 import React from 'react'
+import { assert, property, integer } from 'fast-check'
 import { cleanup, render, fireEvent } from 'react-testing-library'
 import { Suit } from '../engine/cards'
 import { Player } from './Player'
-import { assert, property, integer } from 'fast-check'
 
 beforeEach(cleanup)
 
