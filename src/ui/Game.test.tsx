@@ -1,5 +1,11 @@
 import React from 'react'
-import { cleanup, render, fireEvent, wait } from 'react-testing-library'
+import {
+  cleanup,
+  render,
+  fireEvent,
+  wait,
+  getByTitle
+} from 'react-testing-library'
 import { State } from '../engine/state'
 import { Game } from './Game'
 import { Suit } from '../engine/cards'
@@ -69,6 +75,37 @@ test(`card visibility`, () => {
   expect(queryByTitle('Tre di denari')).toBeFalsy()
   expect(queryByTitle('Due di denari')).toBeFalsy()
   expect(queryByTitle('Quattro di denari')).toBeFalsy()
+})
+
+test(`player piles`, () => {
+  const onStart = () =>
+    right<Error, State>(
+      testGame({
+        players: [
+          { hand: [], pile: [[1, Suit.DENARI], [1, Suit.DENARI]], score: 0 },
+          {
+            hand: [],
+            pile: [[1, Suit.DENARI], [1, Suit.DENARI], [1, Suit.DENARI]],
+            score: 0
+          }
+        ],
+        table: [],
+        pile: []
+      })
+    )
+
+  const { getByText, getByTitle } = render(
+    <Game
+      onStart={onStart}
+      onPlay={jest.fn()}
+      onOpponentTurn={jest.fn()}
+      onScore={jest.fn()}
+    />
+  )
+  fireEvent.click(getByText('Start new game'))
+
+  expect(getByTitle('Player 1 pile: 2 cards')).toBeTruthy()
+  // expect(getByTitle('Player 2 pile: 3 cards')).toBeTruthy()
 })
 
 test(`allow playing a card`, () => {

@@ -6,7 +6,7 @@ import { Card } from './Card'
 
 const TableArea = styled('section')`
   background-color: darkgreen;
-  padding: 1rem;
+  margin: 1rem;
   text-align: center;
   transform: perspective(1500px) rotateX(30deg) rotateY(0deg) rotateZ(0deg)
     scale(1);

@@ -27,21 +27,24 @@ function name(value: number, suit: Suit) {
 }
 
 const Face = styled('img')`
-  max-height: 30vh;
-  max-width: 10vw;
-  border-radius: 1rem;
+  height: 18vw;
+  width: 10vw;
+  border-radius: 1vw;
   box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
 `
 
 const Back = styled('img')`
-  max-height: 30vh;
-  max-width: 10vw;
-  border-radius: 1rem;
+  height: 18vw;
+  width: 10vw;
+  border-radius: 1vw;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  background-color: blue;
+  border: 1px solid white;
 `
 
 type CardProps = {
   className?: string
+  index?: number
   hidden?: boolean
   suit?: Suit
   value?: number

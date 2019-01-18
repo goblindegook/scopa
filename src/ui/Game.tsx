@@ -115,7 +115,9 @@ export const Game = ({
           />
           <Player
             disabled={game.state !== 'play' || game.turn !== HUMAN_PLAYER}
+            index={HUMAN_PLAYER}
             hand={game.players[HUMAN_PLAYER].hand}
+            pile={game.players[HUMAN_PLAYER].pile.length}
             onPlay={card => handle(onPlay({ card, targets }, game))}
           />
         </>
