@@ -16,6 +16,7 @@ const Header = styled('header')`
   padding: 1rem;
   font-size: 1rem;
   color: white;
+  height: 4rem;
 `
 
 const Alert = styled('span')`
@@ -36,6 +37,16 @@ const Button = styled('button')`
   padding: 0.25rem 1rem;
   color: black;
   font-size: 1rem;
+`
+
+const GameOver = styled('main')`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.25);
+  height: calc(100vh - 4rem);
 `
 
 type GameProps = {
@@ -98,12 +109,12 @@ export const Game = ({
         {game.state === 'play' && <Turn>Player {game.turn + 1}</Turn>}
       </Header>
       {game.state === 'stop' && (
-        <aside>
+        <GameOver>
           <h2>Game Over</h2>
           <ScoreBoard scores={onScore(game)} />
-        </aside>
+        </GameOver>
       )}
-      {game.players.length > 0 && (
+      {game.state === 'play' && game.players.length > 0 && (
         <main>
           {game.players.map(
             (player, index) =>
@@ -117,13 +128,13 @@ export const Game = ({
               )
           )}
           <Table
-            disabled={game.state !== 'play' || game.turn !== HUMAN_PLAYER}
+            disabled={game.turn !== HUMAN_PLAYER}
             cards={game.table}
             selected={targets}
             onSelect={toggleTarget}
           />
           <Player
-            disabled={game.state !== 'play' || game.turn !== HUMAN_PLAYER}
+            disabled={game.turn !== HUMAN_PLAYER}
             index={HUMAN_PLAYER}
             hand={game.players[HUMAN_PLAYER].hand}
             pile={game.players[HUMAN_PLAYER].pile.length}

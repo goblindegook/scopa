@@ -113,7 +113,7 @@ test(`allow playing a card`, () => {
   const onPlay = jest.fn(() =>
     right(
       testGame({
-        state: 'stop',
+        state: 'play',
         players: [
           { hand: [], pile: [], score: 0 },
           { hand: [], pile: [], score: 0 }
@@ -179,38 +179,6 @@ test(`block interaction when not a player's turn`, async () => {
   expect(onPlay).not.toHaveBeenCalled()
 
   await wait(() => expect(card.disabled).toBeFalsy())
-})
-
-test(`block interaction when game has stopped`, async () => {
-  const initial = testGame({
-    state: 'stop',
-    turn: 0,
-    players: [
-      { hand: [[1, Suit.DENARI]], pile: [], score: 0 },
-      { hand: [], pile: [], score: 0 }
-    ],
-    table: [[7, Suit.DENARI]]
-  })
-
-  const onPlay = jest.fn()
-
-  const { getByText, getByAltText } = render(
-    <Game
-      onStart={() => right(initial)}
-      onOpponentTurn={jest.fn()}
-      onPlay={onPlay}
-      onScore={() => []}
-    />
-  )
-
-  fireEvent.click(getByText('Start new game'))
-
-  const checkbox = getByAltText('Sette di denari')
-    .previousSibling as HTMLInputElement
-  expect(checkbox.disabled).toBeTruthy()
-
-  fireEvent.click(getByAltText('Asso di denari'))
-  expect(onPlay).not.toHaveBeenCalled()
 })
 
 test(`select targets to capture`, () => {
@@ -361,6 +329,8 @@ test(`end game and show scores`, () => {
   expect(onScore).toHaveBeenCalledWith(state)
 
   expect(getByText('Game Over')).toBeTruthy()
-  expect(getByText('Player 1: 3')).toBeTruthy()
-  expect(getByText('Player 2: 4')).toBeTruthy()
+  expect(getByText('Player 1')).toBeTruthy()
+  expect(getByText('3')).toBeTruthy()
+  expect(getByText('Player 2')).toBeTruthy()
+  expect(getByText('4')).toBeTruthy()
 })
