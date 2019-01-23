@@ -4,13 +4,19 @@ import { Deck, Card as CardType } from '../engine/cards'
 import { Card } from './Card'
 import { Stack } from './Stack'
 
+const PlayerArea = styled('section')`
+  background-color: green;
+  display: grid;
+  grid-gap: 0;
+  grid-template-columns: auto 20vw;
+  justify-items: center;
+  padding-left: 20vw;
+`
+
 const PlayerPile = styled(Stack)`
-  transform: perspective(1500px) rotateX(30deg) rotateY(0deg) rotateZ(0deg)
-    scale(1);
-  justify-self: center;
-  align-self: center;
-  width: 15vw;
-  height: 15vw;
+  height: 9vw;
+  width: 5vw;
+  /* transform: perspective(1500px) rotateX(30deg) rotateY(0deg) rotateZ(0deg) scale(1); */
 `
 
 const PlayerCard = styled('button')`
@@ -31,15 +37,6 @@ const PlayerCard = styled('button')`
     border: 2px solid red;
     padding: calc(1rem - 2px);
   }
-`
-
-const PlayerArea = styled('section')`
-  background-color: green;
-  display: grid;
-  grid-gap: 1rem;
-  grid-template-columns: auto 15vw;
-  padding-left: 15vw;
-  justify-items: center;
 `
 
 type PlayerProps = {

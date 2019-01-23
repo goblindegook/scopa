@@ -1,15 +1,9 @@
 import React from 'react'
-import {
-  cleanup,
-  render,
-  fireEvent,
-  wait,
-  getByTitle
-} from 'react-testing-library'
+import { cleanup, render, fireEvent, wait } from 'react-testing-library'
+import { right, left } from 'fp-ts/lib/Either'
+import { Suit } from '../engine/cards'
 import { State } from '../engine/state'
 import { Game } from './Game'
-import { Suit } from '../engine/cards'
-import { right, left } from 'fp-ts/lib/Either'
 
 beforeEach(cleanup)
 
@@ -105,7 +99,7 @@ test(`player piles`, () => {
   fireEvent.click(getByText('Start new game'))
 
   expect(getByTitle('Player 1 pile: 2 cards')).toBeTruthy()
-  // expect(getByTitle('Player 2 pile: 3 cards')).toBeTruthy()
+  expect(getByTitle('Player 2 pile: 3 cards')).toBeTruthy()
 })
 
 test(`allow playing a card`, () => {
@@ -264,7 +258,7 @@ test(`select targets to capture`, () => {
   )
 })
 
-test('invalid move handling', () => {
+test(`invalid move handling`, () => {
   const message = 'test error message'
   const onPlay = jest.fn(() => left(Error(message)))
 

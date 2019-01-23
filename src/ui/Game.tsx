@@ -7,6 +7,7 @@ import { Card } from '../engine/cards'
 import { Table } from './Table'
 import { Player } from './Player'
 import { ScoreBoard } from './ScoreBoard'
+import { Opponent } from './Opponent'
 
 const HUMAN_PLAYER = 0
 
@@ -60,20 +61,17 @@ export const Game = ({
     players: []
   })
 
-  useEffect(
-    () => {
-      let active = true
-      if (game.state === 'play' && game.turn !== HUMAN_PLAYER) {
-        onOpponentTurn(game)
-          .then(game => active && setGame(game))
-          .catch(console.error)
-      }
-      return () => {
-        active = false
-      }
-    },
-    [game.state, game.turn]
-  )
+  useEffect(() => {
+    let active = true
+    if (game.state === 'play' && game.turn !== HUMAN_PLAYER) {
+      onOpponentTurn(game)
+        .then(game => active && setGame(game))
+        .catch(console.error)
+    }
+    return () => {
+      active = false
+    }
+  }, [game.state, game.turn])
 
   const toggleTarget = (card: Card) =>
     setTargets(
@@ -106,7 +104,18 @@ export const Game = ({
         </aside>
       )}
       {game.players.length > 0 && (
-        <>
+        <main>
+          {game.players.map(
+            (player, index) =>
+              index !== HUMAN_PLAYER && (
+                <Opponent
+                  key={`opponent-${index}`}
+                  index={index}
+                  hand={player.hand.length}
+                  pile={player.pile.length}
+                />
+              )
+          )}
           <Table
             disabled={game.state !== 'play' || game.turn !== HUMAN_PLAYER}
             cards={game.table}
@@ -120,7 +129,7 @@ export const Game = ({
             pile={game.players[HUMAN_PLAYER].pile.length}
             onPlay={card => handle(onPlay({ card, targets }, game))}
           />
-        </>
+        </main>
       )}
     </>
   )

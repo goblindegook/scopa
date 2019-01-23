@@ -27,16 +27,16 @@ function name(value: number, suit: Suit) {
 }
 
 const Face = styled('img')`
-  height: 18vw;
-  width: 10vw;
-  border-radius: 1vw;
+  height: 13.5vw;
+  width: 7.5vw;
+  border-radius: 0.75vw;
   box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
 `
 
-const Back = styled('img')`
-  height: 18vw;
-  width: 10vw;
-  border-radius: 1vw;
+const Back = styled('div')`
+  height: 13.5vw;
+  width: 7.5vw;
+  border-radius: 0.75vw;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
   background-color: blue;
   border: 1px solid white;
