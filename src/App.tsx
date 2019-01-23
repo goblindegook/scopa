@@ -1,8 +1,9 @@
 import React, { Component } from 'react'
 import { deck, shuffle } from './engine/cards'
-import { deal, play, score } from './engine/scopa'
+import { deal, play } from './engine/scopa'
 import { Game } from './ui/Game'
 import { findMatches } from './engine/match'
+import { score } from './engine/scores'
 
 const dealShuffledDeck = () => deal(shuffle(deck()), { players: 2 })
 

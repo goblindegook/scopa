@@ -8,6 +8,7 @@ import { Table } from './Table'
 import { Player } from './Player'
 import { ScoreBoard } from './ScoreBoard'
 import { Opponent } from './Opponent'
+import { Score } from '../engine/scores'
 
 const HUMAN_PLAYER = 0
 
@@ -53,7 +54,7 @@ type GameProps = {
   onStart: () => Either<Error, State>
   onPlay: (move: Move, game: State) => Either<Error, State>
   onOpponentTurn: (game: State) => Promise<State>
-  onScore: (game: State) => ReadonlyArray<number>
+  onScore: (game: State) => ReadonlyArray<Score>
 }
 
 export const Game = ({

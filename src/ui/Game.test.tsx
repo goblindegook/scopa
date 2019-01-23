@@ -313,7 +313,7 @@ test(`end game and show scores`, () => {
     ]
   })
 
-  const onScore = jest.fn(() => [3, 4])
+  const onScore = jest.fn(() => [{ score: 3 }, { score: 4 }])
 
   const { getByText, getByAltText } = render(
     <Game
