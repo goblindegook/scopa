@@ -14,8 +14,7 @@ const PlayerArea = styled('section')`
 `
 
 const PlayerPile = styled(Stack)`
-  height: 9vw;
-  width: 5vw;
+  margin: 1rem;
   /* transform: perspective(1500px) rotateX(30deg) rotateY(0deg) rotateZ(0deg) scale(1); */
 `
 

@@ -13,6 +13,7 @@ const OpponentArea = styled('section')`
 `
 
 const OpponentPile = styled(Stack)`
+  margin: 1rem;
   /* transform: perspective(1500px) rotateX(30deg) rotateY(0deg) rotateZ(0deg) scale(1); */
 `
 
