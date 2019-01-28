@@ -4,6 +4,7 @@ import { right, left } from 'fp-ts/lib/Either'
 import { Suit } from '../engine/cards'
 import { State } from '../engine/state'
 import { Game } from './Game'
+import { Score } from '../engine/scores'
 
 beforeEach(cleanup)
 
@@ -12,8 +13,8 @@ function testGame(overrides: Partial<State> = {}): State {
     state: 'play',
     turn: 0,
     players: [
-      { hand: [], pile: [], score: 0 },
-      { hand: [], pile: [], score: 0 }
+      { hand: [], pile: [], scope: 0 },
+      { hand: [], pile: [], scope: 0 }
     ],
     pile: [],
     table: [],
@@ -45,8 +46,8 @@ test(`card visibility`, () => {
     right<Error, State>(
       testGame({
         players: [
-          { hand: [[1, Suit.DENARI]], pile: [[2, Suit.DENARI]], score: 0 },
-          { hand: [[3, Suit.DENARI]], pile: [[4, Suit.DENARI]], score: 0 }
+          { hand: [[1, Suit.DENARI]], pile: [[2, Suit.DENARI]], scope: 0 },
+          { hand: [[3, Suit.DENARI]], pile: [[4, Suit.DENARI]], scope: 0 }
         ],
         table: [[5, Suit.DENARI]],
         pile: [[6, Suit.DENARI]]
@@ -76,11 +77,11 @@ test(`player piles`, () => {
     right<Error, State>(
       testGame({
         players: [
-          { hand: [], pile: [[1, Suit.DENARI], [1, Suit.DENARI]], score: 0 },
+          { hand: [], pile: [[1, Suit.DENARI], [1, Suit.DENARI]], scope: 0 },
           {
             hand: [],
             pile: [[1, Suit.DENARI], [1, Suit.DENARI], [1, Suit.DENARI]],
-            score: 0
+            scope: 0
           }
         ],
         table: [],
@@ -105,8 +106,8 @@ test(`player piles`, () => {
 test(`allow playing a card`, () => {
   const initialState = testGame({
     players: [
-      { hand: [[1, Suit.DENARI]], pile: [], score: 0 },
-      { hand: [], pile: [], score: 0 }
+      { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+      { hand: [], pile: [], scope: 0 }
     ]
   })
 
@@ -115,8 +116,8 @@ test(`allow playing a card`, () => {
       testGame({
         state: 'play',
         players: [
-          { hand: [], pile: [], score: 0 },
-          { hand: [], pile: [], score: 0 }
+          { hand: [], pile: [], scope: 0 },
+          { hand: [], pile: [], scope: 0 }
         ],
         table: [[2, Suit.DENARI]]
       })
@@ -147,8 +148,8 @@ test(`block interaction when not a player's turn`, async () => {
     state: 'play',
     turn: 1,
     players: [
-      { hand: [[1, Suit.DENARI]], pile: [], score: 0 },
-      { hand: [], pile: [], score: 0 }
+      { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+      { hand: [], pile: [], scope: 0 }
     ],
     table: [[7, Suit.DENARI]]
   })
@@ -184,8 +185,8 @@ test(`block interaction when not a player's turn`, async () => {
 test(`select targets to capture`, () => {
   const initialState = testGame({
     players: [
-      { hand: [[1, Suit.DENARI]], pile: [], score: 0 },
-      { hand: [], pile: [], score: 0 }
+      { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+      { hand: [], pile: [], scope: 0 }
     ],
     table: [[1, Suit.COPPE], [1, Suit.SPADE]]
   })
@@ -195,8 +196,8 @@ test(`select targets to capture`, () => {
       testGame({
         state: 'stop',
         players: [
-          { hand: [], pile: [], score: 0 },
-          { hand: [], pile: [], score: 0 }
+          { hand: [], pile: [], scope: 0 },
+          { hand: [], pile: [], scope: 0 }
         ],
         table: [[1, Suit.SPADE]]
       })
@@ -236,8 +237,8 @@ test(`invalid move handling`, () => {
         right(
           testGame({
             players: [
-              { hand: [[1, Suit.DENARI]], pile: [], score: 0 },
-              { hand: [], pile: [], score: 0 }
+              { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+              { hand: [], pile: [], scope: 0 }
             ]
           })
         )
@@ -259,8 +260,8 @@ test(`computer opponent plays a card`, async () => {
     right(
       testGame({
         players: [
-          { hand: [[1, Suit.DENARI]], pile: [], score: 0 },
-          { hand: [[2, Suit.DENARI]], pile: [], score: 0 }
+          { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+          { hand: [[2, Suit.DENARI]], pile: [], scope: 0 }
         ]
       })
     )
@@ -271,8 +272,8 @@ test(`computer opponent plays a card`, async () => {
       testGame({
         turn: 1,
         players: [
-          { hand: [], pile: [], score: 0 },
-          { hand: [[2, Suit.DENARI]], pile: [], score: 0 }
+          { hand: [], pile: [], scope: 0 },
+          { hand: [[2, Suit.DENARI]], pile: [], scope: 0 }
         ],
         table: [[1, Suit.DENARI]]
       })
@@ -282,8 +283,8 @@ test(`computer opponent plays a card`, async () => {
   const onOpponentPlay = async () =>
     testGame({
       players: [
-        { hand: [], pile: [], score: 0 },
-        { hand: [], pile: [], score: 0 }
+        { hand: [], pile: [], scope: 0 },
+        { hand: [], pile: [], scope: 0 }
       ],
       table: [[1, Suit.DENARI], [2, Suit.DENARI]]
     })
@@ -308,12 +309,12 @@ test(`end game and show scores`, () => {
   const state = testGame({
     state: 'stop',
     players: [
-      { hand: [], pile: [], score: 1 },
-      { hand: [], pile: [], score: 2 }
+      { hand: [], pile: [], scope: 1 },
+      { hand: [], pile: [], scope: 2 }
     ]
   })
 
-  const onScore = jest.fn(() => [{ score: 3 }, { score: 4 }])
+  const onScore = jest.fn<Score[]>(() => [{ total: 3 }, { total: 4 }])
 
   const { getByText, getByAltText } = render(
     <Game

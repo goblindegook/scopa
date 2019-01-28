@@ -1,31 +1,48 @@
 import { contains, uniq, sum } from 'ramda'
-import { Deck, Suit } from './cards'
+import { Deck, Suit, Card } from './cards'
 import { State } from './state'
 
 export type Score = {
-  score: number
+  captured: ReadonlyArray<Card>
+  denari: ReadonlyArray<Card>
+  primiera: number
+  scope: number
+  settebello: boolean
+  total: number
 }
 
 export function score(game: State): ReadonlyArray<Score> {
   const cards = game.players.map(({ pile }) => pile.length)
   const cardTie = uniq(cards).length === 1
+  const cardMax = Math.max(...cards)
 
   const denari = game.players.map(
-    ({ pile }) => pile.filter(([value, suit]) => suit === Suit.DENARI).length
+    ({ pile }) => pile.filter(([_, suit]) => suit === Suit.DENARI).length
   )
   const denariTie = uniq(denari).length === 1
+  const denariMax = Math.max(...denari)
 
   const primes = game.players.map(({ pile }) => prime(pile))
   const primeTie = uniq(primes).length === 1
+  const primeMax = Math.max(...primes)
 
-  return game.players.map(({ score, pile }, idx) => ({
-    score:
-      score +
-      (contains([7, Suit.DENARI], pile) ? 1 : 0) +
-      (!cardTie && cards[idx] === Math.max(...cards) ? 1 : 0) +
-      (!denariTie && denari[idx] === Math.max(...denari) ? 1 : 0) +
-      (!primeTie && primes[idx] === Math.max(...primes) ? 1 : 0)
-  }))
+  return game.players.map(({ scope: score, pile }, idx) => {
+    const settebello = contains([7, Suit.DENARI], pile)
+
+    return {
+      scope: score,
+      settebello,
+      captured: pile,
+      denari: pile.filter(([_, suit]) => suit === Suit.DENARI),
+      primiera: primes[idx],
+      total:
+        score +
+        (settebello ? 1 : 0) +
+        (!cardTie && cards[idx] === cardMax ? 1 : 0) +
+        (!denariTie && denari[idx] === denariMax ? 1 : 0) +
+        (!primeTie && primes[idx] === primeMax ? 1 : 0)
+    }
+  })
 }
 
 function replaceMaxAt(value: number, suit: number, points: number[]): number[] {

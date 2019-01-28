@@ -43,8 +43,8 @@ export const ScoreBoard = ({ scores = [] }: ScoreBoardProps) => (
     <tbody>
       <tr>
         <RowHeader>Score</RowHeader>
-        {scores.map(({ score }, index) => (
-          <Cell key={`player-score-${index}`}>{score}</Cell>
+        {scores.map(({ total }, index) => (
+          <Cell key={`player-score-${index}`}>{total}</Cell>
         ))}
       </tr>
     </tbody>

@@ -3,7 +3,7 @@ import { Deck, Card } from './cards'
 export type Player = {
   hand: Deck
   pile: Deck
-  score: number
+  scope: number
 }
 
 export type State = {

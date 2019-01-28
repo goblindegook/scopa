@@ -13,7 +13,7 @@ const DEFAULT_OPTIONS: Required<Options> = {
 }
 
 const createPlayers = (cards: Deck, n: number): ReadonlyArray<Player> =>
-  splitEvery(3, cards).map(hand => ({ hand, pile: [], score: 0 }))
+  splitEvery(3, cards).map(hand => ({ hand, pile: [], scope: 0 }))
 
 export function deal(cards: Deck, options?: Options): Either<Error, State> {
   const { players } = { ...DEFAULT_OPTIONS, ...options }
@@ -57,7 +57,7 @@ function next({ card, targets = [] }: Move, game: State): State {
           ...player,
           hand: nextHand,
           pile: [...player.pile, ...targets, ...(targets.length ? [card] : [])],
-          score: tableAfterMove.length ? player.score : player.score + 1
+          scope: tableAfterMove.length ? player.scope : player.scope + 1
         }
   )
 
