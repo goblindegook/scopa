@@ -33,7 +33,7 @@ export function deal(cards: Deck, options?: Options): Either<Error, State> {
     : left(Error('More than two kings on the table. Deal again.'))
 }
 
-function next({ card, targets = [] }: Move, game: State): State {
+function next({ card, targets }: Move, game: State): State {
   const { turn, table, players, pile } = game
 
   const tableAfterMove = targets.length
@@ -78,7 +78,7 @@ const sortCards = sort<Card>(
 )
 
 export function play(
-  { card, targets = [] }: Move,
+  { card, targets }: Move,
   game: State
 ): Either<Error, State> {
   const { table, turn, players } = game

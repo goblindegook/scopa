@@ -16,5 +16,5 @@ export type State = {
 
 export type Move = {
   card: Card
-  targets?: Deck
+  targets: Deck
 }

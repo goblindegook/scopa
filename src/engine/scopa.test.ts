@@ -105,7 +105,7 @@ describe('play', () => {
       table: [[4, Suit.DENARI]]
     }
 
-    const next = rightOf(play({ card }, game))
+    const next = rightOf(play({ card, targets: [] }, game))
 
     expect(next.table).toContain(card)
     expect(next.players[0].hand).not.toContain(card)
@@ -126,7 +126,7 @@ describe('play', () => {
       table: [[4, Suit.DENARI]]
     }
 
-    const next = rightOf(play({ card }, game))
+    const next = rightOf(play({ card, targets: [] }, game))
 
     expect(next.turn).toBe(0)
     expect(next.state).toBe('play')
@@ -145,7 +145,7 @@ describe('play', () => {
       table: [[4, Suit.DENARI]]
     }
 
-    const next = play({ card }, game)
+    const next = play({ card, targets: [] }, game)
 
     expect(leftOf(next).message).toBe('Not your turn.')
   })
@@ -164,7 +164,7 @@ describe('play', () => {
       table: [[4, Suit.DENARI], target]
     }
 
-    const next = rightOf(play({ card }, game))
+    const next = rightOf(play({ card, targets: [] }, game))
 
     expect(next.table).not.toContain(card)
     expect(next.table).not.toContain(target)
@@ -186,7 +186,7 @@ describe('play', () => {
       table: [[1, Suit.BASTONI], [1, Suit.COPPE]]
     }
 
-    const next = play({ card }, game)
+    const next = play({ card, targets: [] }, game)
 
     expect(leftOf(next).message).toBe('Choose the cards to capture.')
   })
@@ -248,7 +248,7 @@ describe('play', () => {
       table: [[4, Suit.DENARI], ...targets]
     }
 
-    const next = rightOf(play({ card }, game))
+    const next = rightOf(play({ card, targets: [] }, game))
 
     expect(next.table).not.toContain(card)
     targets.forEach(expect(next.table).not.toContain)
@@ -307,7 +307,7 @@ describe('play', () => {
       table
     }
 
-    const next = rightOf(play({ card }, game))
+    const next = rightOf(play({ card, targets: [] }, game))
     expect(next.players[0].scope).toBe(1)
     expect(next.state).toBe('play')
   })
@@ -335,7 +335,7 @@ describe('play', () => {
       table: [[1, Suit.COPPE], [1, Suit.BASTONI], [1, Suit.SPADE]]
     }
 
-    const next = rightOf(play({ card }, game))
+    const next = rightOf(play({ card, targets: [] }, game))
     expect(next.table).toEqual(topOfPile)
     expect(next.pile).toEqual(restOfPile)
     expect(next.state).toBe('play')
@@ -363,7 +363,7 @@ describe('play', () => {
       table: [[1, Suit.COPPE]]
     }
 
-    const next = rightOf(play({ card }, game))
+    const next = rightOf(play({ card, targets: [] }, game))
     expect(next.players[0].hand).toEqual(topOfPile)
     expect(next.pile).toEqual(restOfPile)
     expect(next.state).toBe('play')
@@ -382,7 +382,7 @@ describe('play', () => {
       table: []
     }
 
-    const next = rightOf(play({ card }, game))
+    const next = rightOf(play({ card, targets: [] }, game))
     expect(next.state).toBe('stop')
   })
 })
