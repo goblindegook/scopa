@@ -2,12 +2,16 @@ import { contains, uniq, sum } from 'ramda'
 import { Deck, Suit, Card } from './cards'
 import { State } from './state'
 
+const SETTEBELLO: Card = [7, Suit.DENARI]
+
+type ScoreDetail = {
+  label: string
+  value?: string | number
+  cards?: ReadonlyArray<Card>
+}
+
 export type Score = {
-  captured: ReadonlyArray<Card>
-  denari: ReadonlyArray<Card>
-  primiera: number
-  scope: number
-  settebello: boolean
+  details: ReadonlyArray<ScoreDetail>
   total: number
 }
 
@@ -27,14 +31,20 @@ export function score(game: State): ReadonlyArray<Score> {
   const primeMax = Math.max(...primes)
 
   return game.players.map(({ scope: score, pile }, idx) => {
-    const settebello = contains([7, Suit.DENARI], pile)
+    const settebello = contains(SETTEBELLO, pile)
 
     return {
-      scope: score,
-      settebello,
-      captured: pile,
-      denari: pile.filter(([_, suit]) => suit === Suit.DENARI),
-      primiera: primes[idx],
+      details: [
+        { label: 'Scope', value: score },
+        { label: 'Sette Bello', cards: settebello ? [SETTEBELLO] : [] },
+        { label: 'Captured', value: pile.length, cards: pile },
+        {
+          label: 'Denari',
+          value: denari[idx],
+          cards: pile.filter(([_, suit]) => suit === Suit.DENARI)
+        },
+        { label: 'Primiera', value: primes[idx], cards: [] }
+      ],
       total:
         score +
         (settebello ? 1 : 0) +
