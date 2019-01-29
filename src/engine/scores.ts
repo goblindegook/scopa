@@ -32,17 +32,14 @@ export function score(game: State): ReadonlyArray<Score> {
 
   return game.players.map(({ scope: score, pile }, idx) => {
     const settebello = contains(SETTEBELLO, pile)
+    const denariCards = pile.filter(([_, suit]) => suit === Suit.DENARI)
 
     return {
       details: [
         { label: 'Scope', value: score },
-        { label: 'Sette Bello', cards: settebello ? [SETTEBELLO] : [] },
         { label: 'Captured', value: pile.length, cards: pile },
-        {
-          label: 'Denari',
-          value: denari[idx],
-          cards: pile.filter(([_, suit]) => suit === Suit.DENARI)
-        },
+        { label: 'Denari', value: denari[idx], cards: denariCards },
+        { label: 'Sette Bello', cards: settebello ? [SETTEBELLO] : [] },
         { label: 'Primiera', value: primes[idx], cards: [] }
       ],
       total:

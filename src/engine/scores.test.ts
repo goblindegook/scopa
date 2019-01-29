@@ -71,9 +71,9 @@ describe('single player score', () => {
       {
         details: [
           { label: 'Scope', value: 1 },
-          { label: 'Sette Bello', cards: [] },
           { label: 'Captured', value: 0, cards: [] },
           { label: 'Denari', value: 0, cards: [] },
+          { label: 'Sette Bello', cards: [] },
           { label: 'Primiera', value: 0, cards: [] }
         ],
         total: 1
@@ -81,9 +81,9 @@ describe('single player score', () => {
       {
         details: [
           { label: 'Scope', value: 2 },
-          { label: 'Sette Bello', cards: [] },
           { label: 'Captured', value: 0, cards: [] },
           { label: 'Denari', value: 0, cards: [] },
+          { label: 'Sette Bello', cards: [] },
           { label: 'Primiera', value: 0, cards: [] }
         ],
         total: 2
@@ -105,17 +105,17 @@ describe('single player score', () => {
           table: []
         }
 
-        expect(score(game)).toMatchObject([
+        expect(score(game)).toEqual([
           {
             details: [
               { label: 'Scope', value: s1 },
-              { label: 'Sette Bello', cards: [[7, Suit.DENARI]] },
               {
                 label: 'Captured',
                 value: 2,
                 cards: [[7, Suit.DENARI], [1, Suit.COPPE]]
               },
               { label: 'Denari', value: 1, cards: [[7, Suit.DENARI]] },
+              { label: 'Sette Bello', cards: [[7, Suit.DENARI]] },
               { label: 'Primiera', value: 37, cards: [] }
             ],
             total: s1 + 1
@@ -123,13 +123,13 @@ describe('single player score', () => {
           {
             details: [
               { label: 'Scope', value: s2 },
-              { label: 'Sette Bello', cards: [] },
               {
                 label: 'Captured',
                 value: 2,
                 cards: [[7, Suit.COPPE], [1, Suit.DENARI]]
               },
               { label: 'Denari', value: 1, cards: [[1, Suit.DENARI]] },
+              { label: 'Sette Bello', cards: [] },
               { label: 'Primiera', value: 37, cards: [] }
             ],
             total: s2
@@ -156,13 +156,13 @@ describe('single player score', () => {
           table: []
         }
 
-        expect(score(game)).toMatchObject([
+        expect(score(game)).toEqual([
           {
             details: [
               { label: 'Scope', value: s1 },
-              { label: 'Sette Bello', cards: [] },
               { label: 'Captured', value: p1.length, cards: p1 },
               { label: 'Denari', value: 0, cards: [] },
+              { label: 'Sette Bello', cards: [] },
               { label: 'Primiera', value: 30, cards: [] }
             ],
             total: s1
@@ -170,9 +170,9 @@ describe('single player score', () => {
           {
             details: [
               { label: 'Scope', value: s2 },
-              { label: 'Sette Bello', cards: [] },
               { label: 'Captured', value: p2.length, cards: p2 },
               { label: 'Denari', value: 0, cards: [] },
+              { label: 'Sette Bello', cards: [] },
               { label: 'Primiera', value: 30, cards: [] }
             ],
             total: s2 + 1
@@ -196,11 +196,10 @@ describe('single player score', () => {
           table: []
         }
 
-        expect(score(game)).toMatchObject([
+        expect(score(game)).toEqual([
           {
             details: [
               { label: 'Scope', value: s1 },
-              { label: 'Sette Bello', cards: [] },
               {
                 label: 'Captured',
                 value: 2,
@@ -211,6 +210,7 @@ describe('single player score', () => {
                 value: 2,
                 cards: [[1, Suit.DENARI], [2, Suit.DENARI]]
               },
+              { label: 'Sette Bello', cards: [] },
               { label: 'Primiera', value: 16, cards: [] }
             ],
             total: s1 + 1
@@ -218,13 +218,13 @@ describe('single player score', () => {
           {
             details: [
               { label: 'Scope', value: s2 },
-              { label: 'Sette Bello', cards: [] },
               {
                 label: 'Captured',
                 value: 2,
                 cards: [[1, Suit.COPPE], [2, Suit.COPPE]]
               },
               { label: 'Denari', value: 0, cards: [] },
+              { label: 'Sette Bello', cards: [] },
               { label: 'Primiera', value: 16, cards: [] }
             ],
             total: s2
@@ -248,13 +248,13 @@ describe('single player score', () => {
           table: []
         }
 
-        expect(score(game)).toMatchObject([
+        expect(score(game)).toEqual([
           {
             details: [
               { label: 'Scope', value: s1 },
-              { label: 'Sette Bello', cards: [] },
               { label: 'Captured', value: 1, cards: [[7, Suit.SPADE]] },
               { label: 'Denari', value: 0, cards: [] },
+              { label: 'Sette Bello', cards: [] },
               { label: 'Primiera', value: 21, cards: [] }
             ],
             total: s1 + 1
@@ -262,9 +262,9 @@ describe('single player score', () => {
           {
             details: [
               { label: 'Scope', value: s2 },
-              { label: 'Sette Bello', cards: [] },
               { label: 'Captured', value: 1, cards: [[6, Suit.COPPE]] },
               { label: 'Denari', value: 0, cards: [] },
+              { label: 'Sette Bello', cards: [] },
               { label: 'Primiera', value: 18, cards: [] }
             ],
             total: s2
