@@ -28,7 +28,7 @@ describe('prime', () => {
     expect(prime([[3, Suit.DENARI]])).toBe(13)
   })
 
-  test(`two are worth 13 points`, () => {
+  test(`twos are worth 13 points`, () => {
     expect(prime([[2, Suit.DENARI]])).toBe(12)
   })
 
