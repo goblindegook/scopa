@@ -1,5 +1,5 @@
 import React from 'react'
-import { cleanup, render, fireEvent, wait } from 'react-testing-library'
+import { cleanup, render, fireEvent, wait, act } from 'react-testing-library'
 import { right, left } from 'fp-ts/lib/Either'
 import { Suit } from '../engine/cards'
 import { State } from '../engine/state'
@@ -36,7 +36,11 @@ test(`deal new game on start`, () => {
     />
   )
   expect(queryByText('Game Over')).toBeNull()
-  fireEvent.click(getByText('Start new game'))
+
+  act(() => {
+    fireEvent.click(getByText('Start new game'))
+  })
+
   expect(onStart).toHaveBeenCalled()
   expect(getByText(`Player ${turn + 1}`)).toBeTruthy()
 })
@@ -62,7 +66,10 @@ test(`card visibility`, () => {
       onScore={jest.fn()}
     />
   )
-  fireEvent.click(getByText('Start new game'))
+
+  act(() => {
+    fireEvent.click(getByText('Start new game'))
+  })
 
   expect(getByAltText('Asso di denari')).toBeTruthy()
   expect(getByAltText('Cinque di denari')).toBeTruthy()
@@ -97,7 +104,10 @@ test(`player piles`, () => {
       onScore={jest.fn()}
     />
   )
-  fireEvent.click(getByText('Start new game'))
+
+  act(() => {
+    fireEvent.click(getByText('Start new game'))
+  })
 
   expect(getByTitle('Player 1 pile: 2 cards')).toBeTruthy()
   expect(getByTitle('Player 2 pile: 3 cards')).toBeTruthy()
@@ -133,8 +143,12 @@ test(`allow playing a card`, () => {
     />
   )
 
-  fireEvent.click(getByText('Start new game'))
-  fireEvent.click(getByAltText('Asso di denari'))
+  act(() => {
+    fireEvent.click(getByText('Start new game'))
+  })
+  act(() => {
+    fireEvent.click(getByAltText('Asso di denari'))
+  })
 
   expect(onPlay).toHaveBeenCalledWith(
     { card: [1, Suit.DENARI], targets: [] },
@@ -143,7 +157,7 @@ test(`allow playing a card`, () => {
   expect(getByAltText('Due di denari')).toBeTruthy()
 })
 
-test(`block interaction when not a player's turn`, async () => {
+test(`block interaction when not a player's turn`, () => {
   const initialState = testGame({
     state: 'play',
     turn: 1,
@@ -169,17 +183,23 @@ test(`block interaction when not a player's turn`, async () => {
     />
   )
 
-  fireEvent.click(getByText('Start new game'))
+  act(() => {
+    fireEvent.click(getByText('Start new game'))
+  })
 
   const checkbox = getByAltText('Sette di denari')
     .previousSibling as HTMLInputElement
   expect(checkbox.disabled).toBeTruthy()
 
   const card = getByAltText('Asso di denari') as HTMLButtonElement
-  fireEvent.click(card)
+
+  act(() => {
+    fireEvent.click(card)
+  })
+
   expect(onPlay).not.toHaveBeenCalled()
 
-  await wait(() => expect(card.disabled).toBeFalsy())
+  expect(card.disabled).toBeFalsy()
 })
 
 test(`select targets to capture`, () => {
@@ -213,13 +233,21 @@ test(`select targets to capture`, () => {
     />
   )
 
-  fireEvent.click(getByText('Start new game'))
-  fireEvent.click(
-    getByAltText('Asso di coppe')
-      .closest('label')!
-      .querySelector('input')!
-  )
-  fireEvent.click(getByAltText('Asso di denari'))
+  act(() => {
+    fireEvent.click(getByText('Start new game'))
+  })
+
+  act(() => {
+    fireEvent.click(
+      getByAltText('Asso di coppe')
+        .closest('label')!
+        .querySelector('input')!
+    )
+  })
+
+  act(() => {
+    fireEvent.click(getByAltText('Asso di denari'))
+  })
 
   expect(onPlay).toHaveBeenCalledWith(
     { card: [1, Suit.DENARI], targets: [[1, Suit.COPPE]] },
@@ -249,8 +277,13 @@ test(`invalid move handling`, () => {
     />
   )
 
-  fireEvent.click(getByText('Start new game'))
-  fireEvent.click(getByAltText('Asso di denari'))
+  act(() => {
+    fireEvent.click(getByText('Start new game'))
+  })
+
+  act(() => {
+    fireEvent.click(getByAltText('Asso di denari'))
+  })
 
   expect(getByText(message)).toBeTruthy()
 })
@@ -298,8 +331,12 @@ test(`computer opponent plays a card`, async () => {
     />
   )
 
-  fireEvent.click(getByText('Start new game'))
-  fireEvent.click(getByAltText('Asso di denari'))
+  act(() => {
+    fireEvent.click(getByText('Start new game'))
+  })
+  act(() => {
+    fireEvent.click(getByAltText('Asso di denari'))
+  })
 
   expect(getByAltText('Asso di denari')).toBeTruthy()
   await wait(() => getByAltText('Due di denari'))
@@ -325,7 +362,9 @@ test(`end game and show scores`, () => {
     />
   )
 
-  fireEvent.click(getByText('Start new game'))
+  act(() => {
+    fireEvent.click(getByText('Start new game'))
+  })
 
   expect(onScore).toHaveBeenCalledWith(state)
 
