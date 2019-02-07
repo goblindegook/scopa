@@ -23,7 +23,8 @@ describe('deal', () => {
   })
 
   test(`deal four cards on the table`, () => {
-    expect((deal(deck()).value as State).table).toHaveLength(4)
+    const game = deal(deck()).value as State
+    expect(game.table).toHaveLength(4)
   })
 
   test(`reshuffle cards and deal again if three or more kings are on the table`, () => {
