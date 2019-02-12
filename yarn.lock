@@ -1046,17 +1046,17 @@
   resolved "https://registry.yarnpkg.com/@nodelib/fs.stat/-/fs.stat-1.1.3.tgz#2b5a3ab3f918cca48a8c754c08168e3f03eba61b"
   integrity sha512-shAmDyaQC4H92APFoIaVDHCx5bStIocgvbwQyxPRrbUY20V1EYTbSDchWbuwlMG3V17cprZhA6+78JfB+3DTPw==
 
-"@pacote/is-plain-object@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@pacote/is-plain-object/-/is-plain-object-1.0.0.tgz#74b4ab6a3548379347225192ea261ac048c4be70"
-  integrity sha512-/GAP6orKz17R7S4/gDFBHCaQNPaiCV11g+UkciPbHQ95tY+BXAX4BoVvZjUk/3q9xqxBGnxYkBgh1cnzCTMNtQ==
+"@pacote/is-plain-object@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@pacote/is-plain-object/-/is-plain-object-1.0.1.tgz#716af55da625c86f86457dbeee87b59dc06b2c3e"
+  integrity sha512-6zpOjVA3KyVRUR6oOb6W95PeMF3MGxyozUj9LekbEoA9QdIUrcmp12OXzgMN0sMvepd9V/oD+0gWO3q/gJ0Kdw==
 
 "@pacote/jest-either@^2.0.0":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@pacote/jest-either/-/jest-either-2.0.1.tgz#13bcbe5e2c43664ae63e8cf82ccb4228e6772f20"
-  integrity sha512-tzjK4GYUz2E4vlYuotD9BBCzdQo+YdT4vDdLe7+ZkhzcLznuqVtfxwt7GC1mNvm0t+aaV82JWbQaX+1rLv7yjQ==
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@pacote/jest-either/-/jest-either-2.1.0.tgz#ab8ac6f83345f9a7e1689779c430807b10c37266"
+  integrity sha512-O1ENTihq6Prgcm+f1/3waLSar2N0uQUOw1ARjjpo2HhKjtQBiakCZgnkMXnYawVRKGjvYXMFRl9vHtGChs8/8A==
   dependencies:
-    "@pacote/is-plain-object" "^1.0.0"
+    "@pacote/is-plain-object" "^1.0.1"
     fp-ts "^1.13.0"
     jest-diff "^24.0.0"
     jest-matcher-utils "^24.0.0"
@@ -1172,15 +1172,15 @@
     "@svgr/plugin-svgo" "^4.0.3"
     loader-utils "^1.1.0"
 
-"@types/jest@23.3.10":
-  version "23.3.10"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-23.3.10.tgz#4897974cc317bf99d4fe6af1efa15957fa9c94de"
-  integrity sha512-DC8xTuW/6TYgvEg3HEXS7cu9OijFqprVDXXiOcdOKZCU/5PJNLZU37VVvmZHdtMiGOa8wAA/We+JzbdxFzQTRQ==
+"@types/jest@^24.0.1":
+  version "24.0.1"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-24.0.1.tgz#8945411140e7cdfd5ea76380e5f5fa7bf17646ea"
+  integrity sha512-4KNToPz5SAVa0GZrYAL3Q43p5MY/QBmYclYAmqPeqAmbgQ4lXkgKK0mYtr9S+N2Az0JvFaYJECztHZuFGhG3zw==
 
-"@types/node@*", "@types/node@^10.12.18":
-  version "10.12.24"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.12.24.tgz#b13564af612a22a20b5d95ca40f1bffb3af315cf"
-  integrity sha512-GWWbvt+z9G5otRBW8rssOFgRY87J9N/qbhqfjMZ+gUuL6zoL+Hm6gP/8qQBG4jjimqdaNLCehcVapZ/Fs2WjCQ==
+"@types/node@*", "@types/node@^11.9.0":
+  version "11.9.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-11.9.0.tgz#35fea17653490dab82e1d5e69731abfdbf13160d"
+  integrity sha512-ry4DOrC+xenhQbzk1iIPzCZGhhPGEFv7ia7Iu6XXSLVluiJIe9FfG7Iu3mObH9mpxEXCWLCMU4JWbCCR9Oy1Zg==
 
 "@types/prop-types@*":
   version "15.5.8"
@@ -8522,9 +8522,9 @@ readdirp@^2.2.1:
     readable-stream "^2.0.2"
 
 realpath-native@^1.0.0:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/realpath-native/-/realpath-native-1.0.2.tgz#cd51ce089b513b45cf9b1516c82989b51ccc6560"
-  integrity sha512-+S3zTvVt9yTntFrBpm7TQmQ3tzpCrnA1a/y+3cUHAc9ZR6aIjG0WNLR+Rj79QpJktY+VeW/TQtFlQ1bzsehI8g==
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/realpath-native/-/realpath-native-1.1.0.tgz#2003294fea23fb0672f2476ebe22fcf498a2d65c"
+  integrity sha512-wlgPA6cCIIg9gKz0fgAPjnzh4yR/LnXovwuo9hvyGvx3h8nX4+/iLZplfUWasXpqD8BdnGnP5njOFjkUwPzvjA==
   dependencies:
     util.promisify "^1.0.0"
 
