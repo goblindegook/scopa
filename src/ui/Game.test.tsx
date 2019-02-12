@@ -288,6 +288,7 @@ test(`invalid move handling`, () => {
   expect(getByText(message)).toBeTruthy()
 })
 
+// FIXME: act() on render
 test(`computer opponent plays a card`, async () => {
   const onStart = jest.fn(() =>
     right(
