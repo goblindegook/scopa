@@ -24,7 +24,7 @@ function testGame(overrides: Partial<State> = {}): State {
 
 test(`deal new game on start`, () => {
   const turn = 0
-  const onStart = jest.fn(() => right(testGame({ turn })))
+  const onStart = jest.fn(() => right<Error, State>(testGame({ turn })))
   const onOpponentPlay = async () => testGame({ state: 'stop' })
 
   const { getByText, queryByText } = render(
@@ -122,7 +122,7 @@ test(`allow playing a card`, () => {
   })
 
   const onPlay = jest.fn(() =>
-    right(
+    right<Error, State>(
       testGame({
         state: 'play',
         players: [
@@ -212,7 +212,7 @@ test(`select targets to capture`, () => {
   })
 
   const onPlay = jest.fn(() =>
-    right(
+    right<Error, State>(
       testGame({
         state: 'stop',
         players: [
@@ -257,7 +257,7 @@ test(`select targets to capture`, () => {
 
 test(`invalid move handling`, () => {
   const message = 'test error message'
-  const onPlay = jest.fn(() => left(Error(message)))
+  const onPlay = jest.fn(() => left<Error, State>(Error(message)))
 
   const { getByText, getByAltText } = render(
     <Game
@@ -291,7 +291,7 @@ test(`invalid move handling`, () => {
 // FIXME: act() on render
 test(`computer opponent plays a card`, async () => {
   const onStart = jest.fn(() =>
-    right(
+    right<Error, State>(
       testGame({
         players: [
           { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
@@ -302,7 +302,7 @@ test(`computer opponent plays a card`, async () => {
   )
 
   const onPlay = jest.fn(() =>
-    right(
+    right<Error, State>(
       testGame({
         turn: 1,
         players: [
@@ -352,7 +352,10 @@ test(`end game and show scores`, () => {
     ]
   })
 
-  const onScore = jest.fn<Score[]>(() => [{ total: 3 }, { total: 4 }])
+  const onScore = jest.fn<Score[], [State]>(() => [
+    { total: 3, details: [] },
+    { total: 4, details: [] }
+  ])
 
   const { getByText, getByAltText } = render(
     <Game

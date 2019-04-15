@@ -12,7 +12,7 @@ const testGameState = (players: Player[]): State => ({
 })
 
 describe('prime', () => {
-  test.each([
+  test.each<[string, number, Card]>([
     ['sevens', 21, [7, Suit.DENARI]],
     ['sixes', 18, [6, Suit.DENARI]],
     ['aces', 16, [1, Suit.DENARI]],

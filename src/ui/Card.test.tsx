@@ -6,7 +6,7 @@ import { Card } from './Card'
 
 beforeEach(cleanup)
 
-test.each([
+test.each<[string, Suit]>([
   ['bastoni', Suit.BASTONI],
   ['coppe', Suit.COPPE],
   ['denari', Suit.DENARI],
@@ -24,7 +24,7 @@ test.each([
   )
 })
 
-test.each([
+test.each<[string, number]>([
   ['Asso', 1],
   ['Due', 2],
   ['Tre', 3],
