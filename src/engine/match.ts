@@ -1,4 +1,4 @@
-import { sum, head, map, clone } from 'ramda'
+import { sum, head, map } from 'ramda'
 import { Card, Deck } from './cards'
 
 function combinations(cards: Deck): ReadonlyArray<Deck> {

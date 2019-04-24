@@ -83,7 +83,7 @@ export const Game = ({
     return () => {
       active = false
     }
-  }, [game.state, game.turn])
+  }, [game, onOpponentTurn, game.state, game.turn])
 
   const toggleTarget = (card: Card) =>
     setTargets(
