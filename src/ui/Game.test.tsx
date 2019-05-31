@@ -1,5 +1,5 @@
 import React from 'react'
-import { cleanup, render, fireEvent, wait } from 'react-testing-library'
+import { cleanup, render, fireEvent, wait } from '@testing-library/react'
 import { right, left } from 'fp-ts/lib/Either'
 import { Suit } from '../engine/cards'
 import { State } from '../engine/state'

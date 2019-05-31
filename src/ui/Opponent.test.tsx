@@ -1,6 +1,6 @@
 import React from 'react'
 import { assert, property, integer } from 'fast-check'
-import { cleanup, render } from 'react-testing-library'
+import { cleanup, render } from '@testing-library/react'
 import { Opponent } from './Opponent'
 
 beforeEach(cleanup)

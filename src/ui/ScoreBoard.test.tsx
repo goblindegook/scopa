@@ -1,5 +1,5 @@
 import React from 'react'
-import { cleanup, render } from 'react-testing-library'
+import { cleanup, render } from '@testing-library/react'
 import { ScoreBoard } from './ScoreBoard'
 import { Score } from '../engine/scores'
 
