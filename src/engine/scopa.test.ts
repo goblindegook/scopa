@@ -2,7 +2,7 @@ import { deck, Suit, Deck, Card } from './cards'
 import { deal, play } from './scopa'
 import { State } from './state'
 import { assert, property, constantFrom } from 'fast-check'
-import { exists, Either, getOrElse } from 'fp-ts/lib/Either'
+import { Either, getOrElse } from 'fp-ts/lib/Either'
 import { pipe } from 'fp-ts/lib/pipeable'
 import matchers from '@pacote/jest-either'
 
