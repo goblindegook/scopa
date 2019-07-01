@@ -23,7 +23,7 @@
   "dependencies": {
     "@emotion/core": "^10.0.6",
     "@emotion/styled": "^10.0.6",
-    "fp-ts": "^1.12.1",
+    "fp-ts": "^2.0.0",
     "ramda": "^0.26.1",
     "react": "^16.8.0",
     "react-dom": "^16.8.0",

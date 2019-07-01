@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Either } from 'fp-ts/lib/Either'
+import { Either, bimap } from 'fp-ts/lib/Either'
+import { pipe } from 'fp-ts/lib/pipeable'
 import { contains, without, concat } from 'ramda'
 import styled from '@emotion/styled'
 import { State, Move } from '../engine/state'
@@ -93,13 +94,16 @@ export const Game = ({
     )
 
   const handle = (result: Either<Error, State>) =>
-    result.bimap(
-      ({ message }) => setAlert(message),
-      game => {
-        setGame(game)
-        setTargets([])
-        setAlert('')
-      }
+    pipe(
+      result,
+      bimap(
+        ({ message }) => setAlert(message),
+        game => {
+          setGame(game)
+          setTargets([])
+          setAlert('')
+        }
+      )
     )
 
   return (

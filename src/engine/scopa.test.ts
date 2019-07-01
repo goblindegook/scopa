@@ -1,11 +1,25 @@
 import { deck, Suit, Deck, Card } from './cards'
 import { deal, play } from './scopa'
 import { State } from './state'
-import { assert, property, constantFrom, integer, Arbitrary } from 'fast-check'
-import { Either } from 'fp-ts/lib/Either'
+import { assert, property, constantFrom } from 'fast-check'
+import { exists, Either, getOrElse } from 'fp-ts/lib/Either'
+import { pipe } from 'fp-ts/lib/pipeable'
 import matchers from '@pacote/jest-either'
 
 expect.extend(matchers)
+
+function getGame(game: Either<Error, State>): State {
+  return pipe(
+    game,
+    getOrElse<Error, State>(() => ({
+      state: 'stop',
+      turn: -1,
+      players: [],
+      pile: [],
+      table: []
+    }))
+  )
+}
 
 const expectMatchAll = <T extends any>(
   superset: ReadonlyArray<T>,
@@ -23,8 +37,7 @@ describe('deal', () => {
   })
 
   test(`deal four cards on the table`, () => {
-    const game = deal(deck()).value as State
-    expect(game.table).toHaveLength(4)
+    expect(getGame(deal(deck())).table).toHaveLength(4)
   })
 
   test(`reshuffle cards and deal again if three or more kings are on the table`, () => {
@@ -42,41 +55,38 @@ describe('deal', () => {
 
   test(`Scopa is a game for 2, 3, 4 or 6 players`, () => {
     assert(
-      property(
-        constantFrom<2 | 3 | 4 | 6>(2, 3, 4, 6),
-        players => {
-          const game = deal(deck(), { players }).value as State
-          return game.players.length === players
-        }
-      )
+      property(constantFrom<2 | 3 | 4 | 6>(2, 3, 4, 6), players => {
+        const game = getGame(deal(deck(), { players }))
+        return game.players.length === players
+      })
     )
   })
 
   test(`deal three cards to each player`, () => {
-    const game = deal(deck()).value as State
+    const game = getGame(deal(deck()))
     game.players.forEach(p => expect(p.hand).toHaveLength(3))
   })
 
   test(`each player begins with an empty pile`, () => {
-    const game = deal(deck()).value as State
+    const game = getGame(deal(deck()))
     game.players.forEach(p => expect(p.pile).toHaveLength(0))
   })
 
   test(`each player begins with no score`, () => {
-    const game = deal(deck()).value as State
+    const game = getGame(deal(deck()))
     game.players.forEach(p => expect(p.scope).toBe(0))
   })
 
   test(`table pile contains remaining cards`, () => {
     const cards = deck()
-    const game = deal(cards).value as State
+    const game = getGame(deal(cards))
     const hands = game.players.reduce<Deck>((all, p) => all.concat(p.hand), [])
     expect(game.pile).toHaveLength(30)
     expect([...game.table, ...hands, ...game.pile]).toEqual(cards)
   })
 
   test(`random player begins`, () => {
-    const game = deal(deck()).value as State
+    const game = getGame(deal(deck()))
     expect(game.players[game.turn]).toBeDefined()
   })
 })
@@ -95,7 +105,7 @@ describe('play', () => {
       table: [[4, Suit.DENARI]]
     }
 
-    const next = play({ card, targets: [] }, game).value as State
+    const next = getGame(play({ card, targets: [] }, game))
 
     expect(next.table).toContain(card)
     expect(next.players[0].hand).not.toContain(card)
@@ -153,7 +163,7 @@ describe('play', () => {
       table: [[4, Suit.DENARI], target]
     }
 
-    const next = play({ card, targets: [] }, game).value as State
+    const next = getGame(play({ card, targets: [] }, game))
 
     expect(next.table).not.toContain(card)
     expect(next.table).not.toContain(target)
@@ -214,7 +224,7 @@ describe('play', () => {
       table: [[1, Suit.BASTONI], target]
     }
 
-    const next = play({ card, targets: [target] }, game).value as State
+    const next = getGame(play({ card, targets: [target] }, game))
 
     expect(next.table).not.toContain(card)
     expect(next.table).not.toContain(target)
@@ -237,7 +247,7 @@ describe('play', () => {
       table: [[4, Suit.DENARI], ...targets]
     }
 
-    const next = play({ card, targets: [] }, game).value as State
+    const next = getGame(play({ card, targets: [] }, game))
 
     expect(next.table).not.toContain(card)
     targets.forEach(expect(next.table).not.toContain)
@@ -294,7 +304,7 @@ describe('play', () => {
       table
     }
 
-    const next = play({ card, targets: [] }, game).value as State
+    const next = getGame(play({ card, targets: [] }, game))
     expect(next.players[0].scope).toBe(1)
     expect(next.state).toBe('play')
   })
@@ -355,7 +365,7 @@ describe('play', () => {
 
     const next = play({ card, targets: [] }, game)
 
-    expect((next.value as State).players[0].hand).toEqual(topOfPile)
+    expect(getGame(next).players[0].hand).toEqual(topOfPile)
     expect(next).toMatchRight({
       pile: restOfPile,
       state: 'play'
