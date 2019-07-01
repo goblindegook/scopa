@@ -1,9 +1,12 @@
 import React, { Component } from 'react'
+import { getOrElse } from 'fp-ts/lib/Either'
+import { pipe } from 'fp-ts/lib/pipeable'
 import { deck, shuffle } from './engine/cards'
-import { deal, play } from './engine/scopa'
-import { Game } from './ui/Game'
 import { findMatches } from './engine/match'
+import { deal, play } from './engine/scopa'
 import { score } from './engine/scores'
+import { State } from './engine/state'
+import { Game } from './ui/Game'
 
 const dealShuffledDeck = () => deal(shuffle(deck()), { players: 2 })
 
@@ -24,10 +27,13 @@ class App extends Component {
           const valid = available.filter(t => t.length === mustPick)
           const targets = valid[0] || []
 
-          return play({ card, targets }, game).getOrElse({
-            ...game,
-            state: 'stop'
-          })
+          return pipe(
+            play({ card, targets }, game),
+            getOrElse<Error, State>(() => ({
+              ...game,
+              state: 'stop'
+            }))
+          )
         }}
         onScore={score}
       />
