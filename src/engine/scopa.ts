@@ -12,7 +12,7 @@ const DEFAULT_OPTIONS: Required<Options> = {
   players: 2
 }
 
-const createPlayers = (cards: Deck, n: number): readonly Player[] =>
+const createPlayers = (cards: Deck): readonly Player[] =>
   splitEvery(3, cards).map(hand => ({ hand, pile: [], scope: 0 }))
 
 export function deal(cards: Deck, options?: Options): Either<Error, State> {
@@ -26,7 +26,7 @@ export function deal(cards: Deck, options?: Options): Either<Error, State> {
     ? right<Error, State>({
         state: 'play',
         turn: Math.floor(Math.random() * players),
-        players: createPlayers(playerCards, players),
+        players: createPlayers(playerCards),
         pile,
         table
       })
