@@ -1,5 +1,5 @@
 import React from 'react'
-import { assert, property, integer, lorem, string } from 'fast-check'
+import { assert, property, integer, string } from 'fast-check'
 import { cleanup, render } from '@testing-library/react'
 import { Stack } from './Stack'
 

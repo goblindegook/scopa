@@ -21,16 +21,6 @@ function getGame(game: Either<Error, State>): State {
   )
 }
 
-const expectMatchAll = <T extends any>(
-  superset: ReadonlyArray<T>,
-  actual: ReadonlyArray<T>
-) => expect(superset).toMatchObject(expect.arrayContaining(actual as T[]))
-
-const expectMatchNone = <T extends any>(
-  superset: ReadonlyArray<T>,
-  actual: ReadonlyArray<T>
-) => expect(superset).not.toMatchObject(expect.arrayContaining(actual as T[]))
-
 describe('deal', () => {
   test(`deal sets state`, () => {
     expect(deal(deck())).toMatchRight({ state: 'play' })

@@ -22,7 +22,7 @@ const OpponentCard = styled(Card)`
   margin: 0.5rem;
 `
 
-type OpponentProps = {
+interface OpponentProps {
   hand: number
   pile: number
   index: number

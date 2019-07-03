@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import React from 'react'
 import { cleanup, render, fireEvent, wait } from '@testing-library/react'
 import { right, left } from 'fp-ts/lib/Either'
@@ -326,7 +328,7 @@ test(`end game and show scores`, () => {
     { total: 4, details: [] }
   ])
 
-  const { getByText, getByAltText } = render(
+  const { getByText } = render(
     <Game
       onStart={() => right(state)}
       onPlay={jest.fn()}

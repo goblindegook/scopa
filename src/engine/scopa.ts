@@ -4,7 +4,7 @@ import { Deck, Card } from './cards'
 import { findMatches } from './match'
 import { Player, State, Move } from './state'
 
-type Options = {
+interface Options {
   players?: 2 | 3 | 4 | 6
 }
 
@@ -12,7 +12,7 @@ const DEFAULT_OPTIONS: Required<Options> = {
   players: 2
 }
 
-const createPlayers = (cards: Deck, n: number): ReadonlyArray<Player> =>
+const createPlayers = (cards: Deck, n: number): readonly Player[] =>
   splitEvery(3, cards).map(hand => ({ hand, pile: [], scope: 0 }))
 
 export function deal(cards: Deck, options?: Options): Either<Error, State> {

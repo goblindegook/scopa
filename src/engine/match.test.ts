@@ -1,4 +1,4 @@
-import { Card, Deck, Suit, deck } from './cards'
+import { Deck, Suit, deck } from './cards'
 import { findMatches } from './match'
 
 test('match one set of one card', () => {

@@ -19,7 +19,7 @@ const StackedCard = styled(Card)`
   }
 `
 
-type StackProps = {
+interface StackProps {
   className?: string
   size: number
   title: string

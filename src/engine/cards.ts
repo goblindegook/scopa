@@ -9,7 +9,7 @@ export enum Suit {
 
 export type Card = [number, Suit]
 
-export type Deck = ReadonlyArray<Card>
+export type Deck = readonly Card[]
 
 function swap(i: number, j: number, cards: Deck): Deck {
   return cards.map((card, idx) =>

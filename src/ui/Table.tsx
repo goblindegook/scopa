@@ -37,7 +37,7 @@ const Checkbox = styled('input')`
   left: -9999px;
 `
 
-type TableProps = {
+interface TableProps {
   cards: Deck
   disabled?: boolean
   selected: Deck

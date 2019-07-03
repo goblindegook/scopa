@@ -1,20 +1,20 @@
 import { Deck, Card } from './cards'
 
-export type Player = {
+export interface Player {
   hand: Deck
   pile: Deck
   scope: number
 }
 
-export type State = {
+export interface State {
   state: 'initial' | 'play' | 'stop'
   turn: number
   pile: Deck
-  players: ReadonlyArray<Player>
+  players: readonly Player[]
   table: Deck
 }
 
-export type Move = {
+export interface Move {
   card: Card
   targets: Deck
 }

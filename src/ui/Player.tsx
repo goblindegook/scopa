@@ -38,7 +38,7 @@ const PlayerCard = styled('button')`
   }
 `
 
-type PlayerProps = {
+interface PlayerProps {
   hand: Deck
   pile: number
   index: number

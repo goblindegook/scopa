@@ -51,11 +51,11 @@ const GameOver = styled('main')`
   height: calc(100vh - 4rem);
 `
 
-type GameProps = {
+interface GameProps {
   onStart: () => Either<Error, State>
   onPlay: (move: Move, game: State) => Either<Error, State>
   onOpponentTurn: (game: State) => Promise<State>
-  onScore: (game: State) => ReadonlyArray<Score>
+  onScore: (game: State) => readonly Score[]
 }
 
 export const Game = ({
@@ -65,7 +65,7 @@ export const Game = ({
   onScore
 }: GameProps) => {
   const [alert, setAlert] = useState('')
-  const [targets, setTargets] = useState<ReadonlyArray<Card>>([])
+  const [targets, setTargets] = useState<readonly Card[]>([])
   const [game, setGame] = useState<State>({
     state: 'initial',
     turn: 0,

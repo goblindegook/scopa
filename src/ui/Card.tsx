@@ -42,7 +42,7 @@ const Back = styled('div')`
   border: 1px solid white;
 `
 
-type CardProps = {
+interface CardProps {
   className?: string
   index?: number
   hidden?: boolean

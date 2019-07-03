@@ -24,8 +24,8 @@ const RowHeader = styled(Cell)`
   text-align: left;
 `
 
-type ScoreBoardProps = {
-  scores: ReadonlyArray<Score>
+interface ScoreBoardProps {
+  scores: readonly Score[]
 }
 
 export const ScoreBoard = ({ scores = [] }: ScoreBoardProps) => (

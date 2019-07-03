@@ -4,14 +4,14 @@ import { State } from './state'
 
 const SETTEBELLO: Card = [7, Suit.DENARI]
 
-type ScoreDetail = {
+interface ScoreDetail {
   label: string
   value?: string | number
-  cards?: ReadonlyArray<Card>
+  cards?: readonly Card[]
 }
 
-export type Score = {
-  details: ReadonlyArray<ScoreDetail>
+export interface Score {
+  details: readonly ScoreDetail[]
   total: number
 }
 
@@ -31,8 +31,8 @@ const PRIME_POINTS: { [value: number]: number } = {
 type CardPoints = [Card, number]
 
 const cardPoints = (card: Card): CardPoints => [card, PRIME_POINTS[card[0]]]
-const suit = ([[value, suit]]: CardPoints) => `${suit}`
-const mostPoints = ([c1, p1]: CardPoints, [c2, p2]: CardPoints) => p2 - p1
+const suit = ([[, suit]]: CardPoints) => `${suit}`
+const mostPoints = ([, p1]: CardPoints, [, p2]: CardPoints) => p2 - p1
 
 const prime = pipe(
   map(cardPoints),
@@ -47,13 +47,13 @@ const prime = pipe(
   ([cards, value]) => ({ cards, value })
 )
 
-export function score(game: State): ReadonlyArray<Score> {
+export function score(game: State): readonly Score[] {
   const cards = game.players.map(({ pile }) => pile.length)
   const cardTie = uniq(cards).length === 1
   const cardMax = Math.max(...cards)
 
   const denari = game.players.map(
-    ({ pile }) => pile.filter(([_, suit]) => suit === Suit.DENARI).length
+    ({ pile }) => pile.filter(([, suit]) => suit === Suit.DENARI).length
   )
   const denariTie = uniq(denari).length === 1
   const denariMax = Math.max(...denari)
@@ -65,7 +65,7 @@ export function score(game: State): ReadonlyArray<Score> {
 
   return game.players.map(({ scope: score, pile }, idx) => {
     const settebello = contains(SETTEBELLO, pile)
-    const denariCards = pile.filter(([_, suit]) => suit === Suit.DENARI)
+    const denariCards = pile.filter(([, suit]) => suit === Suit.DENARI)
 
     return {
       details: [

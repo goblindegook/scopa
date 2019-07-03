@@ -1,7 +1,7 @@
 import { sum, head, map } from 'ramda'
 import { Card, Deck } from './cards'
 
-function combinations(cards: Deck): ReadonlyArray<Deck> {
+function combinations(cards: Deck): readonly Deck[] {
   const results: Deck[] = [[]]
 
   cards.forEach(card => {
@@ -11,7 +11,7 @@ function combinations(cards: Deck): ReadonlyArray<Deck> {
   return results
 }
 
-export function findMatches(total: number, table: Deck): ReadonlyArray<Deck> {
+export function findMatches(total: number, table: Deck): readonly Deck[] {
   const candidates = table.filter(([value]) => value <= total)
   return combinations(candidates).filter(
     o => sum(map<Card, number>(head, o)) === total
