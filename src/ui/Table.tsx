@@ -51,16 +51,20 @@ export const Table = ({
   onSelect
 }: TableProps) => (
   <TableArea>
-    {cards.map(([value, suit]) => (
-      <label key={`${value}:${suit}`}>
-        <Checkbox
-          disabled={disabled}
-          type="checkbox"
-          checked={contains([value, suit], selected)}
-          onChange={() => onSelect([value, suit])}
-        />
-        <TableCard value={value} suit={suit} />
-      </label>
-    ))}
+    {cards.map(([value, suit]) => {
+      const key = `${suit}${value}`
+      return (
+        <label key={key} htmlFor={key}>
+          <Checkbox
+            disabled={disabled}
+            type="checkbox"
+            checked={contains([value, suit], selected)}
+            onChange={() => onSelect([value, suit])}
+            id={key}
+          />
+          <TableCard value={value} suit={suit} />
+        </label>
+      )
+    })}
   </TableArea>
 )

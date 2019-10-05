@@ -30,6 +30,9 @@
     "react-scripts": "^3.0.0"
   },
   "devDependencies": {
+    "@pacote/eslint-config": "^1.0.1",
+    "@pacote/eslint-config-jest": "^1.0.1",
+    "@pacote/eslint-config-react": "^1.0.0",
     "@pacote/jest-either": "^3.0.0",
     "@testing-library/react": "^9.0.2",
     "@types/jest": "^24.0.1",
@@ -40,9 +43,11 @@
     "@typescript-eslint/eslint-plugin": "^2.3.1",
     "@typescript-eslint/parser": "^2.3.1",
     "babel-preset-react-app": "^9.0.0",
+    "eslint": "^6.5.1",
     "eslint-config-prettier": "^6.0.0",
     "eslint-config-standard": "^14.1.0",
     "eslint-plugin-import": "^2.18.0",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
     "eslint-plugin-node": "^10.0.0",
     "eslint-plugin-prettier": "^3.1.0",
     "eslint-plugin-promise": "^4.2.1",
