@@ -294,9 +294,10 @@ describe('play', () => {
       table
     }
 
-    const next = getGame(play({ card, targets: [] }, game))
-    expect(next.players[0].scope).toBe(1)
-    expect(next.state).toBe('play')
+    const next = play({ card, targets: [] }, game)
+
+    expect(getGame(next).players[0].scope).toBe(1)
+    expect(next).toMatchRight({ state: 'play' })
   })
 
   test(`four cards are drawn from the pile when the table is empty`, () => {
