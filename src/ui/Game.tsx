@@ -75,14 +75,14 @@ export const Game = ({
   })
 
   useEffect(() => {
-    let active = true
+    let isOpponentPlaying = true
     if (game.state === 'play' && game.turn !== HUMAN_PLAYER) {
       onOpponentTurn(game)
-        .then(game => active && setGame(game))
+        .then(game => isOpponentPlaying && setGame(game))
         .catch(console.error)
     }
     return () => {
-      active = false
+      isOpponentPlaying = false
     }
   }, [game, onOpponentTurn, game.state, game.turn])
 
