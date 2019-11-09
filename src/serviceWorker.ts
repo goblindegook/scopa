@@ -46,9 +46,8 @@ function registerValidSW(swUrl: string, config: Config) {
               )
 
               // Execute callback
-              if (config && config.onUpdate) {
-                config.onUpdate(registration)
-              }
+              // eslint-disable-next-line no-undef, no-unused-expressions
+              config?.onUpdate?.(registration)
             } else {
               // At this point, everything has been precached.
               // It's the perfect time to display a
@@ -56,9 +55,8 @@ function registerValidSW(swUrl: string, config: Config) {
               console.log('Content is cached for offline use.')
 
               // Execute callback
-              if (config && config.onSuccess) {
-                config.onSuccess(registration)
-              }
+              // eslint-disable-next-line no-undef, no-unused-expressions
+              config?.onSuccess?.(registration)
             }
           }
         }

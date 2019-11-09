@@ -119,7 +119,7 @@ export const Game = ({
           <ScoreBoard scores={onScore(game)} />
         </GameOver>
       )}
-      {game.state === 'play' && game.players.length > 0 && (
+      {game.state === 'play' && (
         <main>
           {game.players.map(
             (player, index) =>
