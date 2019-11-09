@@ -35,7 +35,14 @@ describe('prime', () => {
 
   test(`only the highest card in the suit is scored`, () => {
     const game = testGameState([
-      { hand: [], pile: [[7, Suit.DENARI], [6, Suit.DENARI]], scope: 0 }
+      {
+        hand: [],
+        pile: [
+          [7, Suit.DENARI],
+          [6, Suit.DENARI]
+        ],
+        scope: 0
+      }
     ])
 
     expect(score(game)[0].details).toContainEqual({
@@ -108,8 +115,14 @@ describe('single player score', () => {
   })
 
   test(`the player who captured the sette bello gets +1 point`, () => {
-    const p1: Card[] = [[7, Suit.DENARI], [1, Suit.COPPE]]
-    const p2: Card[] = [[1, Suit.DENARI], [7, Suit.COPPE]]
+    const p1: Card[] = [
+      [7, Suit.DENARI],
+      [1, Suit.COPPE]
+    ]
+    const p2: Card[] = [
+      [1, Suit.DENARI],
+      [7, Suit.COPPE]
+    ]
 
     assert(
       property(integer(0, 20), integer(0, 20), (s1, s2) => {
@@ -145,8 +158,15 @@ describe('single player score', () => {
   })
 
   test(`the player who captured the most cards gets +1 point`, () => {
-    const p1: Card[] = [[5, Suit.COPPE], [5, Suit.SPADE]]
-    const p2: Card[] = [[10, Suit.COPPE], [10, Suit.BASTONI], [10, Suit.SPADE]]
+    const p1: Card[] = [
+      [5, Suit.COPPE],
+      [5, Suit.SPADE]
+    ]
+    const p2: Card[] = [
+      [10, Suit.COPPE],
+      [10, Suit.BASTONI],
+      [10, Suit.SPADE]
+    ]
 
     assert(
       property(integer(0, 20), integer(0, 20), (s1, s2) => {
@@ -182,8 +202,14 @@ describe('single player score', () => {
   })
 
   test(`the player who captured the most cards in the suit of coins gets +1 point`, () => {
-    const p1: Card[] = [[1, Suit.DENARI], [2, Suit.DENARI]]
-    const p2: Card[] = [[1, Suit.COPPE], [2, Suit.COPPE]]
+    const p1: Card[] = [
+      [1, Suit.DENARI],
+      [2, Suit.DENARI]
+    ]
+    const p2: Card[] = [
+      [1, Suit.COPPE],
+      [2, Suit.COPPE]
+    ]
 
     assert(
       property(integer(0, 20), integer(0, 20), (s1, s2) => {
