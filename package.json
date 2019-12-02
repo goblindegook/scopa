@@ -23,7 +23,7 @@
     "@emotion/core": "10.0.22",
     "@emotion/styled": "10.0.23",
     "@pacote/shuffle": "1.0.2",
-    "fp-ts": "2.1.1",
+    "fp-ts": "2.2.0",
     "ramda": "0.26.1",
     "react": "16.11.0",
     "react-dom": "16.11.0",
