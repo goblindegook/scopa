@@ -1,9 +1,7 @@
 import React from 'react'
-import { cleanup, render } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import { ScoreBoard } from './ScoreBoard'
 import { Score } from '../engine/scores'
-
-beforeEach(cleanup)
 
 test('renders player names and scores', () => {
   const scores: Score[] = [

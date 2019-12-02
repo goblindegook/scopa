@@ -4,8 +4,6 @@ import { assert, property, integer, constantFrom } from 'fast-check'
 import { Suit } from '../engine/cards'
 import { Card } from './Card'
 
-beforeEach(cleanup)
-
 test.each<[string, Suit]>([
   ['bastoni', Suit.BASTONI],
   ['coppe', Suit.COPPE],
@@ -42,10 +40,7 @@ test.each<[string, number]>([
       suit => {
         cleanup()
         const { getByTitle } = render(<Card value={value} suit={suit} />)
-        const image = getByTitle(`${match} di`, {
-          exact: false
-        }) as HTMLImageElement
-        expect(image).toBeTruthy()
+        getByTitle(`${match} di`, { exact: false })
       }
     )
   )

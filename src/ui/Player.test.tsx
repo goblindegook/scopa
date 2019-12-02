@@ -4,8 +4,6 @@ import { cleanup, render, fireEvent } from '@testing-library/react'
 import { Suit } from '../engine/cards'
 import { Player } from './Player'
 
-beforeEach(cleanup)
-
 test('disabled input', () => {
   const onPlay = jest.fn()
   const { getByTitle } = render(

@@ -3,8 +3,6 @@ import { assert, property, integer, string } from 'fast-check'
 import { cleanup, render } from '@testing-library/react'
 import { Stack } from './Stack'
 
-beforeEach(cleanup)
-
 test('renders stack of cards', () => {
   assert(
     property(

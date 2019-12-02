@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import React from 'react'
-import { cleanup, render, fireEvent, wait } from '@testing-library/react'
+import { render, fireEvent, wait } from '@testing-library/react'
 import { right, left } from 'fp-ts/lib/Either'
 import { Suit } from '../engine/cards'
 import { State } from '../engine/state'
 import { Game } from './Game'
 import { Score } from '../engine/scores'
-
-beforeEach(cleanup)
 
 function testGame(overrides: Partial<State> = {}): State {
   return {
