@@ -172,7 +172,10 @@ describe('play', () => {
         { hand: [[3, Suit.DENARI]], pile: [], scope: 0 }
       ],
       pile: [],
-      table: [[1, Suit.BASTONI], [1, Suit.COPPE]]
+      table: [
+        [1, Suit.BASTONI],
+        [1, Suit.COPPE]
+      ]
     }
 
     const next = play({ card, targets: [] }, game)
@@ -190,7 +193,10 @@ describe('play', () => {
         { hand: [[3, Suit.DENARI]], pile: [], scope: 0 }
       ],
       pile: [],
-      table: [[1, Suit.BASTONI], [1, Suit.COPPE]]
+      table: [
+        [1, Suit.BASTONI],
+        [1, Suit.COPPE]
+      ]
     }
 
     const next = play({ card, targets: [[1, Suit.BASTONI]] }, game)
@@ -225,7 +231,11 @@ describe('play', () => {
 
   test(`a player captures multiple cards from the table if their cumulative value is the same as the card played`, () => {
     const card: Card = [3, Suit.DENARI]
-    const targets: Deck = [[1, Suit.COPPE], [1, Suit.BASTONI], [1, Suit.SPADE]]
+    const targets: Deck = [
+      [1, Suit.COPPE],
+      [1, Suit.BASTONI],
+      [1, Suit.SPADE]
+    ]
     const game: State = {
       state: 'play',
       turn: 0,
@@ -248,7 +258,10 @@ describe('play', () => {
 
   test(`a player may only capture the least number of cards when multiple combinations exist`, () => {
     const card: Card = [2, Suit.DENARI]
-    const targets: Deck = [[1, Suit.COPPE], [1, Suit.BASTONI]]
+    const targets: Deck = [
+      [1, Suit.COPPE],
+      [1, Suit.BASTONI]
+    ]
     const game: State = {
       state: 'play',
       turn: 0,
@@ -265,7 +278,10 @@ describe('play', () => {
 
   test(`target order should not be considered when playing`, () => {
     const card: Card = [2, Suit.DENARI]
-    const targets: Deck = [[1, Suit.COPPE], [1, Suit.BASTONI]]
+    const targets: Deck = [
+      [1, Suit.COPPE],
+      [1, Suit.BASTONI]
+    ]
     const game: State = {
       state: 'play',
       turn: 0,
@@ -274,7 +290,11 @@ describe('play', () => {
         { hand: [], pile: [], scope: 0 }
       ],
       pile: [],
-      table: [[1, Suit.BASTONI], [1, Suit.SPADE], [1, Suit.COPPE]]
+      table: [
+        [1, Suit.BASTONI],
+        [1, Suit.SPADE],
+        [1, Suit.COPPE]
+      ]
     }
 
     expect(play({ card, targets }, game)).toBeRight()
@@ -282,7 +302,11 @@ describe('play', () => {
 
   test(`a player scores a scopa when they capture all the cards on the table`, () => {
     const card: Card = [3, Suit.DENARI]
-    const table: Deck = [[1, Suit.COPPE], [1, Suit.BASTONI], [1, Suit.SPADE]]
+    const table: Deck = [
+      [1, Suit.COPPE],
+      [1, Suit.BASTONI],
+      [1, Suit.SPADE]
+    ]
     const game: State = {
       state: 'play',
       turn: 0,
@@ -320,7 +344,11 @@ describe('play', () => {
         { hand: [[5, Suit.DENARI]], pile: [], scope: 0 }
       ],
       pile: [...topOfPile, ...restOfPile],
-      table: [[1, Suit.COPPE], [1, Suit.BASTONI], [1, Suit.SPADE]]
+      table: [
+        [1, Suit.COPPE],
+        [1, Suit.BASTONI],
+        [1, Suit.SPADE]
+      ]
     }
 
     const next = play({ card, targets: [] }, game)

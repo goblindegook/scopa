@@ -14,7 +14,10 @@ export type Deck = readonly Card[]
 export function deck(): Deck {
   const suits = [Suit.DENARI, Suit.COPPE, Suit.BASTONI, Suit.SPADE]
   const cards = suits.reduce<Deck>(
-    (all, suit) => all.concat(range(1, 11).map<Card>(v => [v, suit])),
+    (all, suit) =>
+      all.concat(
+        range(1, 11).map<Card>(v => [v, suit])
+      ),
     []
   )
 

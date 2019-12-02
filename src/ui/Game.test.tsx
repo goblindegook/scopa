@@ -82,10 +82,21 @@ test(`player piles`, () => {
     right<Error, State>(
       testGame({
         players: [
-          { hand: [], pile: [[1, Suit.DENARI], [1, Suit.DENARI]], scope: 0 },
           {
             hand: [],
-            pile: [[1, Suit.DENARI], [1, Suit.DENARI], [1, Suit.DENARI]],
+            pile: [
+              [1, Suit.DENARI],
+              [1, Suit.DENARI]
+            ],
+            scope: 0
+          },
+          {
+            hand: [],
+            pile: [
+              [1, Suit.DENARI],
+              [1, Suit.DENARI],
+              [1, Suit.DENARI]
+            ],
             scope: 0
           }
         ],
@@ -196,7 +207,10 @@ test(`select targets to capture`, () => {
       { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
       { hand: [], pile: [], scope: 0 }
     ],
-    table: [[1, Suit.COPPE], [1, Suit.SPADE]]
+    table: [
+      [1, Suit.COPPE],
+      [1, Suit.SPADE]
+    ]
   })
 
   const onPlay = jest.fn(() =>
@@ -294,7 +308,10 @@ test(`computer opponent plays a card`, async () => {
         { hand: [], pile: [], scope: 0 },
         { hand: [], pile: [], scope: 0 }
       ],
-      table: [[1, Suit.DENARI], [2, Suit.DENARI]]
+      table: [
+        [1, Suit.DENARI],
+        [2, Suit.DENARI]
+      ]
     })
 
   const { getByText, getByAltText } = render(
