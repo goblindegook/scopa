@@ -1534,12 +1534,12 @@
   resolved "https://registry.yarnpkg.com/@types/q/-/q-1.5.2.tgz#690a1475b84f2a884fd07cd797c00f5f31356ea8"
   integrity sha512-ce5d3q03Ex0sy4R14722Rmt6MT07Ua+k4FwDfdcToYJcMKNtRVQvJ6JCAPdAmAnbRb6CsX6aYb9m96NGod9uTw==
 
-"@types/ramda@0.26.33":
-  version "0.26.33"
-  resolved "https://registry.yarnpkg.com/@types/ramda/-/ramda-0.26.33.tgz#5fd1f22381ccf913a3627beb16f468fb57f82d94"
-  integrity sha512-sUCQmKfAWmlbb6PpFqvndbGgTf0bCcmHLJqMYw8ErVS0UoZTTiz952aFedJhV+JERiVH7poh33358c7p0AAN8A==
+"@types/ramda@0.26.36":
+  version "0.26.36"
+  resolved "https://registry.yarnpkg.com/@types/ramda/-/ramda-0.26.36.tgz#094f495c04f8876f583597ae73dce7eac94fc6ba"
+  integrity sha512-uo22Nf32Cc3EURp9tYlFttY8MVQZ1zoVum+D+yQ2jm4IqQFxDtwCQlP/WMwbuj4ey5kw1rJ7v6OacDszfWiqLA==
   dependencies:
-    ts-toolbelt "^4.7.7"
+    ts-toolbelt "^4.10.7"
 
 "@types/react-dom@*", "@types/react-dom@16.9.4":
   version "16.9.4"
@@ -10507,10 +10507,10 @@ ts-pnp@^1.1.2:
   resolved "https://registry.yarnpkg.com/ts-pnp/-/ts-pnp-1.1.5.tgz#840e0739c89fce5f3abd9037bb091dbff16d9dec"
   integrity sha512-ti7OGMOUOzo66wLF3liskw6YQIaSsBgc4GOAlWRnIEj8htCxJUxskanMUoJOD6MDCRAXo36goXJZch+nOS0VMA==
 
-ts-toolbelt@^4.7.7:
-  version "4.10.7"
-  resolved "https://registry.yarnpkg.com/ts-toolbelt/-/ts-toolbelt-4.10.7.tgz#3d076afb0e99209cbde458960b253091040c6808"
-  integrity sha512-4YDe0TWABZ4i8am1Bup0dwGii7c1rffZ7MXE7q4kmG+ixeiKUAnaaO75iBrw04v6vJg/VookQ0yOdDD0DEQhHA==
+ts-toolbelt@^4.10.7:
+  version "4.12.11"
+  resolved "https://registry.yarnpkg.com/ts-toolbelt/-/ts-toolbelt-4.12.11.tgz#cad7a5c55488bb9888fbe9d0d6ea88e9b570e670"
+  integrity sha512-hzMlJbTOcXCgr5MaGc7soKbnnsOb2iCI+eGSrPL7wLQQ/6GugrBtHGBT8HFmKdzIpqeEeVyoTtB+g2LUOVzb0A==
 
 tslib@^1.10.0, tslib@^1.8.1, tslib@^1.9.0:
   version "1.10.0"
