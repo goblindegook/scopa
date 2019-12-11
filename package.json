@@ -34,7 +34,7 @@
     "@pacote/eslint-config-jest": "1.0.2",
     "@pacote/eslint-config-react": "1.0.2",
     "@pacote/jest-either": "3.1.0",
-    "@testing-library/react": "9.3.2",
+    "@testing-library/react": "9.3.3",
     "@types/jest": "24.0.23",
     "@types/node": "12.12.16",
     "@types/ramda": "0.26.38",
