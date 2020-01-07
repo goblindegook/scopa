@@ -43,6 +43,41 @@ test(`deal new game on start`, () => {
   expect(getByText(`Player ${turn + 1}`)).toBeTruthy()
 })
 
+test('renders opponent hand', () => {
+  const onStart = () =>
+    right<Error, State>(
+      testGame({
+        players: [
+          { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+          {
+            hand: [
+              [2, Suit.DENARI],
+              [3, Suit.DENARI]
+            ],
+            pile: [],
+            scope: 0
+          }
+        ],
+        table: [],
+        pile: []
+      })
+    )
+
+  const { getByText, getByTestId } = render(
+    <Game
+      onStart={onStart}
+      onPlay={jest.fn()}
+      onOpponentTurn={jest.fn()}
+      onScore={jest.fn()}
+    />
+  )
+
+  fireEvent.click(getByText('Start new game'))
+
+  const cards = getByTestId('p1-hand').querySelectorAll('div')
+  expect(cards).toHaveLength(2)
+})
+
 test(`card visibility`, () => {
   const onStart = () =>
     right<Error, State>(

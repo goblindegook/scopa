@@ -1,17 +1,16 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { Either, bimap } from 'fp-ts/lib/Either'
 import { pipe } from 'fp-ts/lib/pipeable'
-import { contains, without, concat } from 'ramda'
+import { concat, contains, range, without } from 'ramda'
 import styled from '@emotion/styled'
-import { State, Move } from '../engine/state'
 import { Card } from '../engine/cards'
-import { Table } from './Table'
-import { Player } from './Player'
-import { ScoreBoard } from './ScoreBoard'
-import { Opponent } from './Opponent'
 import { Score } from '../engine/scores'
-import { PlayerCard } from './PlayerCard'
+import { State, Move } from '../engine/state'
 import { Card as UICard } from './Card'
+import { Opponent, OpponentCard } from './Opponent'
+import { Player, PlayerCard } from './Player'
+import { ScoreBoard } from './ScoreBoard'
+import { Table } from './Table'
 
 const HUMAN_PLAYER = 0
 
@@ -66,21 +65,24 @@ export const Game = ({
   onOpponentTurn,
   onScore
 }: GameProps) => {
-  const [alert, setAlert] = useState('')
-  const [targets, setTargets] = useState<readonly Card[]>([])
-  const [game, setGame] = useState<State>({
-    state: 'initial',
-    turn: 0,
-    table: [],
-    pile: [],
-    players: []
-  })
+  const [alert, setAlert] = React.useState('')
+  const [targets, setTargets] = React.useState<readonly Card[]>([])
+  const [game, dispatch] = React.useReducer(
+    (state: State, next: State) => next,
+    {
+      state: 'initial',
+      turn: 0,
+      table: [],
+      pile: [],
+      players: []
+    }
+  )
 
-  useEffect(() => {
+  React.useEffect(() => {
     let isOpponentPlaying = true
     if (game.state === 'play' && game.turn !== HUMAN_PLAYER) {
       onOpponentTurn(game)
-        .then(game => isOpponentPlaying && setGame(game))
+        .then(game => isOpponentPlaying && dispatch(game))
         .catch(console.error)
     }
     return () => {
@@ -101,12 +103,14 @@ export const Game = ({
       bimap(
         ({ message }) => setAlert(message),
         game => {
-          setGame(game)
+          dispatch(game)
           setTargets([])
           setAlert('')
         }
       )
     )
+
+  const humanPlayer = game.players[HUMAN_PLAYER]
 
   return (
     <>
@@ -129,9 +133,12 @@ export const Game = ({
                 <Opponent
                   key={`opponent-${index}`}
                   index={index}
-                  hand={player.hand.length}
                   pile={player.pile.length}
-                />
+                >
+                  {range(0, player.hand.length).map(key => (
+                    <OpponentCard key={`${index}-${key}`} hidden={true} />
+                  ))}
+                </Opponent>
               )
           )}
           <Table
@@ -140,11 +147,8 @@ export const Game = ({
             selected={targets}
             onSelect={toggleTarget}
           />
-          <Player
-            index={HUMAN_PLAYER}
-            pile={game.players[HUMAN_PLAYER].pile.length}
-          >
-            {game.players[HUMAN_PLAYER].hand.map(([value, suit]) => (
+          <Player index={HUMAN_PLAYER} pile={humanPlayer.pile.length}>
+            {humanPlayer.hand.map(([value, suit]) => (
               <PlayerCard
                 disabled={game.turn !== HUMAN_PLAYER}
                 key={`${value}:${suit}`}

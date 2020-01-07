@@ -1,8 +1,12 @@
 import React from 'react'
 import styled from '@emotion/styled'
-import { range } from 'ramda'
 import { Card } from './Card'
 import { Stack } from './Stack'
+
+export const OpponentCard = styled(Card)`
+  display: inline-block;
+  margin: 0.5rem;
+`
 
 const OpponentArea = styled('section')`
   background-color: darkgreen;
@@ -17,24 +21,14 @@ const OpponentPile = styled(Stack)`
   /* transform: perspective(1500px) rotateX(30deg) rotateY(0deg) rotateZ(0deg) scale(1); */
 `
 
-const OpponentCard = styled(Card)`
-  display: inline-block;
-  margin: 0.5rem;
-`
-
-interface OpponentProps {
-  hand: number
+type OpponentProps = React.PropsWithChildren<{
   pile: number
   index: number
-}
+}>
 
-export const Opponent = ({ hand, index, pile }: OpponentProps) => (
+export const Opponent = ({ children, index, pile }: OpponentProps) => (
   <OpponentArea>
-    <aside>
-      {range(0, hand).map(key => (
-        <OpponentCard key={`${index}-${key}`} hidden={true} />
-      ))}
-    </aside>
+    <aside data-testid={`p${index}-hand`}>{children}</aside>
     <OpponentPile
       size={pile}
       title={`Player ${index + 1} pile: ${pile} cards`}
