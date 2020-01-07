@@ -1,6 +1,6 @@
+import { cleanup, render } from '@testing-library/react'
+import { assert, constantFrom, integer, property } from 'fast-check'
 import React from 'react'
-import { render, cleanup } from '@testing-library/react'
-import { assert, property, integer, constantFrom } from 'fast-check'
 import { Suit } from '../engine/cards'
 import { Card } from './Card'
 

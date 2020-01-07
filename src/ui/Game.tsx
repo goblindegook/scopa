@@ -10,6 +10,8 @@ import { Player } from './Player'
 import { ScoreBoard } from './ScoreBoard'
 import { Opponent } from './Opponent'
 import { Score } from '../engine/scores'
+import { PlayerCard } from './PlayerCard'
+import { Card as UICard } from './Card'
 
 const HUMAN_PLAYER = 0
 
@@ -139,12 +141,21 @@ export const Game = ({
             onSelect={toggleTarget}
           />
           <Player
-            disabled={game.turn !== HUMAN_PLAYER}
             index={HUMAN_PLAYER}
-            hand={game.players[HUMAN_PLAYER].hand}
             pile={game.players[HUMAN_PLAYER].pile.length}
-            onPlay={card => handle(onPlay({ card, targets }, game))}
-          />
+          >
+            {game.players[HUMAN_PLAYER].hand.map(([value, suit]) => (
+              <PlayerCard
+                disabled={game.turn !== HUMAN_PLAYER}
+                key={`${value}:${suit}`}
+                onClick={() =>
+                  handle(onPlay({ card: [value, suit], targets }, game))
+                }
+              >
+                <UICard value={value} suit={suit} />
+              </PlayerCard>
+            ))}
+          </Player>
         </main>
       )}
     </>
