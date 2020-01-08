@@ -1,5 +1,5 @@
 import React from 'react'
-import { Either, bimap, getOrElse } from 'fp-ts/lib/Either'
+import { Either, bimap } from 'fp-ts/lib/Either'
 import { pipe } from 'fp-ts/lib/pipeable'
 import { concat, contains, range, without } from 'ramda'
 import styled from '@emotion/styled'
@@ -67,7 +67,7 @@ export const Game = ({
 }: GameProps) => {
   const [alert, setAlert] = React.useState('')
   const [targets, setTargets] = React.useState<readonly Card[]>([])
-  const [game, dispatch] = React.useReducer(
+  const [game, setGame] = React.useReducer(
     (state: State, next: State) => next,
     {
       state: 'initial',
@@ -78,29 +78,38 @@ export const Game = ({
     }
   )
 
+  const onInvalidMove = React.useCallback(
+    (error: Error) => setAlert(error.message),
+    []
+  )
+
+  const onNextTurn = React.useCallback((state: State) => {
+    setGame(state)
+    setTargets([])
+    setAlert('')
+  }, [])
+
+  const start = React.useCallback(
+    () => pipe(onStart(), bimap(onInvalidMove, onNextTurn)),
+    [onInvalidMove, onNextTurn, onStart]
+  )
+
+  const play = React.useCallback(
+    (move: Move) => pipe(onPlay(move, game), bimap(onInvalidMove, onNextTurn)),
+    [onPlay, game, onInvalidMove, onNextTurn]
+  )
+
   React.useEffect(() => {
     let isOpponentPlaying = true
     if (game.state === 'play' && game.turn !== HUMAN_PLAYER) {
       onOpponentTurn(game)
-        .then(
-          move =>
-            isOpponentPlaying &&
-            dispatch(
-              pipe(
-                onPlay(move, game),
-                getOrElse<Error, State>(() => ({
-                  ...game,
-                  state: 'stop'
-                }))
-              )
-            )
-        )
-        .catch(console.error)
+        .then(move => isOpponentPlaying && play(move))
+        .catch(onInvalidMove)
     }
     return () => {
       isOpponentPlaying = false
     }
-  }, [game, onOpponentTurn, game.state, game.turn, onPlay])
+  }, [game, onInvalidMove, onOpponentTurn, play])
 
   const toggleTarget = (card: Card) =>
     setTargets(
@@ -109,25 +118,12 @@ export const Game = ({
         : concat([card], targets)
     )
 
-  const handle = (result: Either<Error, State>) =>
-    pipe(
-      result,
-      bimap(
-        ({ message }) => setAlert(message),
-        game => {
-          dispatch(game)
-          setTargets([])
-          setAlert('')
-        }
-      )
-    )
-
   const humanPlayer = game.players[HUMAN_PLAYER]
 
   return (
     <>
       <Header>
-        <Button onClick={() => handle(onStart())}>Start new game</Button>
+        <Button onClick={start}>Start new game</Button>
         <Alert>{alert}</Alert>
         {game.state === 'play' && <Turn>Player {game.turn + 1}</Turn>}
       </Header>
@@ -164,9 +160,7 @@ export const Game = ({
               <PlayerCard
                 disabled={game.turn !== HUMAN_PLAYER}
                 key={`${value}:${suit}`}
-                onClick={() =>
-                  handle(onPlay({ card: [value, suit], targets }, game))
-                }
+                onClick={() => play({ card: [value, suit], targets })}
               >
                 <UICard value={value} suit={suit} />
               </PlayerCard>
