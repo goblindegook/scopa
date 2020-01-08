@@ -4,7 +4,7 @@ import React from 'react'
 import { render, fireEvent, wait } from '@testing-library/react'
 import { right, left } from 'fp-ts/lib/Either'
 import { Suit } from '../engine/cards'
-import { State } from '../engine/state'
+import { State, Move } from '../engine/state'
 import { Game } from './Game'
 import { Score } from '../engine/scores'
 
@@ -31,7 +31,7 @@ test(`deal new game on start`, () => {
     <Game
       onStart={onStart}
       onPlay={jest.fn()}
-      onOpponentTurn={onOpponentPlay}
+      onOpponentTurn={async () => ({ card: [1, Suit.DENARI], targets: [] })}
       onScore={() => []}
     />
   )
@@ -211,7 +211,7 @@ test(`block interaction when not a player's turn`, () => {
       onStart={() => right(initialState)}
       onOpponentTurn={() =>
         new Promise(resolve =>
-          setTimeout(() => resolve({ ...initialState, turn: 0 }), 10)
+          setTimeout(() => resolve({ card: [1, Suit.DENARI], targets: [] }), 10)
         )
       }
       onPlay={onPlay}
@@ -317,7 +317,8 @@ test(`computer opponent plays a card`, async () => {
         players: [
           { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
           { hand: [[2, Suit.DENARI]], pile: [], scope: 0 }
-        ]
+        ],
+        turn: 1
       })
     )
   )
@@ -325,27 +326,20 @@ test(`computer opponent plays a card`, async () => {
   const onPlay = jest.fn(() =>
     right<Error, State>(
       testGame({
-        turn: 1,
+        turn: 0,
         players: [
           { hand: [], pile: [], scope: 0 },
-          { hand: [[2, Suit.DENARI]], pile: [], scope: 0 }
+          { hand: [], pile: [], scope: 0 }
         ],
         table: [[1, Suit.DENARI]]
       })
     )
   )
 
-  const onOpponentPlay = async () =>
-    testGame({
-      players: [
-        { hand: [], pile: [], scope: 0 },
-        { hand: [], pile: [], scope: 0 }
-      ],
-      table: [
-        [1, Suit.DENARI],
-        [2, Suit.DENARI]
-      ]
-    })
+  const onOpponentPlay = async (): Promise<Move> => ({
+    card: [1, Suit.DENARI],
+    targets: []
+  })
 
   const { getByText, getByAltText } = render(
     <Game
@@ -357,11 +351,8 @@ test(`computer opponent plays a card`, async () => {
   )
 
   fireEvent.click(getByText('Start new game'))
-  fireEvent.click(getByAltText('Asso di denari'))
 
-  expect(getByAltText('Asso di denari')).toBeTruthy()
-
-  await wait(() => getByAltText('Due di denari'))
+  await wait(() => getByAltText('Asso di denari'))
 })
 
 test(`end game and show scores`, () => {

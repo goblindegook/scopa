@@ -1,5 +1,5 @@
 import React from 'react'
-import { Either, bimap } from 'fp-ts/lib/Either'
+import { Either, bimap, getOrElse } from 'fp-ts/lib/Either'
 import { pipe } from 'fp-ts/lib/pipeable'
 import { concat, contains, range, without } from 'ramda'
 import styled from '@emotion/styled'
@@ -55,7 +55,7 @@ const GameOver = styled('main')`
 interface GameProps {
   onStart: () => Either<Error, State>
   onPlay: (move: Move, game: State) => Either<Error, State>
-  onOpponentTurn: (game: State) => Promise<State>
+  onOpponentTurn: (game: State) => Promise<Move>
   onScore: (game: State) => readonly Score[]
 }
 
@@ -82,13 +82,25 @@ export const Game = ({
     let isOpponentPlaying = true
     if (game.state === 'play' && game.turn !== HUMAN_PLAYER) {
       onOpponentTurn(game)
-        .then(game => isOpponentPlaying && dispatch(game))
+        .then(
+          move =>
+            isOpponentPlaying &&
+            dispatch(
+              pipe(
+                onPlay(move, game),
+                getOrElse<Error, State>(() => ({
+                  ...game,
+                  state: 'stop'
+                }))
+              )
+            )
+        )
         .catch(console.error)
     }
     return () => {
       isOpponentPlaying = false
     }
-  }, [game, onOpponentTurn, game.state, game.turn])
+  }, [game, onOpponentTurn, game.state, game.turn, onPlay])
 
   const toggleTarget = (card: Card) =>
     setTargets(
