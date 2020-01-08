@@ -28,7 +28,7 @@ interface ScoreBoardProps {
   scores: readonly Score[]
 }
 
-export const ScoreBoard = ({ scores = [] }: ScoreBoardProps) => (
+export const ScoreBoard = ({ scores }: ScoreBoardProps) => (
   <Board>
     <thead>
       <tr>

@@ -44,7 +44,6 @@ const Back = styled('div')`
 
 interface CardProps {
   className?: string
-  index?: number
   hidden?: boolean
   suit?: Suit
   value?: number

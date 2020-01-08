@@ -39,17 +39,12 @@ const Checkbox = styled('input')`
 
 interface TableProps {
   cards: Deck
-  disabled?: boolean
+  disabled: boolean
   selected: Deck
   onSelect: (card: CardType) => void
 }
 
-export const Table = ({
-  cards,
-  disabled = false,
-  selected,
-  onSelect
-}: TableProps) => (
+export const Table = ({ cards, disabled, selected, onSelect }: TableProps) => (
   <TableArea>
     {cards.map(([value, suit]) => {
       const key = `${suit}${value}`
