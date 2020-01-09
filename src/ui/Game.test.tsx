@@ -25,7 +25,6 @@ function testGame(overrides: Partial<State> = {}): State {
 test(`deal new game on start`, () => {
   const turn = 0
   const onStart = jest.fn(() => right<Error, State>(testGame({ turn })))
-  const onOpponentPlay = async () => testGame({ state: 'stop' })
 
   const { getByText, queryByText } = render(
     <Game
@@ -364,7 +363,7 @@ test(`end game and show scores`, () => {
     ]
   })
 
-  const onScore = jest.fn<Score[], [State]>(() => [
+  const onScore = jest.fn<Score[], [State['players']]>(() => [
     { total: 3, details: [] },
     { total: 4, details: [] }
   ])
@@ -380,7 +379,7 @@ test(`end game and show scores`, () => {
 
   fireEvent.click(getByText('Start new game'))
 
-  expect(onScore).toHaveBeenCalledWith(state)
+  expect(onScore).toHaveBeenCalledWith(state.players)
 
   expect(getByText('Game Over')).toBeTruthy()
   expect(getByText('Player 1')).toBeTruthy()

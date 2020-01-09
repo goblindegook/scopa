@@ -1,6 +1,6 @@
-import { contains, groupBy, map, pipe, reduce, sort, uniq } from 'ramda'
+import { contains, groupBy, map, pipe, reduce, sort } from 'ramda'
 import { Suit, Card } from './cards'
-import { State } from './state'
+import { Player } from './state'
 
 const SETTEBELLO: Card = [7, Suit.DENARI]
 
@@ -47,40 +47,42 @@ const prime = pipe(
   ([cards, value]) => ({ cards, value })
 )
 
-export function score(game: State): readonly Score[] {
-  const cards = game.players.map(({ pile }) => pile.length)
-  const cardTie = uniq(cards).length === 1
-  const cardMax = Math.max(...cards)
+function findWinner(totals: number[]): number | null {
+  const maximum = Math.max(...totals)
+  const singleWinner = totals.filter(total => total === maximum).length === 1
+  return singleWinner ? totals.indexOf(maximum) : null
+}
 
-  const denari = game.players.map(
+export function score(players: readonly Player[]): readonly Score[] {
+  const cardTotal = players.map(({ pile }) => pile.length)
+  const mostCards = findWinner(cardTotal)
+
+  const denariTotal = players.map(
     ({ pile }) => pile.filter(([, suit]) => suit === Suit.DENARI).length
   )
-  const denariTie = uniq(denari).length === 1
-  const denariMax = Math.max(...denari)
+  const mostDenari = findWinner(denariTotal)
 
-  const primes = game.players.map(({ pile }) => prime(pile))
-  const primeTotals = primes.map(({ value }) => value)
-  const primeTie = uniq(primeTotals).length === 1
-  const primeMax = Math.max(...primeTotals)
+  const primes = players.map(({ pile }) => prime(pile))
+  const highestPrime = findWinner(primes.map(({ value }) => value))
 
-  return game.players.map(({ scope: score, pile }, idx) => {
+  return players.map(({ scope, pile }, player) => {
     const settebello = contains(SETTEBELLO, pile)
     const denariCards = pile.filter(([, suit]) => suit === Suit.DENARI)
 
     return {
       details: [
-        { label: 'Scope', value: score },
+        { label: 'Scope', value: scope },
         { label: 'Captured', value: pile.length, cards: pile },
-        { label: 'Denari', value: denari[idx], cards: denariCards },
+        { label: 'Denari', value: denariTotal[player], cards: denariCards },
         { label: 'Sette Bello', cards: settebello ? [SETTEBELLO] : [] },
-        { label: 'Primiera', ...primes[idx] }
+        { label: 'Primiera', ...primes[player] }
       ],
       total:
-        score +
+        scope +
         (settebello ? 1 : 0) +
-        (!cardTie && cards[idx] === cardMax ? 1 : 0) +
-        (!denariTie && denari[idx] === denariMax ? 1 : 0) +
-        (!primeTie && primeTotals[idx] === primeMax ? 1 : 0)
+        (mostCards === player ? 1 : 0) +
+        (mostDenari === player ? 1 : 0) +
+        (highestPrime === player ? 1 : 0)
     }
   })
 }

@@ -56,7 +56,7 @@ interface GameProps {
   onStart: () => Either<Error, State>
   onPlay: (move: Move, game: State) => Either<Error, State>
   onOpponentTurn: (game: State) => Promise<Move>
-  onScore: (game: State) => readonly Score[]
+  onScore: (game: State['players']) => readonly Score[]
 }
 
 export const Game = ({
@@ -130,7 +130,7 @@ export const Game = ({
       {game.state === 'stop' && (
         <GameOver>
           <h2>Game Over</h2>
-          <ScoreBoard scores={onScore(game)} />
+          <ScoreBoard scores={onScore(game.players)} />
         </GameOver>
       )}
       {game.state === 'play' && (

@@ -1,15 +1,6 @@
 import { Suit, Card } from './cards'
 import { score } from './scores'
-import { State, Player } from './state'
 import { assert, property, integer } from 'fast-check'
-
-const testGameState = (players: Player[]): State => ({
-  state: 'stop',
-  turn: 0,
-  players: players.map(({ pile, scope }) => ({ hand: [], pile, scope })),
-  pile: [],
-  table: []
-})
 
 describe('prime', () => {
   test.each<[string, number, Card]>([
@@ -24,9 +15,9 @@ describe('prime', () => {
     ['knights', 10, [9, Suit.DENARI]],
     ['knaves', 10, [8, Suit.DENARI]]
   ])(`%s are worth %s points`, (_, value, card) => {
-    const game = testGameState([{ hand: [], pile: [card], scope: 0 }])
+    const players = [{ hand: [], pile: [card], scope: 0 }]
 
-    expect(score(game)[0].details).toContainEqual({
+    expect(score(players)[0].details).toContainEqual({
       label: 'Primiera',
       value,
       cards: [card]
@@ -34,18 +25,18 @@ describe('prime', () => {
   })
 
   test(`only the highest card in the suit is scored`, () => {
-    const game = testGameState([
+    const players = [
       {
         hand: [],
         pile: [
           [7, Suit.DENARI],
           [6, Suit.DENARI]
-        ],
+        ] as Card[],
         scope: 0
       }
-    ])
+    ]
 
-    expect(score(game)[0].details).toContainEqual({
+    expect(score(players)[0].details).toContainEqual({
       label: 'Primiera',
       value: 21,
       cards: [[7, Suit.DENARI]]
@@ -67,13 +58,7 @@ describe('prime', () => {
       [6, Suit.SPADE]
     ]
 
-    const game = testGameState([
-      {
-        hand: [],
-        pile: [...highest, ...rest],
-        scope: 0
-      }
-    ])
+    const game = [{ hand: [], pile: [...highest, ...rest], scope: 0 }]
 
     expect(score(game)[0].details).toContainEqual({
       label: 'Primiera',
@@ -85,12 +70,12 @@ describe('prime', () => {
 
 describe('single player score', () => {
   test(`a player's base score is the number of scope they achieved`, () => {
-    const game = testGameState([
+    const players = [
       { hand: [], pile: [], scope: 1 },
       { hand: [], pile: [], scope: 2 }
-    ])
+    ]
 
-    expect(score(game)).toEqual([
+    expect(score(players)).toEqual([
       {
         details: [
           { label: 'Scope', value: 1 },
@@ -126,12 +111,12 @@ describe('single player score', () => {
 
     assert(
       property(integer(0, 20), integer(0, 20), (s1, s2) => {
-        const game = testGameState([
+        const players = [
           { hand: [], pile: p1, scope: s1 },
           { hand: [], pile: p2, scope: s2 }
-        ])
+        ]
 
-        expect(score(game)).toEqual([
+        expect(score(players)).toEqual([
           {
             details: [
               { label: 'Scope', value: s1 },
@@ -170,12 +155,12 @@ describe('single player score', () => {
 
     assert(
       property(integer(0, 20), integer(0, 20), (s1, s2) => {
-        const game = testGameState([
+        const players = [
           { hand: [], pile: p1, scope: s1 },
           { hand: [], pile: p2, scope: s2 }
-        ])
+        ]
 
-        expect(score(game)).toEqual([
+        expect(score(players)).toEqual([
           {
             details: [
               { label: 'Scope', value: s1 },
@@ -213,12 +198,12 @@ describe('single player score', () => {
 
     assert(
       property(integer(0, 20), integer(0, 20), (s1, s2) => {
-        const game = testGameState([
+        const players = [
           { hand: [], pile: p1, scope: s1 },
           { hand: [], pile: p2, scope: s2 }
-        ])
+        ]
 
-        expect(score(game)).toEqual([
+        expect(score(players)).toEqual([
           {
             details: [
               { label: 'Scope', value: s1 },
@@ -262,12 +247,12 @@ describe('single player score', () => {
 
     assert(
       property(integer(0, 20), integer(0, 20), (s1, s2) => {
-        const game = testGameState([
+        const players = [
           { hand: [], pile: p1, scope: s1 },
           { hand: [], pile: p2, scope: s2 }
-        ])
+        ]
 
-        expect(score(game)).toEqual([
+        expect(score(players)).toEqual([
           {
             details: [
               { label: 'Scope', value: s1 },
@@ -295,23 +280,17 @@ describe('single player score', () => {
 })
 
 describe('team score', () => {
-  test.skip(`a team's base score is the number of scope each of its players achieved`, () => {
-    // TODO
-  })
+  test.todo(
+    `a team's base score is the number of scope each of its players achieved`
+  )
 
-  test.skip(`the team that captured the sette bello gets +1 point`, () => {
-    // TODO
-  })
+  test.todo(`the team that captured the sette bello gets +1 point`)
 
-  test.skip(`the team that captured most cards gets +1 point`, () => {
-    // TODO
-  })
+  test.todo(`the team that captured most cards gets +1 point`)
 
-  test.skip(`the team that captured most cards in the suit of coins gets +1 point`, () => {
-    // TODO
-  })
+  test.todo(
+    `the team that captured most cards in the suit of coins gets +1 point`
+  )
 
-  test.skip(`the team that captured the primiera gets +1 point`, () => {
-    // TODO
-  })
+  test.todo(`the team that captured the primiera gets +1 point`)
 })
