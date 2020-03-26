@@ -1,6 +1,5 @@
 import React from 'react'
-import { Either, bimap } from 'fp-ts/lib/Either'
-import { pipe } from 'fp-ts/lib/pipeable'
+import { Result, fold } from '@pacote/result'
 import { concat, contains, range, without } from 'ramda'
 import styled from '@emotion/styled'
 import { Card } from '../engine/cards'
@@ -53,8 +52,8 @@ const GameOver = styled('main')`
 `
 
 interface GameProps {
-  onStart: () => Either<Error, State>
-  onPlay: (move: Move, game: State) => Either<Error, State>
+  onStart: () => Result<State, Error>
+  onPlay: (move: Move, game: State) => Result<State, Error>
   onOpponentTurn: (game: State) => Promise<Move>
   onScore: (game: State['players']) => readonly Score[]
 }
@@ -63,7 +62,7 @@ export const Game = ({
   onStart,
   onPlay,
   onOpponentTurn,
-  onScore
+  onScore,
 }: GameProps) => {
   const [alert, setAlert] = React.useState('')
   const [targets, setTargets] = React.useState<readonly Card[]>([])
@@ -74,7 +73,7 @@ export const Game = ({
       turn: 0,
       table: [],
       pile: [],
-      players: []
+      players: [],
     }
   )
 
@@ -90,12 +89,12 @@ export const Game = ({
   }, [])
 
   const start = React.useCallback(
-    () => pipe(onStart(), bimap(onInvalidMove, onNextTurn)),
+    () => fold(onNextTurn, onInvalidMove, onStart()),
     [onInvalidMove, onNextTurn, onStart]
   )
 
   const play = React.useCallback(
-    (move: Move) => pipe(onPlay(move, game), bimap(onInvalidMove, onNextTurn)),
+    (move: Move) => fold(onNextTurn, onInvalidMove, onPlay(move, game)),
     [onPlay, game, onInvalidMove, onNextTurn]
   )
 
@@ -103,7 +102,7 @@ export const Game = ({
     let isOpponentPlaying = true
     if (game.state === 'play' && game.turn !== HUMAN_PLAYER) {
       onOpponentTurn(game)
-        .then(move => isOpponentPlaying && play(move))
+        .then((move) => isOpponentPlaying && play(move))
         .catch(onInvalidMove)
     }
     return () => {
@@ -143,7 +142,7 @@ export const Game = ({
                   index={index}
                   pile={player.pile.length}
                 >
-                  {range(0, player.hand.length).map(key => (
+                  {range(0, player.hand.length).map((key) => (
                     <OpponentCard key={`${index}-${key}`} hidden={true} />
                   ))}
                 </Opponent>

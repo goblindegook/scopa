@@ -1,29 +1,25 @@
+import { assert, property, constantFrom } from 'fast-check'
+import { Result, Ok, Err, getOrElse, isErr, isOk } from '@pacote/result'
 import { deck, Suit, Deck, Card } from './cards'
 import { deal, play } from './scopa'
 import { State } from './state'
-import { assert, property, constantFrom } from 'fast-check'
-import { Either, getOrElse } from 'fp-ts/lib/Either'
-import { pipe } from 'fp-ts/lib/pipeable'
-import matchers from '@pacote/jest-either'
 
-expect.extend(matchers)
-
-function getGame(game: Either<Error, State>): State {
-  return pipe(
-    game,
-    getOrElse<Error, State>(() => ({
+function getGame(game: Result<State, Error>): State {
+  return getOrElse(
+    () => ({
       state: 'stop',
       turn: -1,
       players: [],
       pile: [],
-      table: []
-    }))
+      table: [],
+    }),
+    game
   )
 }
 
 describe('deal', () => {
   test(`deal sets state`, () => {
-    expect(deal(deck())).toMatchRight({ state: 'play' })
+    expect(deal(deck())).toMatchObject(Ok({ state: 'play' }))
   })
 
   test(`deal four cards on the table`, () => {
@@ -35,17 +31,19 @@ describe('deal', () => {
       [10, Suit.BASTONI],
       [10, Suit.COPPE],
       [10, Suit.SPADE],
-      [7, Suit.DENARI]
+      [7, Suit.DENARI],
     ])
 
-    expect(game).toMatchLeft({
-      message: 'More than two kings on the table. Deal again.'
-    })
+    expect(game).toMatchObject(
+      Err({
+        message: 'More than two kings on the table. Deal again.',
+      })
+    )
   })
 
   test(`Scopa is a game for 2, 3, 4 or 6 players`, () => {
     assert(
-      property(constantFrom<2 | 3 | 4 | 6>(2, 3, 4, 6), players => {
+      property(constantFrom<2 | 3 | 4 | 6>(2, 3, 4, 6), (players) => {
         const game = getGame(deal(deck(), { players }))
         return game.players.length === players
       })
@@ -54,17 +52,17 @@ describe('deal', () => {
 
   test(`deal three cards to each player`, () => {
     const game = getGame(deal(deck()))
-    game.players.forEach(p => expect(p.hand).toHaveLength(3))
+    game.players.forEach((p) => expect(p.hand).toHaveLength(3))
   })
 
   test(`each player begins with an empty pile`, () => {
     const game = getGame(deal(deck()))
-    game.players.forEach(p => expect(p.pile).toHaveLength(0))
+    game.players.forEach((p) => expect(p.pile).toHaveLength(0))
   })
 
   test(`each player begins with no score`, () => {
     const game = getGame(deal(deck()))
-    game.players.forEach(p => expect(p.scope).toBe(0))
+    game.players.forEach((p) => expect(p.scope).toBe(0))
   })
 
   test(`table pile contains remaining cards`, () => {
@@ -89,10 +87,10 @@ describe('play', () => {
       turn: 0,
       players: [
         { hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [[4, Suit.DENARI]]
+      table: [[4, Suit.DENARI]],
     }
 
     const next = getGame(play({ card, targets: [] }, game))
@@ -110,15 +108,15 @@ describe('play', () => {
       turn: 1,
       players: [
         { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [card, [3, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [card, [3, Suit.DENARI]], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [[4, Suit.DENARI]]
+      table: [[4, Suit.DENARI]],
     }
 
     const next = play({ card, targets: [] }, game)
 
-    expect(next).toMatchRight({ state: 'play', turn: 0 })
+    expect(next).toMatchObject(Ok({ state: 'play', turn: 0 }))
   })
 
   test(`a player cannot play a card they don't have`, () => {
@@ -128,15 +126,15 @@ describe('play', () => {
       turn: 0,
       players: [
         { hand: [[2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [[4, Suit.DENARI]]
+      table: [[4, Suit.DENARI]],
     }
 
     const next = play({ card, targets: [] }, game)
 
-    expect(next).toMatchLeft({ message: 'Not your turn.' })
+    expect(next).toMatchObject(Err({ message: 'Not your turn.' }))
   })
 
   test(`a player captures a card from the table if it's the same value as the card played`, () => {
@@ -147,10 +145,10 @@ describe('play', () => {
       turn: 0,
       players: [
         { hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [[4, Suit.DENARI], target]
+      table: [[4, Suit.DENARI], target],
     }
 
     const next = getGame(play({ card, targets: [] }, game))
@@ -169,18 +167,18 @@ describe('play', () => {
       turn: 0,
       players: [
         { hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 },
       ],
       pile: [],
       table: [
         [1, Suit.BASTONI],
-        [1, Suit.COPPE]
-      ]
+        [1, Suit.COPPE],
+      ],
     }
 
     const next = play({ card, targets: [] }, game)
 
-    expect(next).toMatchLeft({ message: 'Choose the cards to capture.' })
+    expect(next).toMatchObject(Err({ message: 'Choose the cards to capture.' }))
   })
 
   test(`a player must choose a valid capture`, () => {
@@ -190,20 +188,22 @@ describe('play', () => {
       turn: 0,
       players: [
         { hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 },
       ],
       pile: [],
       table: [
         [1, Suit.BASTONI],
-        [1, Suit.COPPE]
-      ]
+        [1, Suit.COPPE],
+      ],
     }
 
     const next = play({ card, targets: [[1, Suit.BASTONI]] }, game)
 
-    expect(next).toMatchLeft({
-      message: 'The targetted cards may not be captured.'
-    })
+    expect(next).toMatchObject(
+      Err({
+        message: 'The targetted cards may not be captured.',
+      })
+    )
   })
 
   test(`a player chooses a card from the table that is the same value as the card played`, () => {
@@ -214,10 +214,10 @@ describe('play', () => {
       turn: 0,
       players: [
         { hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [[3, Suit.DENARI]], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [[1, Suit.BASTONI], target]
+      table: [[1, Suit.BASTONI], target],
     }
 
     const next = getGame(play({ card, targets: [target] }, game))
@@ -234,17 +234,17 @@ describe('play', () => {
     const targets: Deck = [
       [1, Suit.COPPE],
       [1, Suit.BASTONI],
-      [1, Suit.SPADE]
+      [1, Suit.SPADE],
     ]
     const game: State = {
       state: 'play',
       turn: 0,
       players: [
         { hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[5, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [[5, Suit.DENARI]], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [[4, Suit.DENARI], ...targets]
+      table: [[4, Suit.DENARI], ...targets],
     }
 
     const next = getGame(play({ card, targets: [] }, game))
@@ -260,44 +260,44 @@ describe('play', () => {
     const card: Card = [2, Suit.DENARI]
     const targets: Deck = [
       [1, Suit.COPPE],
-      [1, Suit.BASTONI]
+      [1, Suit.BASTONI],
     ]
     const game: State = {
       state: 'play',
       turn: 0,
       players: [
         { hand: [card], pile: [], scope: 0 },
-        { hand: [[10, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [[10, Suit.DENARI]], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [[2, Suit.COPPE], ...targets]
+      table: [[2, Suit.COPPE], ...targets],
     }
 
-    expect(play({ card, targets }, game)).toBeLeft()
+    expect(isErr(play({ card, targets }, game))).toBe(true)
   })
 
   test(`target order should not be considered when playing`, () => {
     const card: Card = [2, Suit.DENARI]
     const targets: Deck = [
       [1, Suit.COPPE],
-      [1, Suit.BASTONI]
+      [1, Suit.BASTONI],
     ]
     const game: State = {
       state: 'play',
       turn: 0,
       players: [
         { hand: [card], pile: [], scope: 0 },
-        { hand: [], pile: [], scope: 0 }
+        { hand: [], pile: [], scope: 0 },
       ],
       pile: [],
       table: [
         [1, Suit.BASTONI],
         [1, Suit.SPADE],
-        [1, Suit.COPPE]
-      ]
+        [1, Suit.COPPE],
+      ],
     }
 
-    expect(play({ card, targets }, game)).toBeRight()
+    expect(isOk(play({ card, targets }, game))).toBe(true)
   })
 
   test(`a player scores a scopa when they capture all the cards on the table`, () => {
@@ -305,23 +305,23 @@ describe('play', () => {
     const table: Deck = [
       [1, Suit.COPPE],
       [1, Suit.BASTONI],
-      [1, Suit.SPADE]
+      [1, Suit.SPADE],
     ]
     const game: State = {
       state: 'play',
       turn: 0,
       players: [
         { hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[5, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [[5, Suit.DENARI]], pile: [], scope: 0 },
       ],
       pile: [],
-      table
+      table,
     }
 
     const next = play({ card, targets: [] }, game)
 
     expect(getGame(next).players[0].scope).toBe(1)
-    expect(next).toMatchRight({ state: 'play' })
+    expect(next).toMatchObject(Ok({ state: 'play' }))
   })
 
   test(`four cards are drawn from the pile when the table is empty`, () => {
@@ -331,7 +331,7 @@ describe('play', () => {
       [4, Suit.COPPE],
       [4, Suit.BASTONI],
       [4, Suit.SPADE],
-      [4, Suit.DENARI]
+      [4, Suit.DENARI],
     ]
 
     const restOfPile: Deck = [[8, Suit.COPPE]]
@@ -341,23 +341,25 @@ describe('play', () => {
       turn: 0,
       players: [
         { hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { hand: [[5, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [[5, Suit.DENARI]], pile: [], scope: 0 },
       ],
       pile: [...topOfPile, ...restOfPile],
       table: [
         [1, Suit.COPPE],
         [1, Suit.BASTONI],
-        [1, Suit.SPADE]
-      ]
+        [1, Suit.SPADE],
+      ],
     }
 
     const next = play({ card, targets: [] }, game)
 
-    expect(next).toMatchRight({
-      table: topOfPile,
-      pile: restOfPile,
-      state: 'play'
-    })
+    expect(next).toMatchObject(
+      Ok({
+        table: topOfPile,
+        pile: restOfPile,
+        state: 'play',
+      })
+    )
   })
 
   test(`three cards are drawn from the pile when a player's hand is empty`, () => {
@@ -366,7 +368,7 @@ describe('play', () => {
     const topOfPile: Deck = [
       [4, Suit.COPPE],
       [4, Suit.BASTONI],
-      [4, Suit.SPADE]
+      [4, Suit.SPADE],
     ]
 
     const restOfPile: Deck = [[8, Suit.COPPE]]
@@ -376,19 +378,21 @@ describe('play', () => {
       turn: 0,
       players: [
         { hand: [card], pile: [], scope: 0 },
-        { hand: [[5, Suit.DENARI]], pile: [], scope: 0 }
+        { hand: [[5, Suit.DENARI]], pile: [], scope: 0 },
       ],
       pile: [...topOfPile, ...restOfPile],
-      table: [[1, Suit.COPPE]]
+      table: [[1, Suit.COPPE]],
     }
 
     const next = play({ card, targets: [] }, game)
 
     expect(getGame(next).players[0].hand).toEqual(topOfPile)
-    expect(next).toMatchRight({
-      pile: restOfPile,
-      state: 'play'
-    })
+    expect(next).toMatchObject(
+      Ok({
+        pile: restOfPile,
+        state: 'play',
+      })
+    )
   })
 
   test(`the game ends when the next player's hand is empty and they can't draw any more cards`, () => {
@@ -398,14 +402,14 @@ describe('play', () => {
       turn: 1,
       players: [
         { hand: [], pile: [], scope: 0 },
-        { hand: [card], pile: [], scope: 0 }
+        { hand: [card], pile: [], scope: 0 },
       ],
       pile: [],
-      table: []
+      table: [],
     }
 
     const next = play({ card, targets: [] }, game)
 
-    expect(next).toMatchRight({ state: 'stop' })
+    expect(next).toMatchObject(Ok({ state: 'stop' }))
   })
 })

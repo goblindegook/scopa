@@ -1,5 +1,5 @@
 import { contains, without, splitAt, splitEvery, sort } from 'ramda'
-import { Either, right, left } from 'fp-ts/lib/Either'
+import { Result, Ok, Err } from '@pacote/result'
 import { Deck, Card } from './cards'
 import { findMatches } from './match'
 import { Player, State, Move } from './state'
@@ -9,13 +9,13 @@ interface Options {
 }
 
 const DEFAULT_OPTIONS: Required<Options> = {
-  players: 2
+  players: 2,
 }
 
 const createPlayers = (cards: Deck): readonly Player[] =>
-  splitEvery(3, cards).map(hand => ({ hand, pile: [], scope: 0 }))
+  splitEvery(3, cards).map((hand) => ({ hand, pile: [], scope: 0 }))
 
-export function deal(cards: Deck, options?: Options): Either<Error, State> {
+export function deal(cards: Deck, options?: Options): Result<State, Error> {
   const { players } = { ...DEFAULT_OPTIONS, ...options }
   const [table, rest] = splitAt(4, cards)
   const isValid = table.filter(([value]) => value === 10).length <= 2
@@ -23,14 +23,14 @@ export function deal(cards: Deck, options?: Options): Either<Error, State> {
   const [playerCards, pile] = splitAt(players * 3, rest)
 
   return isValid
-    ? right<Error, State>({
+    ? Ok({
         state: 'play',
         turn: Math.floor(Math.random() * players),
         players: createPlayers(playerCards),
         pile,
-        table
+        table,
       })
-    : left(Error('More than two kings on the table. Deal again.'))
+    : Err(Error('More than two kings on the table. Deal again.'))
 }
 
 function next({ card, targets }: Move, game: State): State {
@@ -57,7 +57,7 @@ function next({ card, targets }: Move, game: State): State {
           ...player,
           hand: nextHand,
           pile: [...player.pile, ...targets, ...(targets.length ? [card] : [])],
-          scope: tableAfterMove.length ? player.scope : player.scope + 1
+          scope: tableAfterMove.length ? player.scope : player.scope + 1,
         }
   )
 
@@ -69,7 +69,7 @@ function next({ card, targets }: Move, game: State): State {
     pile: nextPile,
     table: nextTable,
     players: nextPlayers,
-    turn: nextTurn
+    turn: nextTurn,
   }
 }
 
@@ -80,14 +80,14 @@ const sortCards = sort<Card>(
 export function play(
   { card, targets }: Move,
   game: State
-): Either<Error, State> {
+): Result<State, Error> {
   const { table, turn, players } = game
 
   const hasCard = contains(card, players[turn].hand)
 
   const possibleTargets = findMatches(card[0], sortCards(table))
-  const mustPick = Math.min(...possibleTargets.map(t => t.length))
-  const validTargets = possibleTargets.filter(t => t.length === mustPick)
+  const mustPick = Math.min(...possibleTargets.map((t) => t.length))
+  const validTargets = possibleTargets.filter((t) => t.length === mustPick)
 
   const autoTargets =
     !targets.length && validTargets.length < 2 ? validTargets[0] || [] : null
@@ -95,11 +95,11 @@ export function play(
 
   return hasCard
     ? hasTarget
-      ? right(next({ card, targets: autoTargets || targets }, game))
-      : left(
+      ? Ok(next({ card, targets: autoTargets || targets }, game))
+      : Err(
           targets.length
             ? Error('The targetted cards may not be captured.')
             : Error('Choose the cards to capture.')
         )
-    : left(Error('Not your turn.'))
+    : Err(Error('Not your turn.'))
 }
