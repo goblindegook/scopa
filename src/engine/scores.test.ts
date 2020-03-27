@@ -13,14 +13,14 @@ describe('prime', () => {
     ['twos', 12, [2, Suit.DENARI]],
     ['kings', 10, [10, Suit.DENARI]],
     ['knights', 10, [9, Suit.DENARI]],
-    ['knaves', 10, [8, Suit.DENARI]]
+    ['knaves', 10, [8, Suit.DENARI]],
   ])(`%s are worth %s points`, (_, value, card) => {
     const players = [{ hand: [], pile: [card], scope: 0 }]
 
     expect(score(players)[0].details).toContainEqual({
       label: 'Primiera',
       value,
-      cards: [card]
+      cards: [card],
     })
   })
 
@@ -30,16 +30,16 @@ describe('prime', () => {
         hand: [],
         pile: [
           [7, Suit.DENARI],
-          [6, Suit.DENARI]
+          [6, Suit.DENARI],
         ] as Card[],
-        scope: 0
-      }
+        scope: 0,
+      },
     ]
 
     expect(score(players)[0].details).toContainEqual({
       label: 'Primiera',
       value: 21,
-      cards: [[7, Suit.DENARI]]
+      cards: [[7, Suit.DENARI]],
     })
   })
 
@@ -48,14 +48,14 @@ describe('prime', () => {
       [7, Suit.DENARI],
       [7, Suit.COPPE],
       [7, Suit.BASTONI],
-      [7, Suit.SPADE]
+      [7, Suit.SPADE],
     ]
 
     const rest: Card[] = [
       [6, Suit.DENARI],
       [6, Suit.COPPE],
       [6, Suit.BASTONI],
-      [6, Suit.SPADE]
+      [6, Suit.SPADE],
     ]
 
     const game = [{ hand: [], pile: [...highest, ...rest], scope: 0 }]
@@ -63,7 +63,7 @@ describe('prime', () => {
     expect(score(game)[0].details).toContainEqual({
       label: 'Primiera',
       value: 84,
-      cards: highest
+      cards: highest,
     })
   })
 })
@@ -72,7 +72,7 @@ describe('single player score', () => {
   test(`a player's base score is the number of scope they achieved`, () => {
     const players = [
       { hand: [], pile: [], scope: 1 },
-      { hand: [], pile: [], scope: 2 }
+      { hand: [], pile: [], scope: 2 },
     ]
 
     expect(score(players)).toEqual([
@@ -82,9 +82,9 @@ describe('single player score', () => {
           { label: 'Captured', value: 0, cards: [] },
           { label: 'Denari', value: 0, cards: [] },
           { label: 'Sette Bello', cards: [] },
-          { label: 'Primiera', value: 0, cards: [] }
+          { label: 'Primiera', value: 0, cards: [] },
         ],
-        total: 1
+        total: 1,
       },
       {
         details: [
@@ -92,28 +92,28 @@ describe('single player score', () => {
           { label: 'Captured', value: 0, cards: [] },
           { label: 'Denari', value: 0, cards: [] },
           { label: 'Sette Bello', cards: [] },
-          { label: 'Primiera', value: 0, cards: [] }
+          { label: 'Primiera', value: 0, cards: [] },
         ],
-        total: 2
-      }
+        total: 2,
+      },
     ])
   })
 
   test(`the player who captured the sette bello gets +1 point`, () => {
     const p1: Card[] = [
       [7, Suit.DENARI],
-      [1, Suit.COPPE]
+      [1, Suit.COPPE],
     ]
     const p2: Card[] = [
       [1, Suit.DENARI],
-      [7, Suit.COPPE]
+      [7, Suit.COPPE],
     ]
 
     assert(
       property(integer(0, 20), integer(0, 20), (s1, s2) => {
         const players = [
           { hand: [], pile: p1, scope: s1 },
-          { hand: [], pile: p2, scope: s2 }
+          { hand: [], pile: p2, scope: s2 },
         ]
 
         expect(score(players)).toEqual([
@@ -123,9 +123,9 @@ describe('single player score', () => {
               { label: 'Captured', value: 2, cards: p1 },
               { label: 'Denari', value: 1, cards: [[7, Suit.DENARI]] },
               { label: 'Sette Bello', cards: [[7, Suit.DENARI]] },
-              { label: 'Primiera', value: 37, cards: p1 }
+              { label: 'Primiera', value: 37, cards: p1 },
             ],
-            total: s1 + 1
+            total: s1 + 1,
           },
           {
             details: [
@@ -133,10 +133,10 @@ describe('single player score', () => {
               { label: 'Captured', value: 2, cards: p2 },
               { label: 'Denari', value: 1, cards: [[1, Suit.DENARI]] },
               { label: 'Sette Bello', cards: [] },
-              { label: 'Primiera', value: 37, cards: p2 }
+              { label: 'Primiera', value: 37, cards: p2 },
             ],
-            total: s2
-          }
+            total: s2,
+          },
         ])
       })
     )
@@ -145,19 +145,19 @@ describe('single player score', () => {
   test(`the player who captured the most cards gets +1 point`, () => {
     const p1: Card[] = [
       [5, Suit.COPPE],
-      [5, Suit.SPADE]
+      [5, Suit.SPADE],
     ]
     const p2: Card[] = [
       [10, Suit.COPPE],
       [10, Suit.BASTONI],
-      [10, Suit.SPADE]
+      [10, Suit.SPADE],
     ]
 
     assert(
       property(integer(0, 20), integer(0, 20), (s1, s2) => {
         const players = [
           { hand: [], pile: p1, scope: s1 },
-          { hand: [], pile: p2, scope: s2 }
+          { hand: [], pile: p2, scope: s2 },
         ]
 
         expect(score(players)).toEqual([
@@ -167,9 +167,9 @@ describe('single player score', () => {
               { label: 'Captured', value: p1.length, cards: p1 },
               { label: 'Denari', value: 0, cards: [] },
               { label: 'Sette Bello', cards: [] },
-              { label: 'Primiera', value: 30, cards: p1 }
+              { label: 'Primiera', value: 30, cards: p1 },
             ],
-            total: s1
+            total: s1,
           },
           {
             details: [
@@ -177,10 +177,10 @@ describe('single player score', () => {
               { label: 'Captured', value: p2.length, cards: p2 },
               { label: 'Denari', value: 0, cards: [] },
               { label: 'Sette Bello', cards: [] },
-              { label: 'Primiera', value: 30, cards: p2 }
+              { label: 'Primiera', value: 30, cards: p2 },
             ],
-            total: s2 + 1
-          }
+            total: s2 + 1,
+          },
         ])
       })
     )
@@ -189,18 +189,18 @@ describe('single player score', () => {
   test(`the player who captured the most cards in the suit of coins gets +1 point`, () => {
     const p1: Card[] = [
       [1, Suit.DENARI],
-      [2, Suit.DENARI]
+      [2, Suit.DENARI],
     ]
     const p2: Card[] = [
       [1, Suit.COPPE],
-      [2, Suit.COPPE]
+      [2, Suit.COPPE],
     ]
 
     assert(
       property(integer(0, 20), integer(0, 20), (s1, s2) => {
         const players = [
           { hand: [], pile: p1, scope: s1 },
-          { hand: [], pile: p2, scope: s2 }
+          { hand: [], pile: p2, scope: s2 },
         ]
 
         expect(score(players)).toEqual([
@@ -210,17 +210,17 @@ describe('single player score', () => {
               {
                 label: 'Captured',
                 value: 2,
-                cards: p1
+                cards: p1,
               },
               {
                 label: 'Denari',
                 value: 2,
-                cards: p1
+                cards: p1,
               },
               { label: 'Sette Bello', cards: [] },
-              { label: 'Primiera', value: 16, cards: [[1, Suit.DENARI]] }
+              { label: 'Primiera', value: 16, cards: [[1, Suit.DENARI]] },
             ],
-            total: s1 + 1
+            total: s1 + 1,
           },
           {
             details: [
@@ -228,14 +228,14 @@ describe('single player score', () => {
               {
                 label: 'Captured',
                 value: 2,
-                cards: p2
+                cards: p2,
               },
               { label: 'Denari', value: 0, cards: [] },
               { label: 'Sette Bello', cards: [] },
-              { label: 'Primiera', value: 16, cards: [[1, Suit.COPPE]] }
+              { label: 'Primiera', value: 16, cards: [[1, Suit.COPPE]] },
             ],
-            total: s2
-          }
+            total: s2,
+          },
         ])
       })
     )
@@ -249,7 +249,7 @@ describe('single player score', () => {
       property(integer(0, 20), integer(0, 20), (s1, s2) => {
         const players = [
           { hand: [], pile: p1, scope: s1 },
-          { hand: [], pile: p2, scope: s2 }
+          { hand: [], pile: p2, scope: s2 },
         ]
 
         expect(score(players)).toEqual([
@@ -259,9 +259,9 @@ describe('single player score', () => {
               { label: 'Captured', value: 1, cards: p1 },
               { label: 'Denari', value: 0, cards: [] },
               { label: 'Sette Bello', cards: [] },
-              { label: 'Primiera', value: 21, cards: p1 }
+              { label: 'Primiera', value: 21, cards: p1 },
             ],
-            total: s1 + 1
+            total: s1 + 1,
           },
           {
             details: [
@@ -269,10 +269,10 @@ describe('single player score', () => {
               { label: 'Captured', value: 1, cards: p2 },
               { label: 'Denari', value: 0, cards: [] },
               { label: 'Sette Bello', cards: [] },
-              { label: 'Primiera', value: 18, cards: p2 }
+              { label: 'Primiera', value: 18, cards: p2 },
             ],
-            total: s2
-          }
+            total: s2,
+          },
         ])
       })
     )

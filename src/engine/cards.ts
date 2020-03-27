@@ -4,7 +4,7 @@ export enum Suit {
   DENARI,
   COPPE,
   BASTONI,
-  SPADE
+  SPADE,
 }
 
 export type Card = [number, Suit]
@@ -16,7 +16,7 @@ export function deck(): Deck {
   const cards = suits.reduce<Deck>(
     (all, suit) =>
       all.concat(
-        range(1, 11).map<Card>(v => [v, suit])
+        range(1, 11).map<Card>((v) => [v, suit])
       ),
     []
   )

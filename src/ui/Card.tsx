@@ -12,14 +12,14 @@ const VALUES: { [key: number]: string } = {
   7: 'Sette',
   8: 'Fante',
   9: 'Cavallo',
-  10: 'Re'
+  10: 'Re',
 }
 
 const SUITS = {
   [Suit.BASTONI]: 'bastoni',
   [Suit.COPPE]: 'coppe',
   [Suit.DENARI]: 'denari',
-  [Suit.SPADE]: 'spade'
+  [Suit.SPADE]: 'spade',
 }
 
 function name(value: number, suit: Suit) {

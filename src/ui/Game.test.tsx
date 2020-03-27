@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import React from 'react'
-import { render, fireEvent, wait } from '@testing-library/react'
+import { render, fireEvent } from '@testing-library/react'
 import { Err, Ok } from '@pacote/result'
 import { Suit } from '../engine/cards'
 import { State, Move } from '../engine/state'
@@ -338,7 +338,7 @@ test(`computer opponent plays a card`, async () => {
     targets: [],
   })
 
-  const { getByText, getByAltText } = render(
+  const { getByText, findByAltText } = render(
     <Game
       onStart={onStart}
       onPlay={onPlay}
@@ -349,7 +349,7 @@ test(`computer opponent plays a card`, async () => {
 
   fireEvent.click(getByText('Start new game'))
 
-  await wait(() => getByAltText('Asso di denari'))
+  await findByAltText('Asso di denari')
 })
 
 test(`end game and show scores`, () => {

@@ -6,7 +6,7 @@ import { Stack } from './Stack'
 test('renders stack of cards', () => {
   assert(
     property(
-      string().map(s => s.trim()),
+      string().map((s) => s.trim()),
       integer(1, 40),
       (title, size) => {
         cleanup()

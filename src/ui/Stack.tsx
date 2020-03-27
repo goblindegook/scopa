@@ -27,7 +27,7 @@ interface StackProps {
 
 export const Stack = ({ className, size, title }: StackProps) => (
   <StackArea className={className} title={title}>
-    {range(0, size).map(i => (
+    {range(0, size).map((i) => (
       <StackedCard hidden={true} index={i} key={`player-pile-${i}`} />
     ))}
   </StackArea>

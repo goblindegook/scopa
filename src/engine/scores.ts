@@ -25,7 +25,7 @@ const PRIME_POINTS: { [value: number]: number } = {
   7: 21,
   8: 10,
   9: 10,
-  10: 10
+  10: 10,
 }
 
 type CardPoints = [Card, number]
@@ -49,7 +49,7 @@ const prime = pipe(
 
 function findWinner(totals: number[]): number | null {
   const maximum = Math.max(...totals)
-  const singleWinner = totals.filter(total => total === maximum).length === 1
+  const singleWinner = totals.filter((total) => total === maximum).length === 1
   return singleWinner ? totals.indexOf(maximum) : null
 }
 
@@ -75,14 +75,14 @@ export function score(players: readonly Player[]): readonly Score[] {
         { label: 'Captured', value: pile.length, cards: pile },
         { label: 'Denari', value: denariTotal[player], cards: denariCards },
         { label: 'Sette Bello', cards: settebello ? [SETTEBELLO] : [] },
-        { label: 'Primiera', ...primes[player] }
+        { label: 'Primiera', ...primes[player] },
       ],
       total:
         scope +
         (settebello ? 1 : 0) +
         (mostCards === player ? 1 : 0) +
         (mostDenari === player ? 1 : 0) +
-        (highestPrime === player ? 1 : 0)
+        (highestPrime === player ? 1 : 0),
     }
   })
 }
