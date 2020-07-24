@@ -1,18 +1,22 @@
 import React from 'react'
-import { assert, property, integer } from 'fast-check'
+import { assert, property, integer, tuple, set, constantFrom } from 'fast-check'
 import { cleanup, render } from '@testing-library/react'
 import { Player } from './Player'
-import { range } from 'ramda'
 import { Suit, Card } from '../engine/cards'
+
+const suits = [Suit.BASTONI, Suit.COPPE, Suit.DENARI, Suit.SPADE]
+const card = tuple(integer(1, 10), constantFrom(...suits))
+const compareCards = (a: Card, b: Card) => a[0] === b[0] && a[1] === b[1]
 
 test('renders pile', () => {
   assert(
-    property(integer(1, 10), integer(1, 6), (size, index) => {
+    property(set(card, 10, compareCards), integer(1, 6), (pile, index) => {
       cleanup()
-      const pile: Card[] = range(0, size).map((value) => [value, Suit.DENARI])
       const { getByTitle } = render(<Player index={index} pile={pile} />)
-      const pileElement = getByTitle(`Player ${index + 1} pile: ${size} cards`)
-      expect(pileElement.children).toHaveLength(size)
+      const pileElement = getByTitle(
+        `Player ${index + 1} pile: ${pile.length} cards`
+      )
+      expect(pileElement.children).toHaveLength(pile.length)
     })
   )
 })
