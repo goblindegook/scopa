@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { render, fireEvent } from '@testing-library/react'
+import '@testing-library/jest-dom'
 import { Err, Ok } from '@pacote/result'
 import { Suit } from '../engine/cards'
 import { State, Move } from '../engine/state'
@@ -222,7 +223,8 @@ test(`block interaction when not a player's turn`, () => {
 
   const checkbox = getByAltText('Sette di denari')
     .previousSibling as HTMLInputElement
-  expect(checkbox.disabled).toBeTruthy()
+
+  expect(checkbox).toBeDisabled()
 
   const card = getByAltText('Asso di denari') as HTMLButtonElement
 
@@ -230,7 +232,7 @@ test(`block interaction when not a player's turn`, () => {
 
   expect(onPlay).not.toHaveBeenCalled()
 
-  expect(card.disabled).toBeFalsy()
+  expect(card).toBeEnabled()
 })
 
 test(`select targets to capture`, () => {
