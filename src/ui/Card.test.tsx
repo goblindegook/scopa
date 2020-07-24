@@ -13,7 +13,7 @@ test.each<[string, Suit]>([
   assert(
     property(integer(1, 10), (value) => {
       cleanup()
-      const { getByTitle } = render(<Card value={value} suit={suit} />)
+      const { getByTitle } = render(<Card card={[value, suit]} />)
       const image = getByTitle(`di ${match}`, {
         exact: false,
       }) as HTMLImageElement
@@ -39,7 +39,7 @@ test.each<[string, number]>([
       constantFrom(Suit.BASTONI, Suit.COPPE, Suit.DENARI, Suit.SPADE),
       (suit) => {
         cleanup()
-        const { getByTitle } = render(<Card value={value} suit={suit} />)
+        const { getByTitle } = render(<Card card={[value, suit]} />)
         getByTitle(`${match} di`, { exact: false })
       }
     )
@@ -47,12 +47,6 @@ test.each<[string, number]>([
 })
 
 test('hidden cards have no title', () => {
-  const { queryByAltText } = render(
-    <Card hidden={true} value={1} suit={Suit.DENARI} />
-  )
+  const { queryByAltText } = render(<Card faceDown card={[1, Suit.DENARI]} />)
   expect(queryByAltText('Asso di denari')).toBeNull()
-})
-
-test(`hidden cards don't require a value`, () => {
-  render(<Card hidden={true} />)
 })

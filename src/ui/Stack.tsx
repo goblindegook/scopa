@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from '@emotion/styled'
-import { range } from 'ramda'
+import { Card as CardType } from '../engine/cards'
 import { Card } from './Card'
 
 const StackArea = styled('aside')`
@@ -21,14 +21,19 @@ const StackedCard = styled<typeof Card, { index: number }>(Card)`
 
 interface StackProps {
   className?: string
-  size: number
+  pile: readonly CardType[]
   title: string
 }
 
-export const Stack = ({ className, size, title }: StackProps) => (
+export const Stack = ({ className, pile, title }: StackProps) => (
   <StackArea className={className} title={title}>
-    {range(0, size).map((i) => (
-      <StackedCard hidden={true} index={i} key={`player-pile-${i}`} />
+    {pile.map((card, index) => (
+      <StackedCard
+        key={`${card.join('')}`}
+        faceDown
+        index={index}
+        card={card}
+      />
     ))}
   </StackArea>
 )

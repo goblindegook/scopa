@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from '@emotion/styled'
-import { Suit } from '../engine/cards'
+import { Suit, Card as CardType } from '../engine/cards'
 
 const VALUES: { [key: number]: string } = {
   1: 'Asso',
@@ -22,7 +22,7 @@ const SUITS = {
   [Suit.SPADE]: 'spade',
 }
 
-function name(value: number, suit: Suit) {
+function name([value, suit]: CardType) {
   return `${VALUES[value]} di ${SUITS[suit]}`
 }
 
@@ -44,19 +44,19 @@ const Back = styled('div')`
 
 interface CardProps {
   className?: string
-  hidden?: boolean
-  suit?: Suit
-  value?: number
+  faceDown?: boolean
+  card: CardType
 }
 
-export const Card = ({ className, hidden = false, value, suit }: CardProps) =>
-  hidden || value === undefined || suit === undefined ? (
+export const Card = ({ className, faceDown = false, card }: CardProps) => {
+  return faceDown ? (
     <Back className={className} />
   ) : (
     <Face
       className={className}
-      src={require(`./assets/${SUITS[suit]}/${value}.jpg`)}
-      title={name(value, suit)}
-      alt={name(value, suit)}
+      src={require(`./assets/${SUITS[card[1]]}/${card[0]}.jpg`)}
+      title={name(card)}
+      alt={name(card)}
     />
   )
+}

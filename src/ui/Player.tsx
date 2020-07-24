@@ -1,5 +1,6 @@
 import React from 'react'
 import styled from '@emotion/styled'
+import { Card as CardType } from '../engine/cards'
 import { Stack } from './Stack'
 
 const PlayerArea = styled('section')`
@@ -37,13 +38,16 @@ export const PlayerCard = styled('button')`
 `
 
 type PlayerProps = React.PropsWithChildren<{
-  pile: number
+  pile: readonly CardType[]
   index: number
 }>
 
 export const Player = ({ children, index, pile }: PlayerProps) => (
   <PlayerArea>
     <div>{children}</div>
-    <PlayerPile size={pile} title={`Player ${index + 1} pile: ${pile} cards`} />
+    <PlayerPile
+      pile={pile}
+      title={`Player ${index + 1} pile: ${pile.length} cards`}
+    />
   </PlayerArea>
 )

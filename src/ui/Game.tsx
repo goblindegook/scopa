@@ -5,7 +5,7 @@ import styled from '@emotion/styled'
 import { Card } from '../engine/cards'
 import { Score } from '../engine/scores'
 import { State, Move } from '../engine/state'
-import { Card as UICard } from './Card'
+import { Card as HandCard } from './Card'
 import { Opponent, OpponentCard } from './Opponent'
 import { Player, PlayerCard } from './Player'
 import { ScoreBoard } from './ScoreBoard'
@@ -146,39 +146,43 @@ export const Game = ({
                 <Opponent
                   key={`opponent-${index}`}
                   index={index}
-                  pile={player.pile.length}
+                  pile={player.pile}
                 >
-                  {range(0, player.hand.length).map((key) => (
-                    <OpponentCard key={`${index}-${key}`} hidden={true} />
+                  {player.hand.map((card, cardIndex) => (
+                    <OpponentCard
+                      key={`${index}-${cardIndex}`}
+                      card={card}
+                      faceDown
+                    />
                   ))}
                 </Opponent>
               )
           )}
           <Table>
-            {game.table.map(([value, suit]) => {
-              const key = `${suit}${value}`
+            {game.table.map((card) => {
+              const key = card.join('')
               return (
                 <label key={key} htmlFor={key}>
                   <TableCardSelector
                     disabled={game.turn !== HUMAN_PLAYER}
                     type="checkbox"
-                    checked={contains([value, suit], targets)}
-                    onChange={() => toggleTarget([value, suit])}
+                    checked={contains(card, targets)}
+                    onChange={() => toggleTarget(card)}
                     id={key}
                   />
-                  <TableCard value={value} suit={suit} />
+                  <TableCard card={card} />
                 </label>
               )
             })}
           </Table>
-          <Player index={HUMAN_PLAYER} pile={humanPlayer.pile.length}>
-            {humanPlayer.hand.map(([value, suit]) => (
+          <Player index={HUMAN_PLAYER} pile={humanPlayer.pile}>
+            {humanPlayer.hand.map((card) => (
               <PlayerCard
                 disabled={game.turn !== HUMAN_PLAYER}
-                key={`${value}:${suit}`}
-                onClick={() => play({ card: [value, suit], targets })}
+                key={card.join('')}
+                onClick={() => play({ card, targets })}
               >
-                <UICard value={value} suit={suit} />
+                <HandCard card={card} />
               </PlayerCard>
             ))}
           </Player>

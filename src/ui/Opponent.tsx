@@ -1,5 +1,6 @@
 import React from 'react'
 import styled from '@emotion/styled'
+import { Card as CardType } from '../engine/cards'
 import { Card } from './Card'
 import { Stack } from './Stack'
 
@@ -22,7 +23,7 @@ const OpponentPile = styled(Stack)`
 `
 
 type OpponentProps = React.PropsWithChildren<{
-  pile: number
+  pile: readonly CardType[]
   index: number
 }>
 
@@ -30,8 +31,8 @@ export const Opponent = ({ children, index, pile }: OpponentProps) => (
   <OpponentArea>
     <aside data-testid={`p${index}-hand`}>{children}</aside>
     <OpponentPile
-      size={pile}
-      title={`Player ${index + 1} pile: ${pile} cards`}
+      pile={pile}
+      title={`Player ${index + 1} pile: ${pile.length} cards`}
     />
   </OpponentArea>
 )

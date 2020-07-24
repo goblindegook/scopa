@@ -119,16 +119,16 @@ test(`player piles`, () => {
             hand: [],
             pile: [
               [1, Suit.DENARI],
-              [1, Suit.DENARI],
+              [2, Suit.DENARI],
             ],
             scope: 0,
           },
           {
             hand: [],
             pile: [
-              [1, Suit.DENARI],
-              [1, Suit.DENARI],
-              [1, Suit.DENARI],
+              [3, Suit.DENARI],
+              [4, Suit.DENARI],
+              [5, Suit.DENARI],
             ],
             scope: 0,
           },
