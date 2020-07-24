@@ -33,8 +33,3 @@ export const TableCardSelector = styled('input')`
   position: absolute;
   left: -9999px;
 `
-
-export const TableCardPlaceholder = styled(TableCard)`
-  display: inline-block;
-  visibility: hidden;
-`

@@ -9,12 +9,7 @@ import { Card as UICard } from './Card'
 import { Opponent, OpponentCard } from './Opponent'
 import { Player, PlayerCard } from './Player'
 import { ScoreBoard } from './ScoreBoard'
-import {
-  Table,
-  TableCard,
-  TableCardSelector,
-  TableCardPlaceholder,
-} from './Table'
+import { Table, TableCard, TableCardSelector } from './Table'
 
 const HUMAN_PLAYER = 0
 
@@ -70,7 +65,6 @@ export const Game = ({
   onScore,
 }: GameProps) => {
   const [alert, setAlert] = React.useState('')
-  const [isPlaying, setIsPlaying] = React.useState(false)
   const [targets, setTargets] = React.useState<readonly Card[]>([])
   const [game, setGame] = React.useReducer(
     (currentGame: State, next: State) => next,
@@ -83,41 +77,44 @@ export const Game = ({
     }
   )
 
-  const onInvalidMove = React.useCallback(
+  const invalidMove = React.useCallback(
     async (error: Error) => setAlert(error.message),
     []
   )
 
-  const onNextTurn = React.useCallback(async (nextGame: State) => {
-    setIsPlaying(true)
-    // TODO: Animate
-    setGame(nextGame)
-    setTargets([])
-    setAlert('')
-    setIsPlaying(false)
-  }, [])
+  const turnTransition = React.useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (game: State, move?: Move) => async (nextGame: State) => {
+      // TODO: animateTurnTransition: move, game -> nextGame
+      setGame(nextGame)
+      setTargets([])
+      setAlert('')
+    },
+    []
+  )
 
   const start = React.useCallback(
-    () => fold(onNextTurn, onInvalidMove, onStart()),
-    [onInvalidMove, onNextTurn, onStart]
+    () => fold(turnTransition(game), invalidMove, onStart()),
+    [invalidMove, turnTransition, onStart, game]
   )
 
   const play = React.useCallback(
-    (move: Move) => fold(onNextTurn, onInvalidMove, onPlay(move, game)),
-    [onPlay, game, onInvalidMove, onNextTurn]
+    (move: Move) =>
+      fold(turnTransition(game, move), invalidMove, onPlay(move, game)),
+    [onPlay, game, invalidMove, turnTransition]
   )
 
   React.useEffect(() => {
     let isOpponentPlaying = true
     if (game.state === 'play' && game.turn !== HUMAN_PLAYER) {
       onOpponentTurn(game)
-        .then((move) => (isOpponentPlaying ? play(move) : Promise.resolve()))
-        .catch(onInvalidMove)
+        .then((move) => (isOpponentPlaying ? play(move) : undefined))
+        .catch(invalidMove)
     }
     return () => {
       isOpponentPlaying = false
     }
-  }, [game, onInvalidMove, onOpponentTurn, play])
+  }, [game, invalidMove, onOpponentTurn, play])
 
   const toggleTarget = (card: Card) =>
     setTargets(
@@ -173,7 +170,6 @@ export const Game = ({
                 </label>
               )
             })}
-            {isPlaying && <TableCardPlaceholder hidden />}
           </Table>
           <Player index={HUMAN_PLAYER} pile={humanPlayer.pile.length}>
             {humanPlayer.hand.map(([value, suit]) => (
