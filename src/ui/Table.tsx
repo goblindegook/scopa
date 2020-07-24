@@ -1,17 +1,14 @@
-import React from 'react'
 import styled from '@emotion/styled'
-import { Card as CardType, Deck } from '../engine/cards'
-import { contains } from 'ramda'
 import { Card } from './Card'
 
-const TableArea = styled('section')`
+export const Table = styled('section')`
   background-color: darkgreen;
   margin: 1rem;
   text-align: center;
   /* transform: perspective(1500px) rotateX(30deg) rotateY(0deg) rotateZ(0deg) scale(1); */
 `
 
-const TableCard = styled(Card)`
+export const TableCard = styled(Card)`
   margin: 1rem;
   transition: transform 0.2s ease-in, box-shadow 0.2s ease-in;
 
@@ -32,34 +29,12 @@ const TableCard = styled(Card)`
   }
 `
 
-const Checkbox = styled('input')`
+export const TableCardSelector = styled('input')`
   position: absolute;
   left: -9999px;
 `
 
-interface TableProps {
-  cards: Deck
-  disabled: boolean
-  selected: Deck
-  onSelect: (card: CardType) => void
-}
-
-export const Table = ({ cards, disabled, selected, onSelect }: TableProps) => (
-  <TableArea>
-    {cards.map(([value, suit]) => {
-      const key = `${suit}${value}`
-      return (
-        <label key={key} htmlFor={key}>
-          <Checkbox
-            disabled={disabled}
-            type="checkbox"
-            checked={contains([value, suit], selected)}
-            onChange={() => onSelect([value, suit])}
-            id={key}
-          />
-          <TableCard value={value} suit={suit} />
-        </label>
-      )
-    })}
-  </TableArea>
-)
+export const TableCardPlaceholder = styled(TableCard)`
+  display: inline-block;
+  visibility: hidden;
+`

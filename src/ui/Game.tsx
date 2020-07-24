@@ -9,7 +9,12 @@ import { Card as UICard } from './Card'
 import { Opponent, OpponentCard } from './Opponent'
 import { Player, PlayerCard } from './Player'
 import { ScoreBoard } from './ScoreBoard'
-import { Table } from './Table'
+import {
+  Table,
+  TableCard,
+  TableCardSelector,
+  TableCardPlaceholder,
+} from './Table'
 
 const HUMAN_PLAYER = 0
 
@@ -65,9 +70,10 @@ export const Game = ({
   onScore,
 }: GameProps) => {
   const [alert, setAlert] = React.useState('')
+  const [isPlaying, setIsPlaying] = React.useState(false)
   const [targets, setTargets] = React.useState<readonly Card[]>([])
   const [game, setGame] = React.useReducer(
-    (state: State, next: State) => next,
+    (currentGame: State, next: State) => next,
     {
       state: 'initial',
       turn: 0,
@@ -78,14 +84,17 @@ export const Game = ({
   )
 
   const onInvalidMove = React.useCallback(
-    (error: Error) => setAlert(error.message),
+    async (error: Error) => setAlert(error.message),
     []
   )
 
-  const onNextTurn = React.useCallback((state: State) => {
-    setGame(state)
+  const onNextTurn = React.useCallback(async (nextGame: State) => {
+    setIsPlaying(true)
+    // TODO: Animate
+    setGame(nextGame)
     setTargets([])
     setAlert('')
+    setIsPlaying(false)
   }, [])
 
   const start = React.useCallback(
@@ -102,7 +111,7 @@ export const Game = ({
     let isOpponentPlaying = true
     if (game.state === 'play' && game.turn !== HUMAN_PLAYER) {
       onOpponentTurn(game)
-        .then((move) => isOpponentPlaying && play(move))
+        .then((move) => (isOpponentPlaying ? play(move) : Promise.resolve()))
         .catch(onInvalidMove)
     }
     return () => {
@@ -148,12 +157,24 @@ export const Game = ({
                 </Opponent>
               )
           )}
-          <Table
-            disabled={game.turn !== HUMAN_PLAYER}
-            cards={game.table}
-            selected={targets}
-            onSelect={toggleTarget}
-          />
+          <Table>
+            {game.table.map(([value, suit]) => {
+              const key = `${suit}${value}`
+              return (
+                <label key={key} htmlFor={key}>
+                  <TableCardSelector
+                    disabled={game.turn !== HUMAN_PLAYER}
+                    type="checkbox"
+                    checked={contains([value, suit], targets)}
+                    onChange={() => toggleTarget([value, suit])}
+                    id={key}
+                  />
+                  <TableCard value={value} suit={suit} />
+                </label>
+              )
+            })}
+            {isPlaying && <TableCardPlaceholder hidden />}
+          </Table>
           <Player index={HUMAN_PLAYER} pile={humanPlayer.pile.length}>
             {humanPlayer.hand.map(([value, suit]) => (
               <PlayerCard
