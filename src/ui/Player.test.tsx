@@ -4,8 +4,11 @@ import { cleanup, render } from '@testing-library/react'
 import { Player } from './Player'
 import { Suit, Card } from '../engine/cards'
 
-const suits = [Suit.BASTONI, Suit.COPPE, Suit.DENARI, Suit.SPADE]
-const card = tuple(integer(1, 10), constantFrom(...suits))
+const card = tuple(
+  integer(1, 10),
+  constantFrom(Suit.BASTONI, Suit.COPPE, Suit.DENARI, Suit.SPADE)
+)
+
 const compareCards = (a: Card, b: Card) => a[0] === b[0] && a[1] === b[1]
 
 test('renders pile', () => {
