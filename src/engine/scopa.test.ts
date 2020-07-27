@@ -43,7 +43,7 @@ describe('deal', () => {
 
   test(`Scopa is a game for 2, 3, 4 or 6 players`, () => {
     assert(
-      property(constantFrom<2 | 3 | 4 | 6>(2, 3, 4, 6), (players) => {
+      property(constantFrom<(2 | 3 | 4 | 6)[]>(2, 3, 4, 6), (players) => {
         const game = getGame(deal(deck(), { players }))
         return game.players.length === players
       })

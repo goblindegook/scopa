@@ -160,7 +160,7 @@ export const Game = ({
           )}
           <Table>
             {game.table.map((card) => {
-              const key = card.join('')
+              const key = 'card-' + card.join('-')
               return (
                 <label key={key} htmlFor={key}>
                   <TableCardSelector
