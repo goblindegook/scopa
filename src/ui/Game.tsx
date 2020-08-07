@@ -66,16 +66,13 @@ export const Game = ({
 }: GameProps) => {
   const [alert, setAlert] = React.useState('')
   const [targets, setTargets] = React.useState<readonly Card[]>([])
-  const [game, setGame] = React.useReducer(
-    (currentGame: State, next: State) => next,
-    {
-      state: 'initial',
-      turn: 0,
-      table: [],
-      pile: [],
-      players: [],
-    }
-  )
+  const [game, setGame] = React.useState<State>({
+    state: 'initial',
+    turn: 0,
+    table: [],
+    pile: [],
+    players: [],
+  })
 
   const invalidMove = React.useCallback(
     async (error: Error) => setAlert(error.message),

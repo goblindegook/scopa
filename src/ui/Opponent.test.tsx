@@ -2,7 +2,7 @@ import React from 'react'
 import { assert, property, integer, constantFrom, tuple, set } from 'fast-check'
 import { cleanup, render } from '@testing-library/react'
 import { Opponent } from './Opponent'
-import { Card, Suit } from '../engine/cards'
+import { Suit } from '../engine/cards'
 
 const card = tuple(
   integer(1, 10),

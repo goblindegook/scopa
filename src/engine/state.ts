@@ -1,20 +1,20 @@
 import { Deck, Card } from './cards'
 
 export interface Player {
-  hand: Deck
-  pile: Deck
-  scope: number
+  readonly hand: Deck
+  readonly pile: Deck
+  readonly scope: number
 }
 
 export interface State {
-  state: 'initial' | 'play' | 'stop'
-  turn: number
-  pile: Deck
-  players: readonly Player[]
-  table: Deck
+  readonly state: 'initial' | 'play' | 'stop'
+  readonly turn: number
+  readonly pile: Deck
+  readonly players: readonly Player[]
+  readonly table: Deck
 }
 
 export interface Move {
-  card: Card
-  targets: Deck
+  readonly card: Card
+  readonly targets: Deck
 }
