@@ -1,20 +1,13 @@
-import { assert, property, constantFrom } from 'fast-check'
-import { Result, Ok, Err, getOrElse, isErr, isOk } from '@pacote/result'
+import assert from 'assert'
+import fc from 'fast-check'
+import { Result, Ok, Err, isErr, isOk } from '@pacote/result'
 import { deck, Suit, Deck, Card } from './cards'
 import { deal, play } from './scopa'
 import { State } from './state'
 
 function getGame(game: Result<State, Error>): State {
-  return getOrElse(
-    () => ({
-      state: 'stop',
-      turn: -1,
-      players: [],
-      pile: [],
-      table: [],
-    }),
-    game
-  )
+  assert(isOk(game))
+  return game.value
 }
 
 describe('deal', () => {
@@ -42,8 +35,8 @@ describe('deal', () => {
   })
 
   test(`Scopa is a game for 2, 3, 4 or 6 players`, () => {
-    assert(
-      property(constantFrom<(2 | 3 | 4 | 6)[]>(2, 3, 4, 6), (players) => {
+    fc.assert(
+      fc.property(fc.constantFrom<(2 | 3 | 4 | 6)[]>(2, 3, 4, 6), (players) => {
         const game = getGame(deal(deck(), { players }))
         return game.players.length === players
       })
