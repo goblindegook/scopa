@@ -1,6 +1,6 @@
 import React from 'react'
 import { assert, property, integer, tuple, set, constantFrom } from 'fast-check'
-import { cleanup, render } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { Player } from './Player'
 import { Suit } from '../engine/cards'
 
@@ -16,8 +16,8 @@ test('renders pile', () => {
   assert(
     property(cardSet(10), integer(1, 6), (pile, index) => {
       cleanup()
-      const { getByTitle } = render(<Player index={index} pile={pile} />)
-      const pileElement = getByTitle(
+      render(<Player index={index} pile={pile} />)
+      const pileElement = screen.getByTitle(
         `Player ${index + 1} pile: ${pile.length} cards`
       )
       expect(pileElement.children).toHaveLength(pile.length)

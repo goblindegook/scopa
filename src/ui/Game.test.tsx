@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import React from 'react'
-import { render, fireEvent } from '@testing-library/react'
+import { render, fireEvent, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import { Err, Ok } from '@pacote/result'
 import { Suit } from '../engine/cards'
@@ -27,7 +27,7 @@ test(`deal new game on start`, () => {
   const turn = 0
   const onStart = jest.fn(() => Ok(testGame({ turn })))
 
-  const { getByText, queryByText } = render(
+  render(
     <Game
       onStart={onStart}
       onPlay={jest.fn()}
@@ -35,12 +35,12 @@ test(`deal new game on start`, () => {
       onScore={() => []}
     />
   )
-  expect(queryByText('Game Over')).toBeNull()
+  expect(screen.queryByText('Game Over')).toBeNull()
 
-  fireEvent.click(getByText('Start new game'))
+  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
 
   expect(onStart).toHaveBeenCalled()
-  expect(getByText(`Player ${turn + 1}`)).toBeTruthy()
+  expect(screen.getByText(`Player ${turn + 1}`)).toBeTruthy()
 })
 
 test('renders opponent hand', () => {
@@ -63,7 +63,7 @@ test('renders opponent hand', () => {
       })
     )
 
-  const { getByText, getByTestId } = render(
+  render(
     <Game
       onStart={onStart}
       onPlay={jest.fn()}
@@ -72,9 +72,9 @@ test('renders opponent hand', () => {
     />
   )
 
-  fireEvent.click(getByText('Start new game'))
+  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
 
-  const cards = getByTestId('p1-hand').querySelectorAll('div')
+  const cards = screen.getByTestId('p1-hand').querySelectorAll('div')
   expect(cards).toHaveLength(2)
 })
 
@@ -91,7 +91,7 @@ test(`card visibility`, () => {
       })
     )
 
-  const { getByText, getByAltText, queryByTitle } = render(
+  render(
     <Game
       onStart={onStart}
       onPlay={jest.fn()}
@@ -100,14 +100,14 @@ test(`card visibility`, () => {
     />
   )
 
-  fireEvent.click(getByText('Start new game'))
+  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
 
-  expect(getByAltText('Asso di denari')).toBeTruthy()
-  expect(getByAltText('Cinque di denari')).toBeTruthy()
-  expect(queryByTitle('Sei di denari')).toBeFalsy()
-  expect(queryByTitle('Tre di denari')).toBeFalsy()
-  expect(queryByTitle('Due di denari')).toBeFalsy()
-  expect(queryByTitle('Quattro di denari')).toBeFalsy()
+  expect(screen.getByAltText('Asso di denari')).toBeTruthy()
+  expect(screen.getByAltText('Cinque di denari')).toBeTruthy()
+  expect(screen.queryByTitle('Sei di denari')).toBeFalsy()
+  expect(screen.queryByTitle('Tre di denari')).toBeFalsy()
+  expect(screen.queryByTitle('Due di denari')).toBeFalsy()
+  expect(screen.queryByTitle('Quattro di denari')).toBeFalsy()
 })
 
 test(`player piles`, () => {
@@ -138,7 +138,7 @@ test(`player piles`, () => {
       })
     )
 
-  const { getByText, getByTitle } = render(
+  render(
     <Game
       onStart={onStart}
       onPlay={jest.fn()}
@@ -147,10 +147,10 @@ test(`player piles`, () => {
     />
   )
 
-  fireEvent.click(getByText('Start new game'))
+  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
 
-  expect(getByTitle('Player 1 pile: 2 cards')).toBeTruthy()
-  expect(getByTitle('Player 2 pile: 3 cards')).toBeTruthy()
+  expect(screen.getByTitle('Player 1 pile: 2 cards')).toBeTruthy()
+  expect(screen.getByTitle('Player 2 pile: 3 cards')).toBeTruthy()
 })
 
 test(`allow playing a card`, () => {
@@ -174,7 +174,7 @@ test(`allow playing a card`, () => {
     )
   )
 
-  const { getByText, getByAltText } = render(
+  render(
     <Game
       onStart={() => Ok(initialState)}
       onPlay={onPlay}
@@ -183,14 +183,14 @@ test(`allow playing a card`, () => {
     />
   )
 
-  fireEvent.click(getByText('Start new game'))
-  fireEvent.click(getByAltText('Asso di denari'))
+  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
+  fireEvent.click(screen.getByAltText('Asso di denari'))
 
   expect(onPlay).toHaveBeenCalledWith(
     { card: [1, Suit.DENARI], targets: [] },
     initialState
   )
-  expect(getByAltText('Due di denari')).toBeTruthy()
+  expect(screen.getByAltText('Due di denari')).toBeTruthy()
 })
 
 test(`block interaction when not a player's turn`, () => {
@@ -206,7 +206,7 @@ test(`block interaction when not a player's turn`, () => {
 
   const onPlay = jest.fn()
 
-  const { getByText, getByAltText } = render(
+  render(
     <Game
       onStart={() => Ok(initialState)}
       onOpponentTurn={() =>
@@ -219,14 +219,14 @@ test(`block interaction when not a player's turn`, () => {
     />
   )
 
-  fireEvent.click(getByText('Start new game'))
+  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
 
-  const checkbox = getByAltText('Sette di denari')
+  const checkbox = screen.getByAltText('Sette di denari')
     .previousSibling as HTMLInputElement
 
   expect(checkbox).toBeDisabled()
 
-  const card = getByAltText('Asso di denari') as HTMLButtonElement
+  const card = screen.getByAltText('Asso di denari') as HTMLButtonElement
 
   fireEvent.click(card)
 
@@ -260,7 +260,7 @@ test(`select targets to capture`, () => {
     )
   )
 
-  const { getByText, getByAltText } = render(
+  render(
     <Game
       onStart={() => Ok(initialState)}
       onPlay={onPlay}
@@ -269,11 +269,9 @@ test(`select targets to capture`, () => {
     />
   )
 
-  fireEvent.click(getByText('Start new game'))
-  fireEvent.click(
-    getByAltText('Asso di coppe').closest('label')!.querySelector('input')!
-  )
-  fireEvent.click(getByAltText('Asso di denari'))
+  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Asso di coppe' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
 
   expect(onPlay).toHaveBeenCalledWith(
     { card: [1, Suit.DENARI], targets: [[1, Suit.COPPE]] },
@@ -285,7 +283,7 @@ test(`invalid move handling`, () => {
   const message = 'test error message'
   const onPlay = jest.fn(() => Err(Error(message)))
 
-  const { getByText, getByAltText } = render(
+  render(
     <Game
       onStart={() =>
         Ok(
@@ -303,10 +301,10 @@ test(`invalid move handling`, () => {
     />
   )
 
-  fireEvent.click(getByText('Start new game'))
-  fireEvent.click(getByAltText('Asso di denari'))
+  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
 
-  expect(getByText(message)).toBeTruthy()
+  expect(screen.getByText(message)).toBeTruthy()
 })
 
 test(`computer opponent plays a card`, async () => {
@@ -340,7 +338,7 @@ test(`computer opponent plays a card`, async () => {
     targets: [],
   })
 
-  const { getByText, findByAltText } = render(
+  render(
     <Game
       onStart={onStart}
       onPlay={onPlay}
@@ -349,9 +347,9 @@ test(`computer opponent plays a card`, async () => {
     />
   )
 
-  fireEvent.click(getByText('Start new game'))
+  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
 
-  await findByAltText('Asso di denari')
+  await screen.findByRole('button', { name: 'Asso di denari' })
 })
 
 test(`end game and show scores`, () => {
@@ -368,7 +366,7 @@ test(`end game and show scores`, () => {
     { total: 4, details: [] },
   ])
 
-  const { getByText } = render(
+  render(
     <Game
       onStart={() => Ok(state)}
       onPlay={jest.fn()}
@@ -377,13 +375,13 @@ test(`end game and show scores`, () => {
     />
   )
 
-  fireEvent.click(getByText('Start new game'))
+  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
 
   expect(onScore).toHaveBeenCalledWith(state.players)
 
-  expect(getByText('Game Over')).toBeTruthy()
-  expect(getByText('Player 1')).toBeTruthy()
-  expect(getByText('3')).toBeTruthy()
-  expect(getByText('Player 2')).toBeTruthy()
-  expect(getByText('4')).toBeTruthy()
+  expect(screen.getByText('Game Over')).toBeTruthy()
+  expect(screen.getByText('Player 1')).toBeTruthy()
+  expect(screen.getByText('3')).toBeTruthy()
+  expect(screen.getByText('Player 2')).toBeTruthy()
+  expect(screen.getByText('4')).toBeTruthy()
 })

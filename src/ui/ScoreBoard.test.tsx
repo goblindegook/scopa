@@ -1,5 +1,5 @@
 import React from 'react'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { ScoreBoard } from './ScoreBoard'
 import { Score } from '../engine/scores'
 
@@ -9,10 +9,10 @@ test('renders player names and scores', () => {
     { details: [], total: 4 },
   ]
 
-  const { getByText } = render(<ScoreBoard scores={scores} />)
+  render(<ScoreBoard scores={scores} />)
 
-  expect(getByText('Player 1')).toBeTruthy()
-  expect(getByText('3')).toBeTruthy()
-  expect(getByText('Player 2')).toBeTruthy()
-  expect(getByText('4')).toBeTruthy()
+  expect(screen.getByText('Player 1')).toBeTruthy()
+  expect(screen.getByText('3')).toBeTruthy()
+  expect(screen.getByText('Player 2')).toBeTruthy()
+  expect(screen.getByText('4')).toBeTruthy()
 })

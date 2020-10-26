@@ -1,6 +1,6 @@
 import React from 'react'
 import { Result, fold } from '@pacote/result'
-import { concat, contains, range, without } from 'ramda'
+import { concat, contains, without } from 'ramda'
 import styled from '@emotion/styled'
 import { Card } from '../engine/cards'
 import { Score } from '../engine/scores'

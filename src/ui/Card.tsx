@@ -49,14 +49,11 @@ interface CardProps {
 }
 
 export const Card = ({ className, faceDown = false, card }: CardProps) => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const src = require(`./assets/${SUITS[card[1]]}/${card[0]}.jpg`).default
   return faceDown ? (
     <Back className={className} />
   ) : (
-    <Face
-      className={className}
-      src={require(`./assets/${SUITS[card[1]]}/${card[0]}.jpg`)}
-      title={name(card)}
-      alt={name(card)}
-    />
+    <Face className={className} src={src} title={name(card)} alt={name(card)} />
   )
 }

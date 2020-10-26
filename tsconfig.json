@@ -7,7 +7,7 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "sourceMap": true,
-    "jsx": "preserve",
+    "jsx": "react",
     "allowJs": false,
     "strict": true,
     "skipLibCheck": true,
@@ -15,7 +15,8 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": true,
+    "noFallthroughCasesInSwitch": true
   },
   "include": ["src"]
 }
