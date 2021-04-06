@@ -1,11 +1,11 @@
 import React from 'react'
 import { Result, fold } from '@pacote/result'
-import { concat, contains, without } from 'ramda'
+import { contains, without } from 'ramda'
 import styled from '@emotion/styled'
 import { Card } from '../engine/cards'
 import { Score } from '../engine/scores'
 import { State, Move } from '../engine/state'
-import { Card as HandCard } from './Card'
+import { Card as DisplayCard } from './Card'
 import { Opponent, OpponentCard } from './Opponent'
 import { Player, PlayerCard } from './Player'
 import { ScoreBoard } from './ScoreBoard'
@@ -115,9 +115,7 @@ export const Game = ({
 
   const toggleTarget = (card: Card) =>
     setTargets(
-      contains(card, targets)
-        ? without([card], targets)
-        : concat([card], targets)
+      contains(card, targets) ? without([card], targets) : [...targets, card]
     )
 
   const humanPlayer = game.players[HUMAN_PLAYER]
@@ -179,7 +177,7 @@ export const Game = ({
                 key={card.join('')}
                 onClick={() => play({ card, targets })}
               >
-                <HandCard card={card} />
+                <DisplayCard card={card} />
               </PlayerCard>
             ))}
           </Player>

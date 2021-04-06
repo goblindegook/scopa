@@ -1,5 +1,6 @@
-import { contains, without, splitAt, splitEvery, sort } from 'ramda'
+import { contains, without, splitAt, sort } from 'ramda'
 import { Result, Ok, Err } from '@pacote/result'
+import { windowed } from '@pacote/array'
 import { Deck, Card } from './cards'
 import { findMatches } from './match'
 import { Player, State, Move } from './state'
@@ -13,7 +14,7 @@ const DEFAULT_OPTIONS: Required<Options> = {
 }
 
 const createPlayers = (cards: Deck): readonly Player[] =>
-  splitEvery(3, cards).map((hand) => ({ hand, pile: [], scope: 0 }))
+  windowed(3, 3, cards).map((hand) => ({ hand, pile: [], scope: 0 }))
 
 export function deal(cards: Deck, options?: Options): Result<State, Error> {
   const { players } = { ...DEFAULT_OPTIONS, ...options }

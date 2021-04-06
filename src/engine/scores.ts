@@ -1,19 +1,22 @@
-import { contains, groupBy, map, pipe, reduce, sort } from 'ramda'
+import { contains, groupBy, map, reduce, sort } from 'ramda'
+import { flow } from '@pacote/pipe'
 import { Suit, Card } from './cards'
 import { Player } from './state'
 
-const SETTEBELLO: Card = [7, Suit.DENARI]
-
 interface ScoreDetail {
   label: string
-  value?: string | number
-  cards?: readonly Card[]
+  value: number
+  cards: readonly Card[]
 }
 
 export interface Score {
   details: readonly ScoreDetail[]
   total: number
 }
+
+const isDenari = ([, suit]: Card) => suit === Suit.DENARI
+
+const SETTEBELLO: Card = [7, Suit.DENARI]
 
 const PRIME_POINTS: { [value: number]: number } = {
   1: 16,
@@ -31,10 +34,10 @@ const PRIME_POINTS: { [value: number]: number } = {
 type CardPoints = [Card, number]
 
 const cardPoints = (card: Card): CardPoints => [card, PRIME_POINTS[card[0]]]
-const suit = ([[, suit]]: CardPoints) => `${suit}`
+const suit = ([[, suit]]: CardPoints) => String(suit)
 const mostPoints = ([, p1]: CardPoints, [, p2]: CardPoints) => p2 - p1
 
-const prime = pipe(
+const prime = flow(
   map(cardPoints),
   sort(mostPoints),
   groupBy(suit),
@@ -57,29 +60,31 @@ export function score(players: readonly Player[]): readonly Score[] {
   const cardTotal = players.map(({ pile }) => pile.length)
   const mostCards = findWinner(cardTotal)
 
-  const denariTotal = players.map(
-    ({ pile }) => pile.filter(([, suit]) => suit === Suit.DENARI).length
-  )
+  const denariTotal = players.map(({ pile }) => pile.filter(isDenari).length)
   const mostDenari = findWinner(denariTotal)
 
   const primes = players.map(({ pile }) => prime(pile))
   const highestPrime = findWinner(primes.map(({ value }) => value))
 
   return players.map(({ scope, pile }, player) => {
-    const settebello = contains(SETTEBELLO, pile)
-    const denariCards = pile.filter(([, suit]) => suit === Suit.DENARI)
+    const settebello = contains(SETTEBELLO, pile) ? 1 : 0
+    const denariCards = pile.filter(isDenari)
 
     return {
       details: [
-        { label: 'Scope', value: scope },
+        { label: 'Scope', value: scope, cards: [] },
         { label: 'Captured', value: pile.length, cards: pile },
         { label: 'Denari', value: denariTotal[player], cards: denariCards },
-        { label: 'Sette Bello', cards: settebello ? [SETTEBELLO] : [] },
+        {
+          label: 'Sette Bello',
+          value: settebello,
+          cards: settebello === 1 ? [SETTEBELLO] : [],
+        },
         { label: 'Primiera', ...primes[player] },
       ],
       total:
         scope +
-        (settebello ? 1 : 0) +
+        settebello +
         (mostCards === player ? 1 : 0) +
         (mostDenari === player ? 1 : 0) +
         (highestPrime === player ? 1 : 0),

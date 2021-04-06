@@ -1,4 +1,4 @@
-import { range } from 'ramda'
+import { range } from '@pacote/array'
 
 export enum Suit {
   DENARI,
