@@ -46,6 +46,7 @@ interface CardProps {
   className?: string
   faceDown?: boolean
   card: CardType
+  index?: number
 }
 
 export const Card = ({ className, faceDown = false, card }: CardProps) => {

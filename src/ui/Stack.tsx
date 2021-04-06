@@ -7,11 +7,11 @@ const StackArea = styled('aside')`
   position: relative;
 `
 
-const StackedCard = styled<typeof Card, { index: number }>(Card)`
+const StackedCard = styled(Card)`
   transition: transform 0.1s ease-in;
   position: absolute;
   z-index: ${({ index }) => index};
-  top: -${({ index }) => index * 2}px;
+  top: -${({ index }) => (index ?? 0) * 2}px;
   left: 0;
 
   &:hover ~ * {
