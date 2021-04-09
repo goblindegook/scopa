@@ -35,7 +35,7 @@ test(`deal new game on start`, () => {
       onScore={() => []}
     />
   )
-  expect(screen.queryByText('Game Over')).toBeNull()
+  expect(screen.queryByText('Game Over')).not.toBeInTheDocument()
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
 

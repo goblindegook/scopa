@@ -47,5 +47,5 @@ test.each<[string, number]>([
 
 test('hidden cards have no title', () => {
   const { queryByAltText } = render(<Card faceDown card={[1, Suit.DENARI]} />)
-  expect(queryByAltText('Asso di denari')).toBeNull()
+  expect(queryByAltText('Asso di denari')).not.toBeInTheDocument()
 })
