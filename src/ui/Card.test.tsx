@@ -1,6 +1,7 @@
+import React from 'react'
+import '@testing-library/jest-dom'
 import { cleanup, render, screen } from '@testing-library/react'
 import { assert, constantFrom, integer, property } from 'fast-check'
-import React from 'react'
 import { Suit } from '../engine/cards'
 import { Card } from './Card'
 
