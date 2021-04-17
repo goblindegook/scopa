@@ -1,6 +1,6 @@
 import React from 'react'
 import '@testing-library/jest-dom'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render } from '@testing-library/react'
 import { assert, constantFrom, integer, property } from 'fast-check'
 import { Suit } from '../engine/cards'
 import { Card } from './Card'
@@ -14,7 +14,7 @@ test.each<[string, Suit]>([
   assert(
     property(integer(1, 10), (value) => {
       cleanup()
-      render(<Card card={[value, suit]} />)
+      const screen = render(<Card card={[value, suit]} />)
       screen.getByTitle(`di ${match}`, {
         exact: false,
       }) as HTMLImageElement
@@ -39,7 +39,7 @@ test.each<[string, number]>([
       constantFrom(Suit.BASTONI, Suit.COPPE, Suit.DENARI, Suit.SPADE),
       (suit) => {
         cleanup()
-        render(<Card card={[value, suit]} />)
+        const screen = render(<Card card={[value, suit]} />)
         screen.getByTitle(`${match} di`, { exact: false })
       }
     )
@@ -47,6 +47,6 @@ test.each<[string, number]>([
 })
 
 test('hidden cards have no title', () => {
-  const { queryByAltText } = render(<Card faceDown card={[1, Suit.DENARI]} />)
-  expect(queryByAltText('Asso di denari')).not.toBeInTheDocument()
+  const screen = render(<Card faceDown card={[1, Suit.DENARI]} />)
+  expect(screen.queryByAltText('Asso di denari')).not.toBeInTheDocument()
 })
