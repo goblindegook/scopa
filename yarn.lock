@@ -1576,22 +1576,22 @@
   resolved "https://registry.yarnpkg.com/@pacote/eslint-config/-/eslint-config-5.0.0.tgz#4a832741c63db578360fc2f631163f0bab0e6669"
   integrity sha512-VnotPYcxDxqD9MFv2cqA58s81Utg9SCup61cP9tbMzknSHj3oNSurpLK2Hid9kEyG8o5eBenKzVqcKotVce2yA==
 
-"@pacote/option@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@pacote/option/-/option-1.1.0.tgz#78463b493752e2a77d506e927df45dbbb302b6fe"
-  integrity sha512-5ztDqSuJdqljKMwz76qq1Q8LypGxgt9+hF1nbydeZKi/B9glPwv/ms9MWDRuFcb2nfoPcrZlh2FCqBE8cAnQcQ==
+"@pacote/option@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@pacote/option/-/option-2.0.0.tgz#377e1b75690ec3d18c665588c5cebaec9b3c24f4"
+  integrity sha512-iwpTNg7CODyP+s5ZedMfY6jsBTs5btJRoMj7/0+aLUzRxIQwqQ266Vkv1rZULf94utwRrNTAIFSzPsnVxuy4bA==
 
 "@pacote/pipe@^0.1.0":
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/@pacote/pipe/-/pipe-0.1.0.tgz#7d34fbaf03325a3622f0aa030da3bf987ee1f11d"
   integrity sha512-jAnr4/KRkHhy2FpSDypJ9vEzhlHyvW9H1wKKYLHcj0oSJpPAusHekeIPR9RqxV88FxtMk73hNTI9JU8IhYV4Yw==
 
-"@pacote/result@^1.0.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@pacote/result/-/result-1.1.0.tgz#9bfdcaa2344bf8cd42f41acbdc8f3dcab3a180f0"
-  integrity sha512-yMlV4HfkyoCo9oYwzEMw2QNqUkqfaguFWI2wAmew22BG+JwjggbrpGM4oru3oZAxtPPlPVzHZGh443q9W03abQ==
+"@pacote/result@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@pacote/result/-/result-2.0.0.tgz#49ed8cc8117739eb6937fd3e85e5d3382554c769"
+  integrity sha512-SD/rNSSfiFu4qE+PjHprxs8f3xMoTVAJwTaFkUvDU1xwfdnHyndUBo2v/NwpV75mYCgTNlLZloRyP5aJCBT82g==
   dependencies:
-    "@pacote/option" "^1.1.0"
+    "@pacote/option" "^2.0.0"
 
 "@pacote/shuffle@^1.0.3":
   version "1.0.9"

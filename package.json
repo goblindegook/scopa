@@ -25,7 +25,7 @@
     "@emotion/styled-base": "^11.0.0",
     "@pacote/array": "^0.3.0",
     "@pacote/pipe": "^0.1.0",
-    "@pacote/result": "^1.0.0",
+    "@pacote/result": "^2.0.0",
     "@pacote/shuffle": "^1.0.3",
     "ramda": "^0.27.0",
     "react": "^17.0.1",

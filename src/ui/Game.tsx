@@ -1,4 +1,5 @@
 import React from 'react'
+import { pipe } from '@pacote/pipe'
 import { Result, fold } from '@pacote/result'
 import { contains, without } from 'ramda'
 import styled from '@emotion/styled'
@@ -91,13 +92,13 @@ export const Game = ({
   )
 
   const start = React.useCallback(
-    () => fold(turnTransition(game), invalidMove, onStart()),
+    () => pipe(onStart(), fold(turnTransition(game), invalidMove)),
     [invalidMove, turnTransition, onStart, game]
   )
 
   const play = React.useCallback(
     (move: Move) =>
-      fold(turnTransition(game, move), invalidMove, onPlay(move, game)),
+      pipe(onPlay(move, game), fold(turnTransition(game, move), invalidMove)),
     [onPlay, game, invalidMove, turnTransition]
   )
 
