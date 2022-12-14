@@ -1,20 +1,27 @@
 import React from 'react'
-import { assert, property, integer, tuple, set, constantFrom } from 'fast-check'
+import {
+  assert,
+  property,
+  integer,
+  tuple,
+  constantFrom,
+  uniqueArray,
+} from 'fast-check'
 import { cleanup, render, screen } from '@testing-library/react'
 import { Player } from './Player'
 import { Suit } from '../engine/cards'
 
 const card = tuple(
-  integer(1, 10),
+  integer({ min: 1, max: 10 }),
   constantFrom(Suit.BASTONI, Suit.COPPE, Suit.DENARI, Suit.SPADE)
 )
 
 const cardSet = (maxLength: number) =>
-  set(card, maxLength, (a, b) => a[0] === b[0] && a[1] === b[1])
+  uniqueArray(card, { maxLength, selector: (v) => v.join(':') })
 
 test('renders pile', () => {
   assert(
-    property(cardSet(10), integer(1, 6), (pile, index) => {
+    property(cardSet(10), integer({ min: 1, max: 6 }), (pile, index) => {
       cleanup()
       render(<Player index={index} pile={pile} />)
       const pileElement = screen.getByTitle(

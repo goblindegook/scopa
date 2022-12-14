@@ -13,7 +13,7 @@ test('a deck contains unique cards', () => {
 
 test('a deck contains Neapolitan cards', () => {
   const arbitraryCard = tuple(
-    integer(1, 10),
+    integer({ min: 1, max: 10 }),
     constantFrom(Suit.BASTONI, Suit.COPPE, Suit.DENARI, Suit.SPADE)
   )
 

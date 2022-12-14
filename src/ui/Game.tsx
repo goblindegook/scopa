@@ -1,7 +1,6 @@
 import React from 'react'
-import { pipe } from '@pacote/pipe'
 import { Result, fold } from '@pacote/result'
-import { contains, without } from 'ramda'
+import { includes, without } from 'ramda'
 import styled from '@emotion/styled'
 import { Card } from '../engine/cards'
 import { Score } from '../engine/scores'
@@ -92,13 +91,13 @@ export const Game = ({
   )
 
   const start = React.useCallback(
-    () => pipe(onStart(), fold(turnTransition(game), invalidMove)),
+    () => fold(turnTransition(game), invalidMove, onStart()),
     [invalidMove, turnTransition, onStart, game]
   )
 
   const play = React.useCallback(
     (move: Move) =>
-      pipe(onPlay(move, game), fold(turnTransition(game, move), invalidMove)),
+      fold(turnTransition(game, move), invalidMove, onPlay(move, game)),
     [onPlay, game, invalidMove, turnTransition]
   )
 
@@ -116,7 +115,7 @@ export const Game = ({
 
   const toggleTarget = (card: Card) =>
     setTargets(
-      contains(card, targets) ? without([card], targets) : [...targets, card]
+      includes(card, targets) ? without([card], targets) : [...targets, card]
     )
 
   const humanPlayer = game.players[HUMAN_PLAYER]
@@ -162,7 +161,7 @@ export const Game = ({
                   <TableCardSelector
                     disabled={game.turn !== HUMAN_PLAYER}
                     type="checkbox"
-                    checked={contains(card, targets)}
+                    checked={includes(card, targets)}
                     onChange={() => toggleTarget(card)}
                     id={key}
                   />

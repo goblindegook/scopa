@@ -9,7 +9,7 @@ test('renders stack of cards', () => {
   assert(
     property(
       string().map((s) => s.trim()),
-      integer(1, 10),
+      integer({ min: 1, max: 10 }),
       (title, size) => {
         cleanup()
         const pile: Card[] = range(0, size).map((value) => [

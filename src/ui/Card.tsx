@@ -50,8 +50,15 @@ interface CardProps {
 }
 
 export const Card = ({ className, faceDown = false, card }: CardProps) => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const src = require(`./assets/${SUITS[card[1]]}/${card[0]}.jpg`).default
+  const [src, setSrc] = React.useState('')
+
+  React.useEffect(() => {
+    ;(async () => {
+      const asset = await import(`./assets/${SUITS[card[1]]}/${card[0]}.jpg`)
+      setSrc(asset.default)
+    })()
+  }, [card, setSrc])
+
   return faceDown ? (
     <Back className={className} />
   ) : (

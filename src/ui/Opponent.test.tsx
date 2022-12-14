@@ -1,16 +1,23 @@
 import React from 'react'
-import { assert, property, integer, constantFrom, tuple, set } from 'fast-check'
+import {
+  assert,
+  property,
+  integer,
+  constantFrom,
+  tuple,
+  uniqueArray,
+} from 'fast-check'
 import { cleanup, render, screen } from '@testing-library/react'
 import { Opponent } from './Opponent'
 import { Suit } from '../engine/cards'
 
 const card = tuple(
-  integer(1, 10),
+  integer({ min: 1, max: 10 }),
   constantFrom(Suit.BASTONI, Suit.COPPE, Suit.DENARI, Suit.SPADE)
 )
 
 const cardSet = (maxLength: number) =>
-  set(card, maxLength, (a, b) => a[0] === b[0] && a[1] === b[1])
+  uniqueArray(card, { maxLength, selector: (v) => v.join(':') })
 
 test('renders opponent pile', () => {
   assert(

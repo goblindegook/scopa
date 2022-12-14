@@ -1,4 +1,4 @@
-import { contains, without, splitAt, sort } from 'ramda'
+import { includes, without, splitAt, sort } from 'ramda'
 import { Result, Ok, Err } from '@pacote/result'
 import { windowed } from '@pacote/array'
 import { Deck, Card } from './cards'
@@ -84,7 +84,7 @@ export function play(
 ): Result<State, Error> {
   const { table, turn, players } = game
 
-  const hasCard = contains(card, players[turn].hand)
+  const hasCard = includes(card, players[turn].hand)
 
   const possibleTargets = findMatches(card[0], sortCards(table))
   const mustPick = Math.min(...possibleTargets.map((t) => t.length))
@@ -92,7 +92,7 @@ export function play(
 
   const autoTargets =
     !targets.length && validTargets.length < 2 ? validTargets[0] || [] : null
-  const hasTarget = autoTargets || contains(sortCards(targets), validTargets)
+  const hasTarget = autoTargets || includes(sortCards(targets), validTargets)
 
   return hasCard
     ? hasTarget

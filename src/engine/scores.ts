@@ -1,4 +1,4 @@
-import { contains, groupBy, map, reduce, sort } from 'ramda'
+import { includes, groupBy, map, reduce, sort } from 'ramda'
 import { flow } from '@pacote/pipe'
 import { Suit, Card } from './cards'
 import { Player } from './state'
@@ -67,7 +67,7 @@ export function score(players: readonly Player[]): readonly Score[] {
   const highestPrime = findWinner(primes.map(({ value }) => value))
 
   return players.map(({ scope, pile }, player) => {
-    const settebello = contains(SETTEBELLO, pile) ? 1 : 0
+    const settebello = includes(SETTEBELLO, pile) ? 1 : 0
     const denariCards = pile.filter(isDenari)
 
     return {

@@ -12,7 +12,7 @@ test.each<[string, Suit]>([
   ['spade', Suit.SPADE],
 ])('render %s suit cards', (match, suit) => {
   assert(
-    property(integer(1, 10), (value) => {
+    property(integer({ min: 1, max: 10 }), (value) => {
       cleanup()
       const screen = render(<Card card={[value, suit]} />)
       screen.getByTitle(`di ${match}`, {
