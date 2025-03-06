@@ -1,9 +1,9 @@
-import React from 'react'
-import { assert, property, integer, string } from 'fast-check'
 import { cleanup, render, screen } from '@testing-library/react'
-import { Stack } from './Stack'
-import { Suit, Card } from '../engine/cards'
+import { assert, integer, property, string } from 'fast-check'
 import { range } from 'ramda'
+import React from 'react'
+import { type Card, Suit } from '../engine/cards'
+import { Stack } from './Stack'
 
 test('renders stack of cards', () => {
   assert(
@@ -19,7 +19,7 @@ test('renders stack of cards', () => {
         render(<Stack title={title} pile={pile} />)
         const container = screen.getByTitle(title)
         expect(container.children).toHaveLength(size)
-      }
-    )
+      },
+    ),
   )
 })

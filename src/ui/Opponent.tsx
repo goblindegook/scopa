@@ -1,6 +1,6 @@
-import React from 'react'
 import styled from '@emotion/styled'
-import { Card as CardType } from '../engine/cards'
+import type React from 'react'
+import type { Card as CardType } from '../engine/cards'
 import { Card } from './Card'
 import { Stack } from './Stack'
 

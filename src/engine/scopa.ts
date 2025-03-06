@@ -1,9 +1,9 @@
-import { includes, without, splitAt, sort } from 'ramda'
-import { Result, Ok, Err } from '@pacote/result'
 import { windowed } from '@pacote/array'
-import { Deck, Card } from './cards'
+import { Err, Ok, type Result } from '@pacote/result'
+import { includes, sort, splitAt, without } from 'ramda'
+import type { Card, Deck } from './cards'
 import { findMatches } from './match'
-import { Player, State, Move } from './state'
+import type { Move, Player, State } from './state'
 
 interface Options {
   players?: 2 | 3 | 4 | 6
@@ -14,7 +14,12 @@ const DEFAULT_OPTIONS: Required<Options> = {
 }
 
 const createPlayers = (cards: Deck): readonly Player[] =>
-  windowed(3, 3, cards).map((hand) => ({ hand, pile: [], scope: 0 }))
+  windowed(3, 3, cards).map((hand, index) => ({
+    id: index,
+    hand,
+    pile: [],
+    scope: 0,
+  }))
 
 export function deal(cards: Deck, options?: Options): Result<State, Error> {
   const { players } = { ...DEFAULT_OPTIONS, ...options }
@@ -59,7 +64,7 @@ function next({ card, targets }: Move, game: State): State {
           hand: nextHand,
           pile: [...player.pile, ...targets, ...(targets.length ? [card] : [])],
           scope: tableAfterMove.length ? player.scope : player.scope + 1,
-        }
+        },
   )
 
   const nextTurn = turn < players.length - 1 ? turn + 1 : 0
@@ -75,12 +80,12 @@ function next({ card, targets }: Move, game: State): State {
 }
 
 const sortCards = sort<Card>(
-  ([va, sa], [vb, sb]) => sb * 10 + vb - (sa * 10 + va)
+  ([va, sa], [vb, sb]) => sb * 10 + vb - (sa * 10 + va),
 )
 
 export function play(
   { card, targets }: Move,
-  game: State
+  game: State,
 ): Result<State, Error> {
   const { table, turn, players } = game
 
@@ -100,7 +105,7 @@ export function play(
       : Err(
           targets.length
             ? Error('The targetted cards may not be captured.')
-            : Error('Choose the cards to capture.')
+            : Error('Choose the cards to capture.'),
         )
     : Err(Error('Not your turn.'))
 }

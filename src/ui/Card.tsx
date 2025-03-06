@@ -1,6 +1,6 @@
-import React from 'react'
 import styled from '@emotion/styled'
-import { Suit, Card as CardType } from '../engine/cards'
+import React from 'react'
+import { type Card as CardType, Suit } from '../engine/cards'
 
 const VALUES: { [key: number]: string } = {
   1: 'Asso',
@@ -57,7 +57,7 @@ export const Card = ({ className, faceDown = false, card }: CardProps) => {
       const asset = await import(`./assets/${SUITS[card[1]]}/${card[0]}.jpg`)
       setSrc(asset.default)
     })()
-  }, [card, setSrc])
+  }, [card])
 
   return faceDown ? (
     <Back className={className} />

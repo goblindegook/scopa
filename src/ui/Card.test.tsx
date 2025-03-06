@@ -18,7 +18,7 @@ test.each<[string, Suit]>([
       screen.getByTitle(`di ${match}`, {
         exact: false,
       }) as HTMLImageElement
-    })
+    }),
   )
 })
 
@@ -41,8 +41,8 @@ test.each<[string, number]>([
         cleanup()
         const screen = render(<Card card={[value, suit]} />)
         screen.getByTitle(`${match} di`, { exact: false })
-      }
-    )
+      },
+    ),
   )
 })
 

@@ -1,6 +1,6 @@
-import React from 'react'
 import styled from '@emotion/styled/base'
-import { Score } from '../engine/scores'
+import React from 'react'
+import type { Score } from '../engine/scores'
 
 const Board = styled('table')`
   border: 1px solid white;
@@ -33,9 +33,9 @@ export const ScoreBoard = ({ scores }: ScoreBoardProps) => (
     <thead>
       <tr>
         <th />
-        {scores.map((_, index) => (
-          <PlayerHeader key={`player-header-${index}`}>
-            Player {index + 1}
+        {scores.map(({ playerId }) => (
+          <PlayerHeader key={`player-header-${playerId}`}>
+            Player {playerId + 1}
           </PlayerHeader>
         ))}
       </tr>
@@ -43,8 +43,8 @@ export const ScoreBoard = ({ scores }: ScoreBoardProps) => (
     <tbody>
       <tr>
         <RowHeader>Score</RowHeader>
-        {scores.map(({ total }, index) => (
-          <Cell key={`player-score-${index}`}>{total}</Cell>
+        {scores.map(({ playerId, total }) => (
+          <Cell key={`player-score-${playerId}`}>{total}</Cell>
         ))}
       </tr>
     </tbody>

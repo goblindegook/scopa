@@ -1,7 +1,7 @@
-import { includes, groupBy, map, reduce, sort } from 'ramda'
 import { flow } from '@pacote/pipe'
-import { Suit, Card } from './cards'
-import { Player } from './state'
+import { groupBy, includes, map, reduce, sort } from 'ramda'
+import { type Card, Suit } from './cards'
+import type { Player } from './state'
 
 interface ScoreDetail {
   label: string
@@ -10,6 +10,7 @@ interface ScoreDetail {
 }
 
 export interface Score {
+  playerId: number
   details: readonly ScoreDetail[]
   total: number
 }
@@ -45,9 +46,9 @@ const prime = flow(
   map(([highest]) => highest),
   reduce<CardPoints, [Card[], number]>(
     ([cards, total], [card, points]) => [[...cards, card], total + points],
-    [[], 0]
+    [[], 0],
   ),
-  ([cards, value]) => ({ cards, value })
+  ([cards, value]) => ({ cards, value }),
 )
 
 function findWinner(totals: number[]): number | null {
@@ -71,6 +72,7 @@ export function score(players: readonly Player[]): readonly Score[] {
     const denariCards = pile.filter(isDenari)
 
     return {
+      playerId: player,
       details: [
         { label: 'Scope', value: scope, cards: [] },
         { label: 'Captured', value: pile.length, cards: pile },

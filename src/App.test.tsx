@@ -8,7 +8,7 @@ test('render without crashing', () => {
   root.render(
     <StrictMode>
       <App />
-    </StrictMode>
+    </StrictMode>,
   )
   root.unmount()
 })

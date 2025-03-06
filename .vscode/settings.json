@@ -1,6 +1,4 @@
 {
-  "editor.formatOnSave": true,
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "deno.enable": false,
-  "standard.enable": false
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.formatOnSave": true
 }

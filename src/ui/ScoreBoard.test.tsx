@@ -1,12 +1,12 @@
-import React from 'react'
 import { render, screen } from '@testing-library/react'
+import React from 'react'
+import type { Score } from '../engine/scores'
 import { ScoreBoard } from './ScoreBoard'
-import { Score } from '../engine/scores'
 
 test('renders player names and scores', () => {
   const scores: Score[] = [
-    { details: [], total: 3 },
-    { details: [], total: 4 },
+    { playerId: 0, details: [], total: 3 },
+    { playerId: 1, details: [], total: 4 },
   ]
 
   render(<ScoreBoard scores={scores} />)

@@ -1,6 +1,7 @@
-import { Deck, Card } from './cards'
+import type { Card, Deck } from './cards'
 
 export interface Player {
+  readonly id: number
   readonly hand: Deck
   readonly pile: Deck
   readonly scope: number

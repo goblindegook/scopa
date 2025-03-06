@@ -1,10 +1,10 @@
-import React from 'react'
-import { Result, fold } from '@pacote/result'
-import { includes, without } from 'ramda'
 import styled from '@emotion/styled'
-import { Card } from '../engine/cards'
-import { Score } from '../engine/scores'
-import { State, Move } from '../engine/state'
+import { type Result, fold } from '@pacote/result'
+import { includes, without } from 'ramda'
+import React from 'react'
+import type { Card } from '../engine/cards'
+import type { Score } from '../engine/scores'
+import type { Move, State } from '../engine/state'
 import { Card as DisplayCard } from './Card'
 import { Opponent, OpponentCard } from './Opponent'
 import { Player, PlayerCard } from './Player'
@@ -76,7 +76,7 @@ export const Game = ({
 
   const invalidMove = React.useCallback(
     async (error: Error) => setAlert(error.message),
-    []
+    [],
   )
 
   const turnTransition = React.useCallback(
@@ -87,18 +87,18 @@ export const Game = ({
       setTargets([])
       setAlert('')
     },
-    []
+    [],
   )
 
   const start = React.useCallback(
     () => fold(turnTransition(game), invalidMove, onStart()),
-    [invalidMove, turnTransition, onStart, game]
+    [invalidMove, turnTransition, onStart, game],
   )
 
   const play = React.useCallback(
     (move: Move) =>
       fold(turnTransition(game, move), invalidMove, onPlay(move, game)),
-    [onPlay, game, invalidMove, turnTransition]
+    [onPlay, game, invalidMove, turnTransition],
   )
 
   React.useEffect(() => {
@@ -115,7 +115,7 @@ export const Game = ({
 
   const toggleTarget = (card: Card) =>
     setTargets(
-      includes(card, targets) ? without([card], targets) : [...targets, card]
+      includes(card, targets) ? without([card], targets) : [...targets, card],
     )
 
   const humanPlayer = game.players[HUMAN_PLAYER]
@@ -136,26 +136,26 @@ export const Game = ({
       {game.state === 'play' && (
         <main>
           {game.players.map(
-            (player, index) =>
-              index !== HUMAN_PLAYER && (
+            (player) =>
+              player.id !== HUMAN_PLAYER && (
                 <Opponent
-                  key={`opponent-${index}`}
-                  index={index}
+                  key={`opponent-${player.id}`}
+                  index={player.id}
                   pile={player.pile}
                 >
-                  {player.hand.map((card, cardIndex) => (
+                  {player.hand.map((card) => (
                     <OpponentCard
-                      key={`${index}-${cardIndex}`}
+                      key={`${player.id}-${card.join('')}`}
                       card={card}
                       faceDown
                     />
                   ))}
                 </Opponent>
-              )
+              ),
           )}
           <Table>
             {game.table.map((card) => {
-              const key = 'card-' + card.join('-')
+              const key = `card-${card.join('-')}`
               return (
                 <label key={key} htmlFor={key}>
                   <TableCardSelector

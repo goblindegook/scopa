@@ -1,5 +1,5 @@
-import React from 'react'
 import { shuffle } from '@pacote/shuffle'
+import React from 'react'
 import { deck } from './engine/cards'
 import { findMatches } from './engine/match'
 import { deal, play } from './engine/scopa'

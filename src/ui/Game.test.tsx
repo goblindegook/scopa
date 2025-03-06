@@ -1,19 +1,19 @@
+import { fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
-import { render, fireEvent, screen } from '@testing-library/react'
-import '@testing-library/jest-dom'
+import { vitest } from 'vitest'
 import { Err, Ok } from '@pacote/result'
 import { Suit } from '../engine/cards'
-import { State, Move } from '../engine/state'
+import type { Score } from '../engine/scores'
+import type { Move, State } from '../engine/state'
 import { Game } from './Game'
-import { Score } from '../engine/scores'
 
 function testGame(overrides: Partial<State> = {}): State {
   return {
     state: 'play',
     turn: 0,
     players: [
-      { hand: [], pile: [], scope: 0 },
-      { hand: [], pile: [], scope: 0 },
+      { id: 0, hand: [], pile: [], scope: 0 },
+      { id: 1, hand: [], pile: [], scope: 0 },
     ],
     pile: [],
     table: [],
@@ -21,17 +21,17 @@ function testGame(overrides: Partial<State> = {}): State {
   }
 }
 
-test(`deal new game on start`, () => {
+test('deal new game on start', () => {
   const turn = 0
-  const onStart = jest.fn(() => Ok(testGame({ turn })))
+  const onStart = vitest.fn(() => Ok(testGame({ turn })))
 
   render(
     <Game
       onStart={onStart}
-      onPlay={jest.fn()}
+      onPlay={vitest.fn()}
       onOpponentTurn={async () => ({ card: [1, Suit.DENARI], targets: [] })}
       onScore={() => []}
-    />
+    />,
   )
   expect(screen.queryByText('Game Over')).not.toBeInTheDocument()
 
@@ -46,8 +46,9 @@ test('renders opponent hand', () => {
     Ok(
       testGame({
         players: [
-          { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+          { id: 0, hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
           {
+            id: 1, 
             hand: [
               [2, Suit.DENARI],
               [3, Suit.DENARI],
@@ -58,16 +59,16 @@ test('renders opponent hand', () => {
         ],
         table: [],
         pile: [],
-      })
+      }),
     )
 
   render(
     <Game
       onStart={onStart}
-      onPlay={jest.fn()}
-      onOpponentTurn={jest.fn()}
-      onScore={jest.fn()}
-    />
+      onPlay={vitest.fn()}
+      onOpponentTurn={vitest.fn()}
+      onScore={vitest.fn()}
+    />,
   )
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
@@ -76,26 +77,26 @@ test('renders opponent hand', () => {
   expect(cards).toHaveLength(2)
 })
 
-test(`card visibility`, () => {
+test('card visibility', () => {
   const onStart = () =>
     Ok(
       testGame({
         players: [
-          { hand: [[1, Suit.DENARI]], pile: [[2, Suit.DENARI]], scope: 0 },
-          { hand: [[3, Suit.DENARI]], pile: [[4, Suit.DENARI]], scope: 0 },
+          { id: 0, hand: [[1, Suit.DENARI]], pile: [[2, Suit.DENARI]], scope: 0 },
+          { id: 1, hand: [[3, Suit.DENARI]], pile: [[4, Suit.DENARI]], scope: 0 },
         ],
         table: [[5, Suit.DENARI]],
         pile: [[6, Suit.DENARI]],
-      })
+      }),
     )
 
   render(
     <Game
       onStart={onStart}
-      onPlay={jest.fn()}
-      onOpponentTurn={jest.fn()}
-      onScore={jest.fn()}
-    />
+      onPlay={vitest.fn()}
+      onOpponentTurn={vitest.fn()}
+      onScore={vitest.fn()}
+    />,
   )
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
@@ -108,12 +109,13 @@ test(`card visibility`, () => {
   expect(screen.queryByTitle('Quattro di denari')).toBeFalsy()
 })
 
-test(`player piles`, () => {
+test('player piles', () => {
   const onStart = () =>
     Ok(
       testGame({
         players: [
           {
+            id: 0,
             hand: [],
             pile: [
               [1, Suit.DENARI],
@@ -122,6 +124,7 @@ test(`player piles`, () => {
             scope: 0,
           },
           {
+            id: 1,
             hand: [],
             pile: [
               [3, Suit.DENARI],
@@ -133,16 +136,16 @@ test(`player piles`, () => {
         ],
         table: [],
         pile: [],
-      })
+      }),
     )
 
   render(
     <Game
       onStart={onStart}
-      onPlay={jest.fn()}
-      onOpponentTurn={jest.fn()}
-      onScore={jest.fn()}
-    />
+      onPlay={vitest.fn()}
+      onOpponentTurn={vitest.fn()}
+      onScore={vitest.fn()}
+    />,
   )
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
@@ -151,34 +154,34 @@ test(`player piles`, () => {
   expect(screen.getByTitle('Player 2 pile: 3 cards')).toBeTruthy()
 })
 
-test(`allow playing a card`, () => {
+test('allow playing a card', () => {
   const initialState = testGame({
     players: [
-      { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
-      { hand: [], pile: [], scope: 0 },
+      { id: 0, hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+      { id: 1, hand: [], pile: [], scope: 0 },
     ],
   })
 
-  const onPlay = jest.fn(() =>
+  const onPlay = vitest.fn(() =>
     Ok(
       testGame({
         state: 'play',
         players: [
-          { hand: [], pile: [], scope: 0 },
-          { hand: [], pile: [], scope: 0 },
+          { id: 0, hand: [], pile: [], scope: 0 },
+          { id: 1, hand: [], pile: [], scope: 0 },
         ],
         table: [[2, Suit.DENARI]],
-      })
-    )
+      }),
+    ),
   )
 
   render(
     <Game
       onStart={() => Ok(initialState)}
       onPlay={onPlay}
-      onOpponentTurn={jest.fn()}
+      onOpponentTurn={vitest.fn()}
       onScore={() => []}
-    />
+    />,
   )
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
@@ -186,7 +189,7 @@ test(`allow playing a card`, () => {
 
   expect(onPlay).toHaveBeenCalledWith(
     { card: [1, Suit.DENARI], targets: [] },
-    initialState
+    initialState,
   )
   expect(screen.getByAltText('Due di denari')).toBeTruthy()
 })
@@ -196,25 +199,28 @@ test(`block interaction when not a player's turn`, () => {
     state: 'play',
     turn: 1,
     players: [
-      { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
-      { hand: [], pile: [], scope: 0 },
+      { id: 0, hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+      { id: 1, hand: [], pile: [], scope: 0 },
     ],
     table: [[7, Suit.DENARI]],
   })
 
-  const onPlay = jest.fn()
+  const onPlay = vitest.fn()
 
   render(
     <Game
       onStart={() => Ok(initialState)}
       onOpponentTurn={() =>
         new Promise((resolve) =>
-          setTimeout(() => resolve({ card: [1, Suit.DENARI], targets: [] }), 10)
+          setTimeout(
+            () => resolve({ card: [1, Suit.DENARI], targets: [] }),
+            10,
+          ),
         )
       }
       onPlay={onPlay}
       onScore={() => []}
-    />
+    />,
   )
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
@@ -233,11 +239,11 @@ test(`block interaction when not a player's turn`, () => {
   expect(card).toBeEnabled()
 })
 
-test(`select targets to capture`, () => {
+test('select targets to capture', () => {
   const initialState = testGame({
     players: [
-      { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
-      { hand: [], pile: [], scope: 0 },
+      { id: 0, hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+      { id: 1, hand: [], pile: [], scope: 0 },
     ],
     table: [
       [1, Suit.COPPE],
@@ -245,26 +251,26 @@ test(`select targets to capture`, () => {
     ],
   })
 
-  const onPlay = jest.fn(() =>
+  const onPlay = vitest.fn(() =>
     Ok(
       testGame({
         state: 'stop',
         players: [
-          { hand: [], pile: [], scope: 0 },
-          { hand: [], pile: [], scope: 0 },
+          { id: 0, hand: [], pile: [], scope: 0 },
+          { id: 1, hand: [], pile: [], scope: 0 },
         ],
         table: [[1, Suit.SPADE]],
-      })
-    )
+      }),
+    ),
   )
 
   render(
     <Game
       onStart={() => Ok(initialState)}
       onPlay={onPlay}
-      onOpponentTurn={jest.fn()}
+      onOpponentTurn={vitest.fn()}
       onScore={() => []}
-    />
+    />,
   )
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
@@ -273,13 +279,13 @@ test(`select targets to capture`, () => {
 
   expect(onPlay).toHaveBeenCalledWith(
     { card: [1, Suit.DENARI], targets: [[1, Suit.COPPE]] },
-    initialState
+    initialState,
   )
 })
 
-test(`invalid move handling`, () => {
+test('invalid move handling', () => {
   const message = 'test error message'
-  const onPlay = jest.fn(() => Err(Error(message)))
+  const onPlay = vitest.fn(() => Err(Error(message)))
 
   render(
     <Game
@@ -287,16 +293,16 @@ test(`invalid move handling`, () => {
         Ok(
           testGame({
             players: [
-              { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
-              { hand: [], pile: [], scope: 0 },
+              { id: 0, hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+              { id: 1, hand: [], pile: [], scope: 0 },
             ],
-          })
+          }),
         )
       }
       onPlay={onPlay}
-      onOpponentTurn={jest.fn()}
-      onScore={jest.fn()}
-    />
+      onOpponentTurn={vitest.fn()}
+      onScore={vitest.fn()}
+    />,
   )
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
@@ -305,30 +311,30 @@ test(`invalid move handling`, () => {
   expect(screen.getByText(message)).toBeTruthy()
 })
 
-test(`computer opponent plays a card`, async () => {
-  const onStart = jest.fn(() =>
+test('computer opponent plays a card', async () => {
+  const onStart = vitest.fn(() =>
     Ok(
       testGame({
         players: [
-          { hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
-          { hand: [[2, Suit.DENARI]], pile: [], scope: 0 },
+          { id: 0, hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+          { id: 1, hand: [[2, Suit.DENARI]], pile: [], scope: 0 },
         ],
         turn: 1,
-      })
-    )
+      }),
+    ),
   )
 
-  const onPlay = jest.fn(() =>
+  const onPlay = vitest.fn(() =>
     Ok(
       testGame({
         turn: 0,
         players: [
-          { hand: [], pile: [], scope: 0 },
-          { hand: [], pile: [], scope: 0 },
+          { id: 0, hand: [], pile: [], scope: 0 },
+          { id: 1, hand: [], pile: [], scope: 0 },
         ],
         table: [[1, Suit.DENARI]],
-      })
-    )
+      }),
+    ),
   )
 
   const onOpponentPlay = async (): Promise<Move> => ({
@@ -341,8 +347,8 @@ test(`computer opponent plays a card`, async () => {
       onStart={onStart}
       onPlay={onPlay}
       onOpponentTurn={onOpponentPlay}
-      onScore={jest.fn()}
-    />
+      onScore={vitest.fn()}
+    />,
   )
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
@@ -350,27 +356,27 @@ test(`computer opponent plays a card`, async () => {
   await screen.findByRole('button', { name: 'Asso di denari' })
 })
 
-test(`end game and show scores`, () => {
+test('end game and show scores', () => {
   const state = testGame({
     state: 'stop',
     players: [
-      { hand: [], pile: [], scope: 1 },
-      { hand: [], pile: [], scope: 2 },
+      { id: 0, hand: [], pile: [], scope: 1 },
+      { id: 1, hand: [], pile: [], scope: 2 },
     ],
   })
 
-  const onScore = jest.fn<Score[], [State['players']]>(() => [
-    { total: 3, details: [] },
-    { total: 4, details: [] },
+  const onScore = vitest.fn(() => [
+    { playerId: 0, total: 3, details: [] },
+    { playerId: 1, total: 4, details: [] },
   ])
 
   render(
     <Game
       onStart={() => Ok(state)}
-      onPlay={jest.fn()}
-      onOpponentTurn={jest.fn()}
+      onPlay={vitest.fn()}
+      onOpponentTurn={vitest.fn()}
       onScore={onScore}
-    />
+    />,
   )
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
