@@ -1,5 +1,4 @@
 import styled from '@emotion/styled/base'
-import React from 'react'
 import type { Score } from '../engine/scores'
 
 const Board = styled('table')`
