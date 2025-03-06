@@ -7,9 +7,9 @@ import {
   tuple,
   uniqueArray,
 } from 'fast-check'
+import { afterEach, expect, test } from 'vitest'
 import { Suit } from '../engine/cards'
 import { Opponent } from './Opponent'
-import { afterEach, expect, test } from 'vitest'
 
 afterEach(() => {
   cleanup()

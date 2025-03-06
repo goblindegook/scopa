@@ -1,10 +1,10 @@
 import assert from 'node:assert'
 import { Err, Ok, type Result, isErr, isOk } from '@pacote/result'
 import fc from 'fast-check'
+import { describe, expect, test } from 'vitest'
 import { type Card, type Deck, Suit, deck } from './cards'
 import { deal, play } from './scopa'
 import type { State } from './state'
-import { describe, expect, test } from 'vitest'
 
 function getGameState(game: Result<State, Error>): State {
   assert(isOk(game))

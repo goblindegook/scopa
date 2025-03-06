@@ -1,6 +1,6 @@
-import { afterEach, expect, test } from 'vitest'
 import { cleanup, render } from '@testing-library/react'
 import { assert, constantFrom, integer, property } from 'fast-check'
+import { afterEach, expect, test } from 'vitest'
 import { Suit } from '../engine/cards'
 import { Card } from './Card'
 

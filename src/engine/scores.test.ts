@@ -1,7 +1,7 @@
 import { assert, integer, property } from 'fast-check'
+import { describe, expect, test } from 'vitest'
 import { type Card, Suit } from './cards'
 import { score } from './scores'
-import { describe, expect, test } from 'vitest'
 
 describe('prime', () => {
   test.each<[string, number, Card]>([
@@ -114,37 +114,41 @@ describe('single player score', () => {
     ]
 
     assert(
-      property(integer({min: 0, max: 20}), integer({min: 0, max: 20}), (s1, s2) => {
-        const players = [
-          { id: 0, hand: [], pile: p1, scope: s1 },
-          { id: 1, hand: [], pile: p2, scope: s2 },
-        ]
+      property(
+        integer({ min: 0, max: 20 }),
+        integer({ min: 0, max: 20 }),
+        (s1, s2) => {
+          const players = [
+            { id: 0, hand: [], pile: p1, scope: s1 },
+            { id: 1, hand: [], pile: p2, scope: s2 },
+          ]
 
-        expect(score(players)).toEqual([
-          {
-            playerId: 0,
-            details: [
-              { label: 'Scope', value: s1, cards: [] },
-              { label: 'Captured', value: 2, cards: p1 },
-              { label: 'Denari', value: 1, cards: [[7, Suit.DENARI]] },
-              { label: 'Sette Bello', value: 1, cards: [[7, Suit.DENARI]] },
-              { label: 'Primiera', value: 37, cards: p1 },
-            ],
-            total: s1 + 1,
-          },
-          {
-            playerId: 1,
-            details: [
-              { label: 'Scope', value: s2, cards: [] },
-              { label: 'Captured', value: 2, cards: p2 },
-              { label: 'Denari', value: 1, cards: [[1, Suit.DENARI]] },
-              { label: 'Sette Bello', value: 0, cards: [] },
-              { label: 'Primiera', value: 37, cards: p2 },
-            ],
-            total: s2,
-          },
-        ])
-      }),
+          expect(score(players)).toEqual([
+            {
+              playerId: 0,
+              details: [
+                { label: 'Scope', value: s1, cards: [] },
+                { label: 'Captured', value: 2, cards: p1 },
+                { label: 'Denari', value: 1, cards: [[7, Suit.DENARI]] },
+                { label: 'Sette Bello', value: 1, cards: [[7, Suit.DENARI]] },
+                { label: 'Primiera', value: 37, cards: p1 },
+              ],
+              total: s1 + 1,
+            },
+            {
+              playerId: 1,
+              details: [
+                { label: 'Scope', value: s2, cards: [] },
+                { label: 'Captured', value: 2, cards: p2 },
+                { label: 'Denari', value: 1, cards: [[1, Suit.DENARI]] },
+                { label: 'Sette Bello', value: 0, cards: [] },
+                { label: 'Primiera', value: 37, cards: p2 },
+              ],
+              total: s2,
+            },
+          ])
+        },
+      ),
     )
   })
 
@@ -160,37 +164,41 @@ describe('single player score', () => {
     ]
 
     assert(
-      property(integer({min: 0, max: 20}), integer({min: 0, max: 20}), (s1, s2) => {
-        const players = [
-          { id: 0, hand: [], pile: p1, scope: s1 },
-          { id: 1, hand: [], pile: p2, scope: s2 },
-        ]
+      property(
+        integer({ min: 0, max: 20 }),
+        integer({ min: 0, max: 20 }),
+        (s1, s2) => {
+          const players = [
+            { id: 0, hand: [], pile: p1, scope: s1 },
+            { id: 1, hand: [], pile: p2, scope: s2 },
+          ]
 
-        expect(score(players)).toEqual([
-          {
-            playerId: 0,
-            details: [
-              { label: 'Scope', value: s1, cards: [] },
-              { label: 'Captured', value: p1.length, cards: p1 },
-              { label: 'Denari', value: 0, cards: [] },
-              { label: 'Sette Bello', value: 0, cards: [] },
-              { label: 'Primiera', value: 30, cards: p1 },
-            ],
-            total: s1,
-          },
-          {
-            playerId: 1,
-            details: [
-              { label: 'Scope', value: s2, cards: [] },
-              { label: 'Captured', value: p2.length, cards: p2 },
-              { label: 'Denari', value: 0, cards: [] },
-              { label: 'Sette Bello', value: 0, cards: [] },
-              { label: 'Primiera', value: 30, cards: p2 },
-            ],
-            total: s2 + 1,
-          },
-        ])
-      }),
+          expect(score(players)).toEqual([
+            {
+              playerId: 0,
+              details: [
+                { label: 'Scope', value: s1, cards: [] },
+                { label: 'Captured', value: p1.length, cards: p1 },
+                { label: 'Denari', value: 0, cards: [] },
+                { label: 'Sette Bello', value: 0, cards: [] },
+                { label: 'Primiera', value: 30, cards: p1 },
+              ],
+              total: s1,
+            },
+            {
+              playerId: 1,
+              details: [
+                { label: 'Scope', value: s2, cards: [] },
+                { label: 'Captured', value: p2.length, cards: p2 },
+                { label: 'Denari', value: 0, cards: [] },
+                { label: 'Sette Bello', value: 0, cards: [] },
+                { label: 'Primiera', value: 30, cards: p2 },
+              ],
+              total: s2 + 1,
+            },
+          ])
+        },
+      ),
     )
   })
 

@@ -1,6 +1,6 @@
+import { Err, Ok } from '@pacote/result'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, test, vitest } from 'vitest'
-import { Err, Ok } from '@pacote/result'
 import { Suit } from '../engine/cards'
 import type { Move, State } from '../engine/state'
 import { Game } from './Game'
@@ -50,7 +50,7 @@ test('renders opponent hand', () => {
         players: [
           { id: 0, hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
           {
-            id: 1, 
+            id: 1,
             hand: [
               [2, Suit.DENARI],
               [3, Suit.DENARI],
@@ -84,8 +84,18 @@ test('card visibility', () => {
     Ok(
       testGame({
         players: [
-          { id: 0, hand: [[1, Suit.DENARI]], pile: [[2, Suit.DENARI]], scope: 0 },
-          { id: 1, hand: [[3, Suit.DENARI]], pile: [[4, Suit.DENARI]], scope: 0 },
+          {
+            id: 0,
+            hand: [[1, Suit.DENARI]],
+            pile: [[2, Suit.DENARI]],
+            scope: 0,
+          },
+          {
+            id: 1,
+            hand: [[3, Suit.DENARI]],
+            pile: [[4, Suit.DENARI]],
+            scope: 0,
+          },
         ],
         table: [[5, Suit.DENARI]],
         pile: [[6, Suit.DENARI]],

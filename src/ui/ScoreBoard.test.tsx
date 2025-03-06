@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, expect, test } from 'vitest'
 import type { Score } from '../engine/scores'
 import { ScoreBoard } from './ScoreBoard'
-import { afterEach, expect, test } from 'vitest'
 
 afterEach(() => {
   cleanup()
