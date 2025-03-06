@@ -7,9 +7,13 @@ import {
   tuple,
   uniqueArray,
 } from 'fast-check'
-import React from 'react'
 import { Suit } from '../engine/cards'
 import { Player } from './Player'
+import { afterEach, expect, test } from 'vitest'
+
+afterEach(() => {
+  cleanup()
+})
 
 const card = tuple(
   integer({ min: 1, max: 10 }),

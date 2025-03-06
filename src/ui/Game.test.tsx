@@ -1,11 +1,13 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import React from 'react'
-import { vitest } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, expect, test, vitest } from 'vitest'
 import { Err, Ok } from '@pacote/result'
 import { Suit } from '../engine/cards'
-import type { Score } from '../engine/scores'
 import type { Move, State } from '../engine/state'
 import { Game } from './Game'
+
+afterEach(() => {
+  cleanup()
+})
 
 function testGame(overrides: Partial<State> = {}): State {
   return {

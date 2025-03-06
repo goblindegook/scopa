@@ -28,7 +28,6 @@
     "@types/ramda": "^0.30.2",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
-    "@vitejs/plugin-react": "^4.3.4",
     "@vitejs/plugin-react-swc": "^3.8.0",
     "fast-check": "^3.23.2",
     "globals": "^15.15.0",

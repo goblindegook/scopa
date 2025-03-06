@@ -1,3 +1,4 @@
+import { expect, test } from 'vitest'
 import { assert, constantFrom, integer, property, tuple } from 'fast-check'
 import { includes, uniq } from 'ramda'
 import { Suit, deck } from './cards'

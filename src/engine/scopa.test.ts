@@ -4,6 +4,7 @@ import fc from 'fast-check'
 import { type Card, type Deck, Suit, deck } from './cards'
 import { deal, play } from './scopa'
 import type { State } from './state'
+import { describe, expect, test } from 'vitest'
 
 function getGameState(game: Result<State, Error>): State {
   assert(isOk(game))

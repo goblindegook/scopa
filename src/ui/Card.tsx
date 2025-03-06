@@ -50,12 +50,14 @@ interface CardProps {
 }
 
 export const Card = ({ className, faceDown = false, card }: CardProps) => {
-  const [src, setSrc] = React.useState('')
+  const [src, setSrc] = React.useState<string | undefined>()
 
   React.useEffect(() => {
     ;(async () => {
       const asset = await import(`./assets/${SUITS[card[1]]}/${card[0]}.jpg`)
-      setSrc(asset.default)
+      if (asset.default) {
+        setSrc(asset.default)
+      }
     })()
   }, [card])
 

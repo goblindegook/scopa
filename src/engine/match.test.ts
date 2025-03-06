@@ -1,3 +1,4 @@
+import { expect, test } from 'vitest'
 import { type Deck, Suit, deck } from './cards'
 import { findMatches } from './match'
 

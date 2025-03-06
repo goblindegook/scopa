@@ -1,9 +1,13 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { assert, integer, property, string } from 'fast-check'
 import { range } from 'ramda'
-import React from 'react'
 import { type Card, Suit } from '../engine/cards'
 import { Stack } from './Stack'
+import { afterEach, expect, test } from 'vitest'
+
+afterEach(() => {
+  cleanup()
+})
 
 test('renders stack of cards', () => {
   assert(

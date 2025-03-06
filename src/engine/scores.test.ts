@@ -1,6 +1,7 @@
 import { assert, integer, property } from 'fast-check'
 import { type Card, Suit } from './cards'
 import { score } from './scores'
+import { describe, expect, test } from 'vitest'
 
 describe('prime', () => {
   test.each<[string, number, Card]>([
@@ -113,7 +114,7 @@ describe('single player score', () => {
     ]
 
     assert(
-      property(integer(0, 20), integer(0, 20), (s1, s2) => {
+      property(integer({min: 0, max: 20}), integer({min: 0, max: 20}), (s1, s2) => {
         const players = [
           { id: 0, hand: [], pile: p1, scope: s1 },
           { id: 1, hand: [], pile: p2, scope: s2 },
@@ -159,7 +160,7 @@ describe('single player score', () => {
     ]
 
     assert(
-      property(integer(0, 20), integer(0, 20), (s1, s2) => {
+      property(integer({min: 0, max: 20}), integer({min: 0, max: 20}), (s1, s2) => {
         const players = [
           { id: 0, hand: [], pile: p1, scope: s1 },
           { id: 1, hand: [], pile: p2, scope: s2 },
