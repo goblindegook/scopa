@@ -1,6 +1,6 @@
 import { shuffle } from '@pacote/shuffle'
 import { deck } from './engine/cards'
-import { move } from './engine/opponent-basic'
+import { move } from './engine/opponent'
 import { deal, play } from './engine/scopa'
 import { score } from './engine/scores'
 import { Game } from './ui/Game'
