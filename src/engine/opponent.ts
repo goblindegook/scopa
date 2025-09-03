@@ -35,22 +35,22 @@ function evaluateCapture(
   targets: Deck,
   tableSize: number,
 ): number {
-  let moveScore = 0
+  let score = 0
 
   if (targets.length > 0 && targets.length === tableSize) {
-    moveScore += 1000
+    score += 1000
   }
 
   const capturedWithCard: Deck = [...targets, playedCard]
   if (hasSettebello(capturedWithCard)) {
-    moveScore += 500
+    score += 500
   }
 
-  moveScore += countDenari(capturedWithCard) * 5
-  moveScore += primieraValue(capturedWithCard) / 10
-  moveScore += targets.length
+  score += countDenari(capturedWithCard) * 5
+  score += primieraValue(capturedWithCard) / 10
+  score += targets.length
 
-  return moveScore
+  return score
 }
 
 function evaluateDiscard(card: Card): number {
