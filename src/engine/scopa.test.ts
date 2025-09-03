@@ -1,7 +1,7 @@
-import { Err, Ok, type Result, isErr, isOk } from '@pacote/result'
+import { Err, isErr, isOk, Ok, type Result } from '@pacote/result'
 import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
-import { type Card, type Deck, Suit, deck } from './cards'
+import { type Card, type Deck, deck, Suit } from './cards'
 import { deal, play } from './scopa'
 import type { State } from './state'
 

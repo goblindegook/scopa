@@ -1,5 +1,5 @@
 import styled from '@emotion/styled'
-import { type Result, fold } from '@pacote/result'
+import { fold, type Result } from '@pacote/result'
 import { includes, without } from 'ramda'
 import React from 'react'
 import type { Card } from '../engine/cards'

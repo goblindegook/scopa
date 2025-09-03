@@ -5,8 +5,9 @@ function combinations(cards: Deck): readonly Deck[] {
   const results: Deck[] = [[]]
 
   for (const card of cards) {
-    // biome-ignore lint/complexity/noForEach: <explanation>
-    results.forEach((combination) => results.push([...combination, card]))
+    results.forEach((combination) => {
+      results.push([...combination, card])
+    })
   }
 
   return results

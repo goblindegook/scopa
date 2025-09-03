@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { type Deck, Suit, deck } from './cards'
+import { type Deck, deck, Suit } from './cards'
 import { findMatches } from './match'
 
 test('match one set of one card', () => {

@@ -1,7 +1,7 @@
 import { assert, constantFrom, integer, property, tuple } from 'fast-check'
 import { includes, uniq } from 'ramda'
 import { expect, test } from 'vitest'
-import { Suit, deck } from './cards'
+import { deck, Suit } from './cards'
 
 test('a deck contains 40 cards', () => {
   expect(deck()).toHaveLength(40)
