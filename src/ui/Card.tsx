@@ -42,7 +42,7 @@ const Back = styled('div')`
   border: 1px solid white;
 `
 
-interface CardProps {
+export interface CardProps {
   className?: string
   faceDown?: boolean
   card: CardType

@@ -1,3 +1,4 @@
+import fc from 'fast-check'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { Suit } from './cards'
 import { move } from './opponent'
@@ -65,15 +66,13 @@ describe('opponent move', () => {
     const game = testGame({
       table: [
         [7, Suit.DENARI],
-        [1, Suit.BASTONI],
+        [7, Suit.BASTONI],
+        [2, Suit.DENARI],
       ],
       players: [
         {
           id: 0,
-          hand: [
-            [7, Suit.COPPE],
-            [1, Suit.COPPE],
-          ],
+          hand: [[7, Suit.COPPE]],
           pile: [],
           scope: 0,
         },
@@ -84,7 +83,34 @@ describe('opponent move', () => {
     const { card, targets } = await runMove(game)
 
     expect(card).toEqual([7, Suit.COPPE])
-    expect(targets).toContainEqual([7, Suit.DENARI])
+    expect(targets).toEqual([[7, Suit.DENARI]])
+  })
+
+  test('capture settebello as part of a group', async () => {
+    const game = testGame({
+      table: [
+        [7, Suit.DENARI],
+        [7, Suit.BASTONI],
+        [2, Suit.DENARI],
+      ],
+      players: [
+        {
+          id: 0,
+          hand: [[9, Suit.COPPE]],
+          pile: [],
+          scope: 0,
+        },
+        { id: 1, hand: [], pile: [], scope: 0 },
+      ],
+    })
+
+    const { card, targets } = await runMove(game)
+
+    expect(card).toEqual([9, Suit.COPPE])
+    expect(targets).toEqual([
+      [7, Suit.DENARI],
+      [2, Suit.DENARI],
+    ])
   })
 
   test('prefer denari among equal single-card captures', async () => {
@@ -106,26 +132,63 @@ describe('opponent move', () => {
     expect(targets[0]).toEqual([1, Suit.DENARI])
   })
 
-  test('discard least valuable non-denari when no captures available', async () => {
-    const game = testGame({
-      table: [[10, Suit.BASTONI]],
-      players: [
-        {
-          id: 0,
-          hand: [
-            [7, Suit.DENARI],
-            [1, Suit.SPADE],
-          ],
-          pile: [],
-          scope: 0,
+  test('discard least valuable non-denari when no captures are available', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.constantFrom(Suit.BASTONI, Suit.SPADE, Suit.COPPE),
+        async (suitToDiscard) => {
+          const game = testGame({
+            table: [[10, Suit.BASTONI]],
+            players: [
+              {
+                id: 0,
+                hand: [
+                  [7, Suit.DENARI],
+                  [7, suitToDiscard],
+                ],
+                pile: [],
+                scope: 0,
+              },
+              { id: 1, hand: [], pile: [], scope: 0 },
+            ],
+          })
+
+          const { card, targets } = await runMove(game)
+
+          expect(targets).toHaveLength(0)
+          expect(card).toEqual([7, suitToDiscard])
         },
-        { id: 1, hand: [], pile: [], scope: 0 },
-      ],
-    })
+      ),
+    )
+  })
 
-    const { card, targets } = await runMove(game)
+  test('discard least valuable denari when no captures are available', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.constantFrom(1, 2, 3, 4, 5, 6, 8, 9),
+        async (valueToDiscard) => {
+          const game = testGame({
+            table: [[10, Suit.BASTONI]],
+            players: [
+              {
+                id: 0,
+                hand: [
+                  [7, Suit.DENARI],
+                  [valueToDiscard, Suit.DENARI],
+                ],
+                pile: [],
+                scope: 0,
+              },
+              { id: 1, hand: [], pile: [], scope: 0 },
+            ],
+          })
 
-    expect(targets).toHaveLength(0)
-    expect(card).toEqual([1, Suit.SPADE])
+          const { card, targets } = await runMove(game)
+
+          expect(targets).toHaveLength(0)
+          expect(card).toEqual([valueToDiscard, Suit.DENARI])
+        },
+      ),
+    )
   })
 })

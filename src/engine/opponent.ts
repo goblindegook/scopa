@@ -71,27 +71,24 @@ export async function move(game: State): Promise<Move> {
   let bestScore = -Infinity
 
   for (const card of hand) {
-    const available = findMatches(card[0], table)
+    const possibleTargets = findMatches(card[0], table)
 
-    if (available.length > 0) {
-      const mustPick = Math.min(...available.map((t) => t.length))
-      const valid = available.filter((t) => t.length === mustPick)
-
-      for (const targets of valid) {
-        const score = evaluateCapture(card, targets, table.length)
-        if (score > bestScore) {
-          bestScore = score
-          bestMove = { card, targets }
-        }
-      }
-    } else {
+    if (possibleTargets.length === 0) {
       const score = evaluateDiscard(card)
       if (score > bestScore) {
         bestScore = score
         bestMove = { card, targets: [] }
       }
     }
+
+    for (const targets of possibleTargets) {
+      const score = evaluateCapture(card, targets, table.length)
+      if (score > bestScore) {
+        bestScore = score
+        bestMove = { card, targets }
+      }
+    }
   }
 
-  return bestMove || { card: hand[0], targets: [] }
+  return bestMove ?? { card: hand[0], targets: [] }
 }
