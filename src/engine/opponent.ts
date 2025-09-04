@@ -55,9 +55,9 @@ function evaluateCapture(
 
 function evaluateDiscard(card: Card): number {
   let score = -PRIME_POINTS[card[0]]
-  if (card[1] === Suit.DENARI) score -= 2
+  if (card[1] === Suit.DENARI) score -= 5
   if (card[0] === [7, Suit.DENARI][0] && card[1] === [7, Suit.DENARI][1])
-    score -= 100
+    score -= 1000
   return score
 }
 
@@ -73,12 +73,10 @@ export async function move(game: State): Promise<Move> {
   for (const card of hand) {
     const possibleTargets = findMatches(card[0], table)
 
-    if (possibleTargets.length === 0) {
-      const score = evaluateDiscard(card)
-      if (score > bestScore) {
-        bestScore = score
-        bestMove = { card, targets: [] }
-      }
+    const score = evaluateDiscard(card)
+    if (score > bestScore) {
+      bestScore = score
+      bestMove = { card, targets: [] }
     }
 
     for (const targets of possibleTargets) {
