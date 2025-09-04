@@ -174,7 +174,7 @@ export const Game = ({
               <PlayerCard
                 disabled={game.turn !== HUMAN_PLAYER}
                 key={card.join('')}
-                onClick={() => play({ card, targets })}
+                onClick={() => play({ card, capture: targets })}
               >
                 <DisplayCard card={card} />
               </PlayerCard>

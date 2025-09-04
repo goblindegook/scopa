@@ -53,10 +53,10 @@ describe('opponent move', () => {
       ],
     })
 
-    const { card, targets } = await runMove(game)
+    const { card, capture } = await runMove(game)
 
     expect(card).toEqual([3, Suit.COPPE])
-    expect(targets).toEqual([
+    expect(capture).toEqual([
       [1, Suit.DENARI],
       [2, Suit.BASTONI],
     ])
@@ -80,10 +80,10 @@ describe('opponent move', () => {
       ],
     })
 
-    const { card, targets } = await runMove(game)
+    const { card, capture } = await runMove(game)
 
     expect(card).toEqual([7, Suit.COPPE])
-    expect(targets).toEqual([[7, Suit.DENARI]])
+    expect(capture).toEqual([[7, Suit.DENARI]])
   })
 
   test('capture settebello as part of a group', async () => {
@@ -104,10 +104,10 @@ describe('opponent move', () => {
       ],
     })
 
-    const { card, targets } = await runMove(game)
+    const { card, capture } = await runMove(game)
 
     expect(card).toEqual([9, Suit.COPPE])
-    expect(targets).toEqual([
+    expect(capture).toEqual([
       [7, Suit.DENARI],
       [2, Suit.DENARI],
     ])
@@ -125,11 +125,11 @@ describe('opponent move', () => {
       ],
     })
 
-    const { card, targets } = await runMove(game)
+    const { card, capture } = await runMove(game)
 
     expect(card).toEqual([1, Suit.COPPE])
-    expect(targets).toHaveLength(1)
-    expect(targets[0]).toEqual([1, Suit.DENARI])
+    expect(capture).toHaveLength(1)
+    expect(capture[0]).toEqual([1, Suit.DENARI])
   })
 
   test('discard least valuable non-denari when no captures are available', async () => {
@@ -153,9 +153,9 @@ describe('opponent move', () => {
             ],
           })
 
-          const { card, targets } = await runMove(game)
+          const { card, capture } = await runMove(game)
 
-          expect(targets).toHaveLength(0)
+          expect(capture).toHaveLength(0)
           expect(card).toEqual([7, suitToDiscard])
         },
       ),
@@ -183,9 +183,9 @@ describe('opponent move', () => {
             ],
           })
 
-          const { card, targets } = await runMove(game)
+          const { card, capture } = await runMove(game)
 
-          expect(targets).toHaveLength(0)
+          expect(capture).toHaveLength(0)
           expect(card).toEqual([valueToDiscard, Suit.DENARI])
         },
       ),

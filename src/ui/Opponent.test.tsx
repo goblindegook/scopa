@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import {
+  type Arbitrary,
   assert,
   constantFrom,
   integer,
@@ -8,15 +9,15 @@ import {
   uniqueArray,
 } from 'fast-check'
 import { afterEach, expect, test } from 'vitest'
-import { Suit } from '../engine/cards'
+import { type Card, Suit, type Value } from '../engine/cards'
 import { Opponent } from './Opponent'
 
 afterEach(() => {
   cleanup()
 })
 
-const card = tuple(
-  integer({ min: 1, max: 10 }),
+const card = tuple<Card>(
+  integer({ min: 1, max: 10 }) as Arbitrary<Value>,
   constantFrom(Suit.BASTONI, Suit.COPPE, Suit.DENARI, Suit.SPADE),
 )
 

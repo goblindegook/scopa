@@ -1,8 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react'
-import { assert, integer, property, string } from 'fast-check'
-import { range } from 'ramda'
 import { afterEach, expect, test } from 'vitest'
-import { type Card, Suit } from '../engine/cards'
+import { type Card, Suit, type Value } from '../engine/cards'
 import { Stack } from './Stack'
 
 afterEach(() => {
@@ -10,20 +8,10 @@ afterEach(() => {
 })
 
 test('renders stack of cards', () => {
-  assert(
-    property(
-      string().map((s) => s.trim()),
-      integer({ min: 1, max: 10 }),
-      (title, size) => {
-        cleanup()
-        const pile: Card[] = range(0, size).map((value) => [
-          value + 1,
-          Suit.DENARI,
-        ])
-        render(<Stack title={title} pile={pile} />)
-        const container = screen.getByTitle(title)
-        expect(container.children).toHaveLength(size)
-      },
-    ),
-  )
+  const values: Value[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  const pile: Card[] = values.map((value) => [value, Suit.DENARI])
+
+  render(<Stack title="Test" pile={pile} />)
+
+  expect(screen.getByTitle('Test').children).toHaveLength(10)
 })

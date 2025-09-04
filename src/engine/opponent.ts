@@ -1,5 +1,5 @@
+import { findCaptures } from './capture.ts'
 import { type Card, type Deck, Suit } from './cards'
-import { findMatches } from './match'
 import type { Move, State } from './state'
 
 const PRIME_POINTS: Record<number, number> = {
@@ -30,25 +30,21 @@ function primieraValue(cards: Deck): number {
   )
 }
 
-function evaluateCapture(
-  playedCard: Card,
-  targets: Deck,
-  tableSize: number,
-): number {
+function evaluateCapture(card: Card, capture: Deck, tableSize: number): number {
   let score = 0
 
-  if (targets.length > 0 && targets.length === tableSize) {
+  if (capture.length > 0 && capture.length === tableSize) {
     score += 1000
   }
 
-  const capturedWithCard: Deck = [...targets, playedCard]
+  const capturedWithCard: Deck = [...capture, card]
   if (hasSettebello(capturedWithCard)) {
     score += 500
   }
 
   score += countDenari(capturedWithCard) * 5
   score += primieraValue(capturedWithCard) / 10
-  score += targets.length
+  score += capture.length
 
   return score
 }
@@ -71,22 +67,21 @@ export async function move(game: State): Promise<Move> {
   let bestScore = -Infinity
 
   for (const card of hand) {
-    const possibleTargets = findMatches(card[0], table)
-
     const score = evaluateDiscard(card)
     if (score > bestScore) {
       bestScore = score
-      bestMove = { card, targets: [] }
+      bestMove = { card, capture: [] }
     }
 
-    for (const targets of possibleTargets) {
+    const availableCaptures = findCaptures(card[0], table)
+    for (const targets of availableCaptures) {
       const score = evaluateCapture(card, targets, table.length)
       if (score > bestScore) {
         bestScore = score
-        bestMove = { card, targets }
+        bestMove = { card, capture: targets }
       }
     }
   }
 
-  return bestMove ?? { card: hand[0], targets: [] }
+  return bestMove ?? { card: hand[0], capture: [] }
 }

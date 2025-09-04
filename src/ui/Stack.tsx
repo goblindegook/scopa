@@ -28,7 +28,7 @@ export const Stack = ({ className, pile, title }: StackProps) => (
   <StackArea className={className} title={title}>
     {pile.map((card, index) => (
       <StackedCard
-        key={`${card[0]}${card[1]}`}
+        key={`${card[0]}-${card[1]}`}
         faceDown
         index={index}
         card={card}

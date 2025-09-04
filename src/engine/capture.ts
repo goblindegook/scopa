@@ -13,7 +13,7 @@ function combinations(cards: Deck): readonly Deck[] {
   return results
 }
 
-export function findMatches(total: number, table: Deck): readonly Deck[] {
+export function findCaptures(total: number, table: Deck): readonly Deck[] {
   const candidates = table.filter(([value]) => value <= total)
   return combinations(candidates).filter(
     (o) => sum(map<Card, number>(head, o)) === total,

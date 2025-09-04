@@ -1,7 +1,7 @@
 import { cleanup, render } from '@testing-library/react'
 import { assert, constantFrom, integer, property } from 'fast-check'
 import { afterEach, expect, test } from 'vitest'
-import { Suit } from '../engine/cards'
+import { Suit, type Value } from '../engine/cards'
 import { Card } from './Card'
 
 afterEach(() => {
@@ -17,7 +17,7 @@ test.each<[string, Suit]>([
   assert(
     property(integer({ min: 1, max: 10 }), (value) => {
       cleanup()
-      const screen = render(<Card card={[value, suit]} />)
+      const screen = render(<Card card={[value as Value, suit]} />)
       screen.getByTitle(`di ${match}`, {
         exact: false,
       }) as HTMLImageElement
@@ -25,7 +25,7 @@ test.each<[string, Suit]>([
   )
 })
 
-test.each<[string, number]>([
+test.each<[string, Value]>([
   ['Asso', 1],
   ['Due', 2],
   ['Tre', 3],

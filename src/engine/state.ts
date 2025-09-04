@@ -17,5 +17,5 @@ export interface State {
 
 export interface Move {
   readonly card: Card
-  readonly targets: Deck
+  readonly capture: Deck
 }

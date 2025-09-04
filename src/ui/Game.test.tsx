@@ -31,7 +31,7 @@ test('deal new game on start', () => {
     <Game
       onStart={onStart}
       onPlay={vitest.fn()}
-      onOpponentTurn={async () => ({ card: [1, Suit.DENARI], targets: [] })}
+      onOpponentTurn={async () => ({ card: [1, Suit.DENARI], capture: [] })}
       onScore={() => []}
     />,
   )
@@ -200,7 +200,7 @@ test('allow playing a card', () => {
   fireEvent.click(screen.getByAltText('Asso di denari'))
 
   expect(onPlay).toHaveBeenCalledWith(
-    { card: [1, Suit.DENARI], targets: [] },
+    { card: [1, Suit.DENARI], capture: [] },
     initialState,
   )
   expect(screen.getByAltText('Due di denari')).toBeTruthy()
@@ -225,7 +225,7 @@ test(`block interaction when not a player's turn`, () => {
       onOpponentTurn={() =>
         new Promise((resolve) =>
           setTimeout(
-            () => resolve({ card: [1, Suit.DENARI], targets: [] }),
+            () => resolve({ card: [1, Suit.DENARI], capture: [] }),
             10,
           ),
         )
@@ -290,7 +290,7 @@ test('select targets to capture', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
 
   expect(onPlay).toHaveBeenCalledWith(
-    { card: [1, Suit.DENARI], targets: [[1, Suit.COPPE]] },
+    { card: [1, Suit.DENARI], capture: [[1, Suit.COPPE]] },
     initialState,
   )
 })
@@ -351,7 +351,7 @@ test('computer opponent plays a card', async () => {
 
   const onOpponentPlay = async (): Promise<Move> => ({
     card: [1, Suit.DENARI],
-    targets: [],
+    capture: [],
   })
 
   render(

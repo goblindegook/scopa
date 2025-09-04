@@ -1,13 +1,13 @@
 import { expect, test } from 'vitest'
+import { findCaptures } from './capture.ts'
 import { type Deck, deck, Suit } from './cards'
-import { findMatches } from './match'
 
 test('match one set of one card', () => {
   const table: Deck = [
     [1, Suit.BASTONI],
     [2, Suit.BASTONI],
   ]
-  expect(findMatches(1, table)).toEqual([[[1, Suit.BASTONI]]])
+  expect(findCaptures(1, table)).toEqual([[[1, Suit.BASTONI]]])
 })
 
 test('match two sets of one card', () => {
@@ -15,7 +15,7 @@ test('match two sets of one card', () => {
     [1, Suit.BASTONI],
     [1, Suit.SPADE],
   ]
-  expect(findMatches(1, table)).toEqual([
+  expect(findCaptures(1, table)).toEqual([
     [[1, Suit.BASTONI]],
     [[1, Suit.SPADE]],
   ])
@@ -26,7 +26,7 @@ test('match one set of two cards', () => {
     [1, Suit.BASTONI],
     [1, Suit.SPADE],
   ]
-  expect(findMatches(2, table)).toEqual([
+  expect(findCaptures(2, table)).toEqual([
     [
       [1, Suit.BASTONI],
       [1, Suit.SPADE],
@@ -40,7 +40,7 @@ test('match two sets of two and one cards', () => {
     [1, Suit.SPADE],
     [2, Suit.BASTONI],
   ]
-  expect(findMatches(2, table)).toEqual([
+  expect(findCaptures(2, table)).toEqual([
     [
       [1, Suit.BASTONI],
       [1, Suit.SPADE],
@@ -52,7 +52,7 @@ test('match two sets of two and one cards', () => {
 test('match a big table', () => {
   // Searches a binary tree up to 40 levels deep:
   const table: Deck = deck()
-  expect(findMatches(1, table)).toEqual([
+  expect(findCaptures(1, table)).toEqual([
     [[1, Suit.DENARI]],
     [[1, Suit.COPPE]],
     [[1, Suit.BASTONI]],
