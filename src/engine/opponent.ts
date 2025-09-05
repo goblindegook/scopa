@@ -1,26 +1,14 @@
 import { findCaptures } from './capture.ts'
 import { type Card, type Pile, Suit } from './cards'
+import { PRIME_POINTS } from './scores.ts'
 import type { Move, State } from './state'
-
-const PRIME_POINTS: Record<number, number> = {
-  1: 16,
-  2: 12,
-  3: 13,
-  4: 14,
-  5: 15,
-  6: 18,
-  7: 21,
-  8: 10,
-  9: 10,
-  10: 10,
-}
 
 function countDenari(cards: Pile): number {
   return cards.filter(([, suit]) => suit === Suit.DENARI).length
 }
 
 function hasSettebello(cards: Pile): boolean {
-  return cards.some((c) => c[0] === 7 && c[1] === Suit.DENARI)
+  return cards.some(([value, suit]) => value === 7 && suit === Suit.DENARI)
 }
 
 function primieraValue(cards: Pile): number {
@@ -33,7 +21,7 @@ function primieraValue(cards: Pile): number {
 function evaluateCapture(card: Card, capture: Pile, tableSize: number): number {
   let score = 0
 
-  if (capture.length > 0 && capture.length === tableSize) {
+  if (capture.length === tableSize) {
     score += 1000
   }
 

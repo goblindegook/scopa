@@ -19,7 +19,7 @@ const isDenari = ([, suit]: Card) => suit === Suit.DENARI
 
 const SETTEBELLO: Card = [7, Suit.DENARI]
 
-const PRIME_POINTS: { [value: number]: number } = {
+export const PRIME_POINTS: { [value: number]: number } = {
   1: 16,
   2: 12,
   3: 13,
