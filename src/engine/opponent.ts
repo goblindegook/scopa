@@ -1,5 +1,5 @@
 import { findCaptures } from './capture.ts'
-import { type Card, type Deck, Suit } from './cards'
+import { type Card, type Pile, Suit } from './cards'
 import type { Move, State } from './state'
 
 const PRIME_POINTS: Record<number, number> = {
@@ -15,29 +15,29 @@ const PRIME_POINTS: Record<number, number> = {
   10: 10,
 }
 
-function countDenari(cards: Deck): number {
+function countDenari(cards: Pile): number {
   return cards.filter(([, suit]) => suit === Suit.DENARI).length
 }
 
-function hasSettebello(cards: Deck): boolean {
+function hasSettebello(cards: Pile): boolean {
   return cards.some((c) => c[0] === 7 && c[1] === Suit.DENARI)
 }
 
-function primieraValue(cards: Deck): number {
+function primieraValue(cards: Pile): number {
   return cards.reduce<number>(
     (acc, [value]: Card) => acc + (PRIME_POINTS[value] ?? 0),
     0,
   )
 }
 
-function evaluateCapture(card: Card, capture: Deck, tableSize: number): number {
+function evaluateCapture(card: Card, capture: Pile, tableSize: number): number {
   let score = 0
 
   if (capture.length > 0 && capture.length === tableSize) {
     score += 1000
   }
 
-  const capturedWithCard: Deck = [...capture, card]
+  const capturedWithCard: Pile = [...capture, card]
   if (hasSettebello(capturedWithCard)) {
     score += 500
   }
@@ -74,11 +74,11 @@ export async function move(game: State): Promise<Move> {
     }
 
     const availableCaptures = findCaptures(card[0], table)
-    for (const targets of availableCaptures) {
-      const score = evaluateCapture(card, targets, table.length)
+    for (const capture of availableCaptures) {
+      const score = evaluateCapture(card, capture, table.length)
       if (score > bestScore) {
         bestScore = score
-        bestMove = { card, capture: targets }
+        bestMove = { card, capture }
       }
     }
   }

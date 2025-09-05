@@ -1,7 +1,7 @@
 import { Err, isErr, isOk, Ok, type Result } from '@pacote/result'
 import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
-import { type Card, type Deck, deck, Suit } from './cards'
+import { type Card, type Pile, deck, Suit } from './cards'
 import { deal, play } from './scopa'
 import type { State } from './state'
 
@@ -81,7 +81,7 @@ describe('deal', () => {
   test('table pile contains remaining cards', () => {
     const cards = deck()
     const game = getGameState(deal(cards))
-    const hands = game.players.reduce<Deck>((all, p) => all.concat(p.hand), [])
+    const hands = game.players.reduce<Pile>((all, p) => all.concat(p.hand), [])
     expect(game.pile).toHaveLength(30)
     expect([...game.table, ...hands, ...game.pile]).toEqual(cards)
   })
@@ -244,7 +244,7 @@ describe('play', () => {
 
   test('a player captures multiple cards from the table if their cumulative value is the same as the card played', () => {
     const card: Card = [3, Suit.DENARI]
-    const capture: Deck = [
+    const capture: Pile = [
       [1, Suit.COPPE],
       [1, Suit.BASTONI],
       [1, Suit.SPADE],
@@ -275,7 +275,7 @@ describe('play', () => {
 
   test('a player may only capture the least number of cards when multiple combinations exist', () => {
     const card: Card = [2, Suit.DENARI]
-    const targets: Deck = [
+    const targets: Pile = [
       [1, Suit.COPPE],
       [1, Suit.BASTONI],
     ]
@@ -295,7 +295,7 @@ describe('play', () => {
 
   test('target order should not be considered when playing', () => {
     const card: Card = [2, Suit.DENARI]
-    const targets: Deck = [
+    const targets: Pile = [
       [1, Suit.COPPE],
       [1, Suit.BASTONI],
     ]
@@ -319,7 +319,7 @@ describe('play', () => {
 
   test('a player scores a scopa when they capture all the cards on the table', () => {
     const card: Card = [3, Suit.DENARI]
-    const table: Deck = [
+    const table: Pile = [
       [1, Suit.COPPE],
       [1, Suit.BASTONI],
       [1, Suit.SPADE],
@@ -344,14 +344,14 @@ describe('play', () => {
   test('four cards are drawn from the pile when the table is empty', () => {
     const card: Card = [3, Suit.DENARI]
 
-    const topOfPile: Deck = [
+    const topOfPile: Pile = [
       [4, Suit.COPPE],
       [4, Suit.BASTONI],
       [4, Suit.SPADE],
       [4, Suit.DENARI],
     ]
 
-    const restOfPile: Deck = [[8, Suit.COPPE]]
+    const restOfPile: Pile = [[8, Suit.COPPE]]
 
     const game: State = {
       state: 'play',
@@ -382,13 +382,13 @@ describe('play', () => {
   test(`three cards are drawn from the pile when a player's hand is empty`, () => {
     const card: Card = [3, Suit.DENARI]
 
-    const topOfPile: Deck = [
+    const topOfPile: Pile = [
       [4, Suit.COPPE],
       [4, Suit.BASTONI],
       [4, Suit.SPADE],
     ]
 
-    const restOfPile: Deck = [[8, Suit.COPPE]]
+    const restOfPile: Pile = [[8, Suit.COPPE]]
 
     const game: State = {
       state: 'play',

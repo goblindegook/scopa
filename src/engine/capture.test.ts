@@ -1,9 +1,9 @@
 import { expect, test } from 'vitest'
 import { findCaptures } from './capture.ts'
-import { type Deck, deck, Suit } from './cards'
+import { type Pile, deck, Suit } from './cards'
 
 test('match one set of one card', () => {
-  const table: Deck = [
+  const table: Pile = [
     [1, Suit.BASTONI],
     [2, Suit.BASTONI],
   ]
@@ -11,7 +11,7 @@ test('match one set of one card', () => {
 })
 
 test('match two sets of one card', () => {
-  const table: Deck = [
+  const table: Pile = [
     [1, Suit.BASTONI],
     [1, Suit.SPADE],
   ]
@@ -22,7 +22,7 @@ test('match two sets of one card', () => {
 })
 
 test('match one set of two cards', () => {
-  const table: Deck = [
+  const table: Pile = [
     [1, Suit.BASTONI],
     [1, Suit.SPADE],
   ]
@@ -35,7 +35,7 @@ test('match one set of two cards', () => {
 })
 
 test('match two sets of two and one cards', () => {
-  const table: Deck = [
+  const table: Pile = [
     [1, Suit.BASTONI],
     [1, Suit.SPADE],
     [2, Suit.BASTONI],
@@ -51,7 +51,7 @@ test('match two sets of two and one cards', () => {
 
 test('match a big table', () => {
   // Searches a binary tree up to 40 levels deep:
-  const table: Deck = deck()
+  const table: Pile = deck()
   expect(findCaptures(1, table)).toEqual([
     [[1, Suit.DENARI]],
     [[1, Suit.COPPE]],

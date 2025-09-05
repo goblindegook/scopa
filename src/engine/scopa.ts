@@ -2,7 +2,7 @@ import { windowed } from '@pacote/array'
 import { Err, Ok, type Result } from '@pacote/result'
 import { includes, splitAt, without } from 'ramda'
 import { findCaptures } from './capture.ts'
-import type { Deck } from './cards'
+import type { Pile } from './cards'
 import type { Move, Player, State } from './state'
 
 interface Options {
@@ -13,7 +13,7 @@ const DEFAULT_OPTIONS: Required<Options> = {
   players: 2,
 }
 
-const createPlayers = (cards: Deck): readonly Player[] =>
+const createPlayers = (cards: Pile): readonly Player[] =>
   windowed(3, 3, cards).map((hand, index) => ({
     id: index,
     hand,
@@ -21,7 +21,7 @@ const createPlayers = (cards: Deck): readonly Player[] =>
     scope: 0,
   }))
 
-export function deal(cards: Deck, options?: Options): Result<State, Error> {
+export function deal(cards: Pile, options?: Options): Result<State, Error> {
   const { players } = { ...DEFAULT_OPTIONS, ...options }
   const [table, rest] = splitAt(4, cards)
   const dealtKings = table.filter(([value]) => value === 10).length
@@ -79,7 +79,7 @@ function next({ card, capture }: Move, game: State): State {
   }
 }
 
-const sort = (cards: Deck) =>
+const sort = (cards: Pile) =>
   cards.toSorted(([va, sa], [vb, sb]) => sb * 10 + vb - (sa * 10 + va))
 
 export function play(
