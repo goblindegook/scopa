@@ -80,7 +80,6 @@ export const Game = ({
   )
 
   const turnTransition = React.useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (_: State, __?: Move) => async (nextGame: State) => {
       setGame(nextGame)
       setTargets([])
