@@ -197,8 +197,8 @@ describe('single player score', () => {
 
   test('the player who captured the highest prime (primiera) gets +1 point', () => {
     const players = [
-      { id: 0, hand: [], pile: [spade(7)], scope: 0 },
-      { id: 1, hand: [], pile: [coppe(6)], scope: 0 },
+      { id: 0, hand: [], pile: [spade(6), spade(7)], scope: 0 },
+      { id: 1, hand: [], pile: [coppe(5), coppe(6)], scope: 0 },
     ]
 
     expect(score(players)).toEqual([
@@ -206,7 +206,7 @@ describe('single player score', () => {
         playerId: 0,
         details: [
           { label: 'Scope', value: 0, cards: [] },
-          { label: 'Captured', value: 1, cards: [spade(7)] },
+          { label: 'Captured', value: 2, cards: [spade(6), spade(7)] },
           { label: 'Denari', value: 0, cards: [] },
           { label: 'Sette Bello', value: 0, cards: [] },
           { label: 'Primiera', value: 21, cards: [spade(7)] },
@@ -217,7 +217,7 @@ describe('single player score', () => {
         playerId: 1,
         details: [
           { label: 'Scope', value: 0, cards: [] },
-          { label: 'Captured', value: 1, cards: [coppe(6)] },
+          { label: 'Captured', value: 2, cards: [coppe(5), coppe(6)] },
           { label: 'Denari', value: 0, cards: [] },
           { label: 'Sette Bello', value: 0, cards: [] },
           { label: 'Primiera', value: 18, cards: [coppe(6)] },

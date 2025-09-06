@@ -53,7 +53,7 @@ function findWinners(totals: number[]): number[] {
   if (maximum === 0) return []
   return totals.reduce<number[]>(
     (winners, total, currentIndex) =>
-      total === maximum ? [...winners, currentIndex] : winners,
+      total === maximum ? winners.concat(currentIndex) : winners,
     [],
   )
 }
