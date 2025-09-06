@@ -30,18 +30,14 @@ export function spade<V extends Value>(value: V): Card<V, Suit.SPADE> {
   return [value, Suit.SPADE]
 }
 
-export function isSuit<S extends Suit>(
+export function isDenari<V extends Value>(
   card: Card,
-  suit: Suit,
-): card is Card<Value, S> {
-  return card[1] === suit
+): card is Card<V, Suit.DENARI> {
+  return card[1] === Suit.DENARI
 }
 
-export function isCard<V extends Value, S extends Suit>(
-  a: Card,
-  b: Card,
-): a is Card<V, S> {
-  return a[0] === b[0] && a[1] === b[1]
+export function isSettebello(card: Card): card is Card<7, Suit.DENARI> {
+  return card[0] === 7 && card[1] === Suit.DENARI
 }
 
 export function deck(): Pile {

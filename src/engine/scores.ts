@@ -1,6 +1,6 @@
 import { flow } from '@pacote/pipe'
-import { groupBy, includes, map, reduce, sort } from 'ramda'
-import { type Card, denari, isSuit, Suit, type Value } from './cards'
+import { groupBy, map, reduce, sort } from 'ramda'
+import { type Card, denari, isDenari, isSettebello } from './cards'
 import type { Player } from './state'
 
 interface ScoreDetail {
@@ -14,14 +14,6 @@ export interface Score {
   details: readonly ScoreDetail[]
   total: number
 }
-
-function isDenari<V extends Value>(
-  card: Card<V, Suit>,
-): card is Card<V, Suit.DENARI> {
-  return isSuit(card, Suit.DENARI)
-}
-
-export const SETTEBELLO = denari(7)
 
 export const PRIME_POINTS: Record<number, number> = {
   1: 16,
@@ -72,7 +64,7 @@ export function score(players: readonly Player[]): readonly Score[] {
   const highestPrime = findWinner(primes.map(({ value }) => value))
 
   return players.map(({ scope, pile }, player) => {
-    const settebello = includes(SETTEBELLO, pile) ? 1 : 0
+    const settebello = pile.some(isSettebello) ? 1 : 0
     const denariCards = pile.filter(isDenari)
 
     return {
@@ -84,7 +76,7 @@ export function score(players: readonly Player[]): readonly Score[] {
         {
           label: 'Sette Bello',
           value: settebello,
-          cards: settebello === 1 ? [SETTEBELLO] : [],
+          cards: settebello === 1 ? [denari(7)] : [],
         },
         { label: 'Primiera', ...primes[player] },
       ],
