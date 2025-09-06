@@ -1,47 +1,27 @@
+import { sum } from 'ramda'
 import { findCaptures } from './capture.ts'
 import { type Card, isDenari, isSettebello, type Pile } from './cards'
-import { PRIME_POINTS } from './scores.ts'
+import { primePoints } from './scores.ts'
 import type { Move, State } from './state'
 
-function countDenari(cards: Pile): number {
-  return cards.filter(isDenari).length
-}
-
-function hasSettebello(cards: Pile): boolean {
-  return cards.some(isSettebello)
-}
-
-function primieraValue(cards: Pile): number {
-  return cards.reduce<number>(
-    (acc, [value]: Card) => acc + (PRIME_POINTS[value] ?? 0),
-    0,
-  )
-}
-
 function evaluateCapture(card: Card, capture: Pile, tableSize: number): number {
-  let score = 0
+  const scoredCards = [...capture, card]
 
-  if (capture.length === tableSize) {
-    score += 1000
-  }
-
-  const capturedWithCard = [...capture, card]
-  if (hasSettebello(capturedWithCard)) {
-    score += 500
-  }
-
-  score += countDenari(capturedWithCard) * 5
-  score += primieraValue(capturedWithCard) / 10
-  score += capture.length
-
-  return score
+  return sum([
+    capture.length,
+    scoredCards.reduce((acc, card) => acc + primePoints(card), 0) / 10,
+    scoredCards.filter(isDenari).length * 5,
+    scoredCards.some(isSettebello) ? 500 : 0,
+    capture.length === tableSize ? 1000 : 0,
+  ])
 }
 
 function evaluateDiscard(card: Card): number {
-  let score = -PRIME_POINTS[card[0]]
-  if (isDenari(card)) score -= 5
-  if (isSettebello(card)) score -= 1000
-  return score
+  return -sum([
+    primePoints(card),
+    isDenari(card) ? 5 : 0,
+    isSettebello(card) ? 1000 : 0,
+  ])
 }
 
 export async function move(game: State): Promise<Move> {

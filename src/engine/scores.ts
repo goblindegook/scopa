@@ -1,12 +1,12 @@
 import { flow } from '@pacote/pipe'
-import { groupBy, map, reduce, sort } from 'ramda'
-import { type Card, denari, isDenari, isSettebello } from './cards'
+import { groupBy, map, reduce, sort, values } from 'ramda'
+import { type Card, denari, isDenari, isSettebello, type Pile } from './cards'
 import type { Player } from './state'
 
 interface ScoreDetail {
   label: string
   value: number
-  cards: readonly Card[]
+  cards: Pile
 }
 
 export interface Score {
@@ -15,7 +15,7 @@ export interface Score {
   total: number
 }
 
-export const PRIME_POINTS: Record<number, number> = {
+const PRIME_POINTS: Record<number, number> = {
   1: 16,
   2: 12,
   3: 13,
@@ -28,40 +28,45 @@ export const PRIME_POINTS: Record<number, number> = {
   10: 10,
 }
 
+export const primePoints = ([value]: Card): number => PRIME_POINTS[value] ?? 0
+
 type CardPoints = [Card, number]
 
-const cardPoints = (card: Card): CardPoints => [card, PRIME_POINTS[card[0]]]
-const suit = ([[, suit]]: CardPoints) => String(suit)
-const mostPoints = ([, p1]: CardPoints, [, p2]: CardPoints) => p2 - p1
-
 const prime = flow(
-  map(cardPoints),
-  sort(mostPoints),
-  groupBy(suit),
-  Object.values,
-  map(([highest]) => highest),
-  reduce<CardPoints, [Card[], number]>(
-    ([cards, total], [card, points]) => [[...cards, card], total + points],
-    [[], 0],
+  map((card: Card): CardPoints => [card, primePoints(card)]),
+  sort(([, p1], [, p2]) => p2 - p1),
+  groupBy(([[, suit]]) => String(suit)),
+  values,
+  map((points) => points![0]),
+  reduce<CardPoints, ScoreDetail>(
+    ({ cards, value, ...rest }, [card, points]) => ({
+      cards: [...cards, card],
+      value: value + points,
+      ...rest,
+    }),
+    { label: 'Primiera', cards: [], value: 0 },
   ),
-  ([cards, value]) => ({ cards, value }),
 )
 
-function findWinner(totals: number[]): number | null {
+function findWinners(totals: number[]): number[] {
   const maximum = Math.max(...totals)
-  const singleWinner = totals.filter((total) => total === maximum).length === 1
-  return singleWinner ? totals.indexOf(maximum) : null
+  if (maximum === 0) return []
+  return totals.reduce<number[]>(
+    (winners, total, currentIndex) =>
+      total === maximum ? [...winners, currentIndex] : winners,
+    [],
+  )
 }
 
 export function score(players: readonly Player[]): readonly Score[] {
   const cardTotal = players.map(({ pile }) => pile.length)
-  const mostCards = findWinner(cardTotal)
+  const mostCards = findWinners(cardTotal)
 
   const denariTotal = players.map(({ pile }) => pile.filter(isDenari).length)
-  const mostDenari = findWinner(denariTotal)
+  const mostDenari = findWinners(denariTotal)
 
   const primes = players.map(({ pile }) => prime(pile))
-  const highestPrime = findWinner(primes.map(({ value }) => value))
+  const highestPrime = findWinners(primes.map(({ value }) => value))
 
   return players.map(({ scope, pile }, player) => {
     const settebello = pile.some(isSettebello) ? 1 : 0
@@ -81,14 +86,14 @@ export function score(players: readonly Player[]): readonly Score[] {
           value: settebello,
           cards: settebello === 1 ? [denari(7)] : [],
         },
-        { label: 'Primiera', ...primes[player] },
+        primes[player],
       ],
       total:
         scope +
         settebello +
-        (mostCards === player ? 1 : 0) +
-        (mostDenari === player ? 1 : 0) +
-        (highestPrime === player ? 1 : 0),
+        (mostCards.includes(player) ? 1 : 0) +
+        (mostDenari.includes(player) ? 1 : 0) +
+        (highestPrime.includes(player) ? 1 : 0),
     }
   })
 }

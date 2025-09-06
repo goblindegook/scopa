@@ -8,12 +8,12 @@ function testGame(table: Pile, hand: Pile): State {
   return {
     state: 'play',
     turn: 0,
+    table,
     players: [
       { id: 0, hand, pile: [], scope: 0 },
       { id: 1, hand: [], pile: [], scope: 0 },
     ],
     pile: [],
-    table,
   }
 }
 
@@ -33,7 +33,7 @@ afterEach(() => {
 
 describe('opponent move', () => {
   test('prefer to sweep the table when possible', async () => {
-    const game = testGame([bastoni(2), denari(1)], [coppe(1), coppe(3)])
+    const game = testGame([bastoni(2), denari(1)], [coppe(3), coppe(1)])
 
     const { card, capture } = await runMove(game)
 
@@ -42,7 +42,7 @@ describe('opponent move', () => {
   })
 
   test('prefer sweeping the table with a settebello', async () => {
-    const game = testGame([coppe(5), coppe(2)], [coppe(7), denari(7)])
+    const game = testGame([coppe(5), coppe(2)], [denari(7), coppe(7)])
 
     const { card, capture } = await runMove(game)
 
@@ -51,7 +51,7 @@ describe('opponent move', () => {
   })
 
   test('prefer sweeping the table with the coins suit', async () => {
-    const game = testGame([coppe(4), coppe(2)], [coppe(6), denari(6)])
+    const game = testGame([coppe(4), coppe(2)], [denari(6), coppe(6)])
 
     const { card, capture } = await runMove(game)
 
@@ -91,8 +91,7 @@ describe('opponent move', () => {
     const { card, capture } = await runMove(game)
 
     expect(card).toEqual(coppe(1))
-    expect(capture).toHaveLength(1)
-    expect(capture[0]).toEqual(denari(1))
+    expect(capture).toEqual([denari(1)])
   })
 
   test('discard least valuable suit when no captures are available', async () => {
@@ -104,8 +103,8 @@ describe('opponent move', () => {
 
           const { card, capture } = await runMove(game)
 
-          expect(capture).toHaveLength(0)
           expect(card).toEqual(suitToDiscard(1))
+          expect(capture).toHaveLength(0)
         },
       ),
     )
@@ -120,8 +119,8 @@ describe('opponent move', () => {
 
           const { card, capture } = await runMove(game)
 
-          expect(capture).toHaveLength(0)
           expect(card).toEqual(denari(valueToDiscard))
+          expect(capture).toHaveLength(0)
         },
       ),
     )

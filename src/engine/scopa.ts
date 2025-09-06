@@ -88,21 +88,25 @@ export function play(
 ): Result<State, Error> {
   const { table, turn, players } = game
 
-  const hasCard = includes(card, players[turn].hand)
+  if (!includes(card, players[turn].hand)) {
+    return Err(Error('Not your turn.'))
+  }
 
   const validCaptures = findCaptures(card[0], sort(table))
 
-  const autoCapture =
-    !capture.length && validCaptures.length < 2 ? validCaptures[0] || [] : null
-  const canCapture = autoCapture ?? includes(sort(capture), validCaptures)
+  if (!capture.length && validCaptures.length > 1) {
+    return Err(Error('Choose the cards to capture.'))
+  }
 
-  return hasCard
-    ? canCapture
-      ? Ok(next({ card, capture: autoCapture ?? capture }, game))
-      : Err(
-          capture.length
-            ? Error('The targeted cards may not be captured.')
-            : Error('Choose the cards to capture.'),
-        )
-    : Err(Error('Not your turn.'))
+  if (capture.length && !includes(sort(capture), validCaptures)) {
+    return Err(Error('The targeted cards may not be captured.'))
+  }
+
+  if (!capture.length && validCaptures.length === 0) {
+    return Ok(next({ card, capture: [] }, game))
+  }
+
+  return Ok(
+    next({ card, capture: capture.length ? capture : validCaptures[0] }, game),
+  )
 }

@@ -95,12 +95,20 @@ describe('play', () => {
       table: [denari(4)],
     }
 
-    const next = getGameState(play({ card: denari(1), capture: [] }, game))
+    const next = play({ card: denari(1), capture: [] }, game)
 
-    expect(next.table).toContainEqual(denari(1))
-    expect(next.players[0].hand).not.toContainEqual(denari(1))
-    expect(next.turn).toBe(1)
-    expect(next.state).toBe('play')
+    expect(next).toMatchObject(
+      Ok({
+        state: 'play',
+        turn: 1,
+        players: [
+          { id: 0, hand: [denari(2)], pile: [], scope: 0 },
+          { id: 1, hand: [denari(3)], pile: [], scope: 0 },
+        ],
+        pile: [],
+        table: [denari(4), denari(1)],
+      }),
+    )
   })
 
   test('player two plays a card from their hand on the table', () => {
@@ -117,7 +125,18 @@ describe('play', () => {
 
     const next = play({ card: denari(2), capture: [] }, game)
 
-    expect(next).toMatchObject(Ok({ state: 'play', turn: 0 }))
+    expect(next).toMatchObject(
+      Ok({
+        state: 'play',
+        turn: 0,
+        players: [
+          { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+          { id: 1, hand: [denari(3)], pile: [], scope: 0 },
+        ],
+        pile: [],
+        table: [denari(4), denari(2)],
+      }),
+    )
   })
 
   test(`a player cannot play a card they don't have`, () => {
