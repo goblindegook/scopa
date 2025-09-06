@@ -90,9 +90,7 @@ export function play(
 
   const hasCard = includes(card, players[turn].hand)
 
-  const availableCaptures = findCaptures(card[0], sort(table))
-  const mustPick = Math.min(...availableCaptures.map((t) => t.length))
-  const validCaptures = availableCaptures.filter((t) => t.length === mustPick)
+  const validCaptures = findCaptures(card[0], sort(table))
 
   const autoCapture =
     !capture.length && validCaptures.length < 2 ? validCaptures[0] || [] : null

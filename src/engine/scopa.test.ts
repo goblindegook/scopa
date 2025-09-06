@@ -84,40 +84,38 @@ describe('deal', () => {
 
 describe('play', () => {
   test('player one plays a card from their hand on the table', () => {
-    const card = denari(1)
     const game: State = {
       state: 'play',
       turn: 0,
       players: [
-        { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
+        { id: 0, hand: [denari(1), denari(2)], pile: [], scope: 0 },
         { id: 1, hand: [denari(3)], pile: [], scope: 0 },
       ],
       pile: [],
       table: [denari(4)],
     }
 
-    const next = getGameState(play({ card, capture: [] }, game))
+    const next = getGameState(play({ card: denari(1), capture: [] }, game))
 
-    expect(next.table).toContain(card)
-    expect(next.players[0].hand).not.toContain(card)
+    expect(next.table).toContainEqual(denari(1))
+    expect(next.players[0].hand).not.toContainEqual(denari(1))
     expect(next.turn).toBe(1)
     expect(next.state).toBe('play')
   })
 
   test('player two plays a card from their hand on the table', () => {
-    const card = denari(2)
     const game: State = {
       state: 'play',
       turn: 1,
       players: [
         { id: 0, hand: [denari(1)], pile: [], scope: 0 },
-        { id: 1, hand: [card, denari(3)], pile: [], scope: 0 },
+        { id: 1, hand: [denari(2), denari(3)], pile: [], scope: 0 },
       ],
       pile: [],
       table: [denari(4)],
     }
 
-    const next = play({ card, capture: [] }, game)
+    const next = play({ card: denari(2), capture: [] }, game)
 
     expect(next).toMatchObject(Ok({ state: 'play', turn: 0 }))
   })
@@ -182,19 +180,18 @@ describe('play', () => {
   })
 
   test('a player must choose a valid capture', () => {
-    const card = denari(4)
     const game: State = {
       state: 'play',
       turn: 0,
       players: [
-        { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
+        { id: 0, hand: [denari(4), denari(2)], pile: [], scope: 0 },
         { id: 1, hand: [denari(3)], pile: [], scope: 0 },
       ],
       pile: [],
       table: [bastoni(1), coppe(1)],
     }
 
-    const next = play({ card, capture: [bastoni(1)] }, game)
+    const next = play({ card: denari(4), capture: [bastoni(1)] }, game)
 
     expect(next).toMatchObject(
       Err({

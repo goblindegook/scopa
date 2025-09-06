@@ -1,6 +1,5 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import {
-  type Arbitrary,
   assert,
   constantFrom,
   integer,
@@ -16,13 +15,13 @@ afterEach(() => {
   cleanup()
 })
 
-const card = tuple(
-  integer({ min: 1, max: 10 }) as Arbitrary<Value>,
+const arbitraryCard = tuple(
+  constantFrom<Value>(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
   constantFrom(Suit.BASTONI, Suit.COPPE, Suit.DENARI, Suit.SPADE),
 )
 
 const cardSet = (maxLength: number) =>
-  uniqueArray(card, { maxLength, selector: (v) => v.join(':') })
+  uniqueArray(arbitraryCard, { maxLength, selector: (v) => v.join(':') })
 
 test('renders pile', () => {
   assert(

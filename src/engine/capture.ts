@@ -1,5 +1,4 @@
-import { head, map, sum } from 'ramda'
-import type { Card, Pile } from './cards'
+import type { Pile } from './cards'
 
 function combinations(cards: Pile): readonly Pile[] {
   const results: Pile[] = [[]]
@@ -13,9 +12,15 @@ function combinations(cards: Pile): readonly Pile[] {
   return results
 }
 
+function captureValue(cards: Pile): number {
+  return cards.reduce((acc, [value]) => acc + value, 0)
+}
+
 export function findCaptures(total: number, table: Pile): readonly Pile[] {
   const candidates = table.filter(([value]) => value <= total)
-  return combinations(candidates).filter(
-    (o) => sum(map<Card, number>(head, o)) === total,
+  const availableCaptures = combinations(candidates).filter(
+    (capture) => captureValue(capture) === total,
   )
+  const mustPick = Math.min(...availableCaptures.map((t) => t.length))
+  return availableCaptures.filter((t) => t.length === mustPick)
 }

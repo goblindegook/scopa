@@ -17,9 +17,9 @@ test('match one set of two cards', () => {
   expect(findCaptures(2, table)).toEqual([[bastoni(1), spade(1)]])
 })
 
-test('match two sets of two and one cards', () => {
-  const table = [bastoni(1), spade(1), bastoni(2)]
-  expect(findCaptures(2, table)).toEqual([[bastoni(1), spade(1)], [bastoni(2)]])
+test('matches the smallest available sets', () => {
+  const table = [bastoni(1), spade(1), bastoni(2), spade(2)]
+  expect(findCaptures(2, table)).toEqual([[bastoni(2)], [spade(2)]])
 })
 
 test('match a big table', () => {

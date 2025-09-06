@@ -1,28 +1,20 @@
 import { cleanup, render, screen } from '@testing-library/react'
-import {
-  type Arbitrary,
-  assert,
-  constantFrom,
-  integer,
-  property,
-  tuple,
-  uniqueArray,
-} from 'fast-check'
+import { assert, constantFrom, property, tuple, uniqueArray } from 'fast-check'
 import { afterEach, expect, test } from 'vitest'
-import { type Card, Suit, type Value } from '../engine/cards'
+import { Suit, type Value } from '../engine/cards'
 import { Opponent } from './Opponent'
 
 afterEach(() => {
   cleanup()
 })
 
-const card = tuple<Card>(
-  integer({ min: 1, max: 10 }) as Arbitrary<Value>,
+const arbitraryCard = tuple(
+  constantFrom<Value>(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
   constantFrom(Suit.BASTONI, Suit.COPPE, Suit.DENARI, Suit.SPADE),
 )
 
 const cardSet = (maxLength: number) =>
-  uniqueArray(card, { maxLength, selector: (v) => v.join(':') })
+  uniqueArray(arbitraryCard, { maxLength, selector: (c) => c.join(':') })
 
 test('renders opponent pile', () => {
   assert(

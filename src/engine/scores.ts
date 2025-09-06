@@ -65,14 +65,17 @@ export function score(players: readonly Player[]): readonly Score[] {
 
   return players.map(({ scope, pile }, player) => {
     const settebello = pile.some(isSettebello) ? 1 : 0
-    const denariCards = pile.filter(isDenari)
 
     return {
       playerId: player,
       details: [
         { label: 'Scope', value: scope, cards: [] },
         { label: 'Captured', value: pile.length, cards: pile },
-        { label: 'Denari', value: denariTotal[player], cards: denariCards },
+        {
+          label: 'Denari',
+          value: denariTotal[player],
+          cards: pile.filter(isDenari),
+        },
         {
           label: 'Sette Bello',
           value: settebello,

@@ -59,6 +59,14 @@ describe('opponent move', () => {
     expect(capture).toEqual([coppe(4), coppe(2)])
   })
 
+  test('must pick the least number of cards when multiple combinations exist', async () => {
+    const game = testGame([coppe(5), coppe(3), coppe(2)], [spade(5)])
+
+    const { capture } = await runMove(game)
+
+    expect(capture).toEqual([coppe(5)])
+  })
+
   test('capture settebello when possible', async () => {
     const game = testGame([denari(7), bastoni(7), denari(2)], [coppe(7)])
 
