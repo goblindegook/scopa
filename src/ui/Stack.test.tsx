@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, expect, test } from 'vitest'
-import { type Card, Suit, type Value } from '../engine/cards'
+import { denari, type Value } from '../engine/cards'
 import { Stack } from './Stack'
 
 afterEach(() => {
@@ -9,7 +9,7 @@ afterEach(() => {
 
 test('renders stack of cards', () => {
   const values: Value[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-  const pile: Card[] = values.map((value) => [value, Suit.DENARI])
+  const pile = values.map((value) => denari(value))
 
   render(<Stack title="Test" pile={pile} />)
 

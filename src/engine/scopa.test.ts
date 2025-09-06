@@ -1,7 +1,15 @@
 import { Err, isErr, isOk, Ok, type Result } from '@pacote/result'
 import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
-import { type Card, type Pile, deck, Suit } from './cards'
+import {
+  bastoni,
+  type Card,
+  coppe,
+  deck,
+  denari,
+  type Pile,
+  spade,
+} from './cards'
 import { deal, play } from './scopa'
 import type { State } from './state'
 
@@ -23,23 +31,13 @@ describe('deal', () => {
   })
 
   test('can deal up to two kings', () => {
-    const game = deal([
-      [10, Suit.BASTONI],
-      [10, Suit.COPPE],
-      [7, Suit.SPADE],
-      [7, Suit.DENARI],
-    ])
+    const game = deal([bastoni(10), coppe(10), spade(7), denari(7)])
 
     expect(getGameState(game).table).toHaveLength(4)
   })
 
   test('reshuffle cards and deal again if three or more kings are on the table', () => {
-    const game = deal([
-      [10, Suit.BASTONI],
-      [10, Suit.COPPE],
-      [10, Suit.SPADE],
-      [7, Suit.DENARI],
-    ])
+    const game = deal([bastoni(10), coppe(10), spade(10), denari(7)])
 
     expect(game).toMatchObject(
       Err({
@@ -94,16 +92,16 @@ describe('deal', () => {
 
 describe('play', () => {
   test('player one plays a card from their hand on the table', () => {
-    const card: Card = [1, Suit.DENARI]
+    const card = denari(1)
     const game: State = {
       state: 'play',
       turn: 0,
       players: [
-        { id: 0, hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { id: 1, hand: [[3, Suit.DENARI]], pile: [], scope: 0 },
+        { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
+        { id: 1, hand: [denari(3)], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [[4, Suit.DENARI]],
+      table: [denari(4)],
     }
 
     const next = getGameState(play({ card, capture: [] }, game))
@@ -115,16 +113,16 @@ describe('play', () => {
   })
 
   test('player two plays a card from their hand on the table', () => {
-    const card: Card = [2, Suit.DENARI]
+    const card: Card = denari(2)
     const game: State = {
       state: 'play',
       turn: 1,
       players: [
-        { id: 0, hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
-        { id: 1, hand: [card, [3, Suit.DENARI]], pile: [], scope: 0 },
+        { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+        { id: 1, hand: [card, denari(3)], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [[4, Suit.DENARI]],
+      table: [denari(4)],
     }
 
     const next = play({ card, capture: [] }, game)
@@ -133,16 +131,16 @@ describe('play', () => {
   })
 
   test(`a player cannot play a card they don't have`, () => {
-    const card: Card = [1, Suit.DENARI]
+    const card: Card = denari(1)
     const game: State = {
       state: 'play',
       turn: 0,
       players: [
-        { id: 0, hand: [[2, Suit.DENARI]], pile: [], scope: 0 },
-        { id: 1, hand: [[3, Suit.DENARI]], pile: [], scope: 0 },
+        { id: 0, hand: [denari(2)], pile: [], scope: 0 },
+        { id: 1, hand: [denari(3)], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [[4, Suit.DENARI]],
+      table: [denari(4)],
     }
 
     const next = play({ card, capture: [] }, game)
@@ -151,17 +149,17 @@ describe('play', () => {
   })
 
   test(`a player captures a card from the table if it's the same value as the card played`, () => {
-    const card: Card = [1, Suit.DENARI]
-    const target: Card = [1, Suit.COPPE]
+    const card: Card = denari(1)
+    const target: Card = coppe(1)
     const game: State = {
       state: 'play',
       turn: 0,
       players: [
-        { id: 0, hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { id: 1, hand: [[3, Suit.DENARI]], pile: [], scope: 0 },
+        { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
+        { id: 1, hand: [denari(3)], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [[4, Suit.DENARI], target],
+      table: [denari(4), target],
     }
 
     const next = getGameState(play({ card, capture: [] }, game))
@@ -174,19 +172,16 @@ describe('play', () => {
   })
 
   test('a player must choose a card from the table if more than one possible capture exists', () => {
-    const card: Card = [1, Suit.DENARI]
+    const card: Card = denari(1)
     const game: State = {
       state: 'play',
       turn: 0,
       players: [
-        { id: 0, hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { id: 1, hand: [[3, Suit.DENARI]], pile: [], scope: 0 },
+        { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
+        { id: 1, hand: [denari(3)], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [
-        [1, Suit.BASTONI],
-        [1, Suit.COPPE],
-      ],
+      table: [bastoni(1), coppe(1)],
     }
 
     const next = play({ card, capture: [] }, game)
@@ -195,22 +190,19 @@ describe('play', () => {
   })
 
   test('a player must choose a valid capture', () => {
-    const card: Card = [4, Suit.DENARI]
+    const card: Card = denari(4)
     const game: State = {
       state: 'play',
       turn: 0,
       players: [
-        { id: 0, hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { id: 1, hand: [[3, Suit.DENARI]], pile: [], scope: 0 },
+        { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
+        { id: 1, hand: [denari(3)], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [
-        [1, Suit.BASTONI],
-        [1, Suit.COPPE],
-      ],
+      table: [bastoni(1), coppe(1)],
     }
 
-    const next = play({ card, capture: [[1, Suit.BASTONI]] }, game)
+    const next = play({ card, capture: [bastoni(1)] }, game)
 
     expect(next).toMatchObject(
       Err({
@@ -220,17 +212,17 @@ describe('play', () => {
   })
 
   test('a player chooses a card from the table that is the same value as the card played', () => {
-    const card: Card = [1, Suit.DENARI]
-    const target: Card = [1, Suit.COPPE]
+    const card: Card = denari(1)
+    const target: Card = coppe(1)
     const game: State = {
       state: 'play',
       turn: 0,
       players: [
-        { id: 0, hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { id: 1, hand: [[3, Suit.DENARI]], pile: [], scope: 0 },
+        { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
+        { id: 1, hand: [denari(3)], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [[1, Suit.BASTONI], target],
+      table: [bastoni(1), target],
     }
 
     const next = getGameState(play({ card, capture: [target] }, game))
@@ -243,21 +235,17 @@ describe('play', () => {
   })
 
   test('a player captures multiple cards from the table if their cumulative value is the same as the card played', () => {
-    const card: Card = [3, Suit.DENARI]
-    const capture: Pile = [
-      [1, Suit.COPPE],
-      [1, Suit.BASTONI],
-      [1, Suit.SPADE],
-    ]
+    const card = denari(3)
+    const capture = [coppe(1), bastoni(1), spade(1)]
     const game: State = {
       state: 'play',
       turn: 0,
       players: [
-        { id: 0, hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { id: 1, hand: [[5, Suit.DENARI]], pile: [], scope: 0 },
+        { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
+        { id: 1, hand: [denari(5)], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [[4, Suit.DENARI], ...capture],
+      table: [denari(4), ...capture],
     }
 
     const next = getGameState(play({ card, capture: [] }, game))
@@ -274,31 +262,25 @@ describe('play', () => {
   })
 
   test('a player may only capture the least number of cards when multiple combinations exist', () => {
-    const card: Card = [2, Suit.DENARI]
-    const targets: Pile = [
-      [1, Suit.COPPE],
-      [1, Suit.BASTONI],
-    ]
+    const card = denari(2)
+    const targets = [coppe(1), bastoni(1)]
     const game: State = {
       state: 'play',
       turn: 0,
       players: [
         { id: 0, hand: [card], pile: [], scope: 0 },
-        { id: 1, hand: [[10, Suit.DENARI]], pile: [], scope: 0 },
+        { id: 1, hand: [denari(10)], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [[2, Suit.COPPE], ...targets],
+      table: [coppe(2), ...targets],
     }
 
     expect(isErr(play({ card, capture: targets }, game))).toBe(true)
   })
 
   test('target order should not be considered when playing', () => {
-    const card: Card = [2, Suit.DENARI]
-    const targets: Pile = [
-      [1, Suit.COPPE],
-      [1, Suit.BASTONI],
-    ]
+    const card = denari(2)
+    const targets = [coppe(1), bastoni(1)]
     const game: State = {
       state: 'play',
       turn: 0,
@@ -307,29 +289,21 @@ describe('play', () => {
         { id: 1, hand: [], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [
-        [1, Suit.BASTONI],
-        [1, Suit.SPADE],
-        [1, Suit.COPPE],
-      ],
+      table: [bastoni(1), spade(1), coppe(1)],
     }
 
     expect(isOk(play({ card, capture: targets }, game))).toBe(true)
   })
 
   test('a player scores a scopa when they capture all the cards on the table', () => {
-    const card: Card = [3, Suit.DENARI]
-    const table: Pile = [
-      [1, Suit.COPPE],
-      [1, Suit.BASTONI],
-      [1, Suit.SPADE],
-    ]
+    const card = denari(3)
+    const table = [coppe(1), bastoni(1), spade(1)]
     const game: State = {
       state: 'play',
       turn: 0,
       players: [
-        { id: 0, hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { id: 1, hand: [[5, Suit.DENARI]], pile: [], scope: 0 },
+        { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
+        { id: 1, hand: [denari(5)], pile: [], scope: 0 },
       ],
       pile: [],
       table,
@@ -342,30 +316,21 @@ describe('play', () => {
   })
 
   test('four cards are drawn from the pile when the table is empty', () => {
-    const card: Card = [3, Suit.DENARI]
+    const card: Card = denari(3)
 
-    const topOfPile: Pile = [
-      [4, Suit.COPPE],
-      [4, Suit.BASTONI],
-      [4, Suit.SPADE],
-      [4, Suit.DENARI],
-    ]
+    const topOfPile: Pile = [coppe(4), bastoni(4), spade(4), denari(4)]
 
-    const restOfPile: Pile = [[8, Suit.COPPE]]
+    const restOfPile: Pile = [coppe(8)]
 
     const game: State = {
       state: 'play',
       turn: 0,
       players: [
-        { id: 0, hand: [card, [2, Suit.DENARI]], pile: [], scope: 0 },
-        { id: 1, hand: [[5, Suit.DENARI]], pile: [], scope: 0 },
+        { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
+        { id: 1, hand: [denari(5)], pile: [], scope: 0 },
       ],
       pile: [...topOfPile, ...restOfPile],
-      table: [
-        [1, Suit.COPPE],
-        [1, Suit.BASTONI],
-        [1, Suit.SPADE],
-      ],
+      table: [coppe(1), bastoni(1), spade(1)],
     }
 
     const next = play({ card, capture: [] }, game)
@@ -380,25 +345,21 @@ describe('play', () => {
   })
 
   test(`three cards are drawn from the pile when a player's hand is empty`, () => {
-    const card: Card = [3, Suit.DENARI]
+    const card: Card = denari(3)
 
-    const topOfPile: Pile = [
-      [4, Suit.COPPE],
-      [4, Suit.BASTONI],
-      [4, Suit.SPADE],
-    ]
+    const topOfPile: Pile = [coppe(4), bastoni(4), spade(4)]
 
-    const restOfPile: Pile = [[8, Suit.COPPE]]
+    const restOfPile: Pile = [coppe(8)]
 
     const game: State = {
       state: 'play',
       turn: 0,
       players: [
         { id: 0, hand: [card], pile: [], scope: 0 },
-        { id: 1, hand: [[5, Suit.DENARI]], pile: [], scope: 0 },
+        { id: 1, hand: [denari(5)], pile: [], scope: 0 },
       ],
       pile: [...topOfPile, ...restOfPile],
-      table: [[1, Suit.COPPE]],
+      table: [coppe(1)],
     }
 
     const next = play({ card, capture: [] }, game)
@@ -413,7 +374,7 @@ describe('play', () => {
   })
 
   test(`the game ends when the next player's hand is empty and they can't draw any more cards`, () => {
-    const card: Card = [3, Suit.DENARI]
+    const card = denari(3)
     const game: State = {
       state: 'play',
       turn: 1,

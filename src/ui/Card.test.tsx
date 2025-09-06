@@ -1,7 +1,14 @@
 import { cleanup, render } from '@testing-library/react'
 import { assert, constantFrom, integer, property } from 'fast-check'
 import { afterEach, expect, test } from 'vitest'
-import { Suit, type Value } from '../engine/cards'
+import {
+  bastoni,
+  coppe,
+  denari,
+  Suit,
+  spade,
+  type Value,
+} from '../engine/cards'
 import { Card } from './Card'
 
 afterEach(() => {
@@ -38,18 +45,15 @@ test.each<[string, Value]>([
   ['Re', 10],
 ])('render %s value cards', (match, value) => {
   assert(
-    property(
-      constantFrom(Suit.BASTONI, Suit.COPPE, Suit.DENARI, Suit.SPADE),
-      (suit) => {
-        cleanup()
-        const screen = render(<Card card={[value, suit]} />)
-        screen.getByTitle(`${match} di`, { exact: false })
-      },
-    ),
+    property(constantFrom(bastoni, coppe, denari, spade), (suit) => {
+      cleanup()
+      const screen = render(<Card card={suit(value)} />)
+      screen.getByTitle(`${match} di`, { exact: false })
+    }),
   )
 })
 
 test('hidden cards have no title', () => {
-  const screen = render(<Card faceDown card={[1, Suit.DENARI]} />)
+  const screen = render(<Card faceDown card={denari(1)} />)
   expect(screen.queryByAltText('Asso di denari')).not.toBeInTheDocument()
 })

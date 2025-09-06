@@ -1,7 +1,7 @@
 import { Err, Ok } from '@pacote/result'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, test, vitest } from 'vitest'
-import { Suit } from '../engine/cards'
+import { coppe, denari, spade } from '../engine/cards'
 import type { Move, State } from '../engine/state'
 import { Game } from './Game'
 
@@ -31,7 +31,7 @@ test('deal new game on start', () => {
     <Game
       onStart={onStart}
       onPlay={vitest.fn()}
-      onOpponentTurn={async () => ({ card: [1, Suit.DENARI], capture: [] })}
+      onOpponentTurn={async () => ({ card: denari(1), capture: [] })}
       onScore={() => []}
     />,
   )
@@ -48,13 +48,10 @@ test('renders opponent hand', () => {
     Ok(
       testGame({
         players: [
-          { id: 0, hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+          { id: 0, hand: [denari(1)], pile: [], scope: 0 },
           {
             id: 1,
-            hand: [
-              [2, Suit.DENARI],
-              [3, Suit.DENARI],
-            ],
+            hand: [denari(2), denari(3)],
             pile: [],
             scope: 0,
           },
@@ -86,19 +83,19 @@ test('card visibility', () => {
         players: [
           {
             id: 0,
-            hand: [[1, Suit.DENARI]],
-            pile: [[2, Suit.DENARI]],
+            hand: [denari(1)],
+            pile: [denari(2)],
             scope: 0,
           },
           {
             id: 1,
-            hand: [[3, Suit.DENARI]],
-            pile: [[4, Suit.DENARI]],
+            hand: [denari(3)],
+            pile: [denari(4)],
             scope: 0,
           },
         ],
-        table: [[5, Suit.DENARI]],
-        pile: [[6, Suit.DENARI]],
+        table: [denari(5)],
+        pile: [denari(6)],
       }),
     )
 
@@ -129,20 +126,13 @@ test('player piles', () => {
           {
             id: 0,
             hand: [],
-            pile: [
-              [1, Suit.DENARI],
-              [2, Suit.DENARI],
-            ],
+            pile: [denari(1), denari(2)],
             scope: 0,
           },
           {
             id: 1,
             hand: [],
-            pile: [
-              [3, Suit.DENARI],
-              [4, Suit.DENARI],
-              [5, Suit.DENARI],
-            ],
+            pile: [denari(3), denari(4), denari(5)],
             scope: 0,
           },
         ],
@@ -169,7 +159,7 @@ test('player piles', () => {
 test('allow playing a card', () => {
   const initialState = testGame({
     players: [
-      { id: 0, hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+      { id: 0, hand: [denari(1)], pile: [], scope: 0 },
       { id: 1, hand: [], pile: [], scope: 0 },
     ],
   })
@@ -182,7 +172,7 @@ test('allow playing a card', () => {
           { id: 0, hand: [], pile: [], scope: 0 },
           { id: 1, hand: [], pile: [], scope: 0 },
         ],
-        table: [[2, Suit.DENARI]],
+        table: [denari(2)],
       }),
     ),
   )
@@ -200,7 +190,7 @@ test('allow playing a card', () => {
   fireEvent.click(screen.getByAltText('Asso di denari'))
 
   expect(onPlay).toHaveBeenCalledWith(
-    { card: [1, Suit.DENARI], capture: [] },
+    { card: denari(1), capture: [] },
     initialState,
   )
   expect(screen.getByAltText('Due di denari')).toBeTruthy()
@@ -211,10 +201,10 @@ test(`block interaction when not a player's turn`, () => {
     state: 'play',
     turn: 1,
     players: [
-      { id: 0, hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+      { id: 0, hand: [denari(1)], pile: [], scope: 0 },
       { id: 1, hand: [], pile: [], scope: 0 },
     ],
-    table: [[7, Suit.DENARI]],
+    table: [denari(7)],
   })
 
   const onPlay = vitest.fn()
@@ -224,10 +214,7 @@ test(`block interaction when not a player's turn`, () => {
       onStart={() => Ok(initialState)}
       onOpponentTurn={() =>
         new Promise((resolve) =>
-          setTimeout(
-            () => resolve({ card: [1, Suit.DENARI], capture: [] }),
-            10,
-          ),
+          setTimeout(() => resolve({ card: denari(1), capture: [] }), 10),
         )
       }
       onPlay={onPlay}
@@ -254,13 +241,10 @@ test(`block interaction when not a player's turn`, () => {
 test('select targets to capture', () => {
   const initialState = testGame({
     players: [
-      { id: 0, hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+      { id: 0, hand: [denari(1)], pile: [], scope: 0 },
       { id: 1, hand: [], pile: [], scope: 0 },
     ],
-    table: [
-      [1, Suit.COPPE],
-      [1, Suit.SPADE],
-    ],
+    table: [coppe(1), spade(1)],
   })
 
   const onPlay = vitest.fn(() =>
@@ -271,7 +255,7 @@ test('select targets to capture', () => {
           { id: 0, hand: [], pile: [], scope: 0 },
           { id: 1, hand: [], pile: [], scope: 0 },
         ],
-        table: [[1, Suit.SPADE]],
+        table: [spade(1)],
       }),
     ),
   )
@@ -290,7 +274,7 @@ test('select targets to capture', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
 
   expect(onPlay).toHaveBeenCalledWith(
-    { card: [1, Suit.DENARI], capture: [[1, Suit.COPPE]] },
+    { card: denari(1), capture: [coppe(1)] },
     initialState,
   )
 })
@@ -305,7 +289,7 @@ test('invalid move handling', () => {
         Ok(
           testGame({
             players: [
-              { id: 0, hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
+              { id: 0, hand: [denari(1)], pile: [], scope: 0 },
               { id: 1, hand: [], pile: [], scope: 0 },
             ],
           }),
@@ -328,8 +312,8 @@ test('computer opponent plays a card', async () => {
     Ok(
       testGame({
         players: [
-          { id: 0, hand: [[1, Suit.DENARI]], pile: [], scope: 0 },
-          { id: 1, hand: [[2, Suit.DENARI]], pile: [], scope: 0 },
+          { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+          { id: 1, hand: [denari(2)], pile: [], scope: 0 },
         ],
         turn: 1,
       }),
@@ -344,13 +328,13 @@ test('computer opponent plays a card', async () => {
           { id: 0, hand: [], pile: [], scope: 0 },
           { id: 1, hand: [], pile: [], scope: 0 },
         ],
-        table: [[1, Suit.DENARI]],
+        table: [denari(1)],
       }),
     ),
   )
 
   const onOpponentPlay = async (): Promise<Move> => ({
-    card: [1, Suit.DENARI],
+    card: denari(1),
     capture: [],
   })
 

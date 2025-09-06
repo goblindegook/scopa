@@ -7,9 +7,42 @@ export enum Suit {
 
 export type Value = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
 
-export type Card = [Value, Suit]
+export type Card<V extends Value = Value, S extends Suit = Suit> = [V, S]
 
-export type Pile = readonly Card[]
+export type Pile<
+  V extends Value = Value,
+  S extends Suit = Suit,
+> = readonly Card<V, S>[]
+
+export function denari<V extends Value>(value: V): Card<V, Suit.DENARI> {
+  return [value, Suit.DENARI]
+}
+
+export function coppe<V extends Value>(value: V): Card<V, Suit.COPPE> {
+  return [value, Suit.COPPE]
+}
+
+export function bastoni<V extends Value>(value: V): Card<V, Suit.BASTONI> {
+  return [value, Suit.BASTONI]
+}
+
+export function spade<V extends Value>(value: V): Card<V, Suit.SPADE> {
+  return [value, Suit.SPADE]
+}
+
+export function isSuit<S extends Suit>(
+  card: Card<Value>,
+  suit: Suit,
+): card is Card<Value, S> {
+  return card[1] === suit
+}
+
+export function isCard<V extends Value, S extends Suit>(
+  a: Card<Value, Suit>,
+  b: Card<Value, Suit>,
+): a is Card<V, S> {
+  return a[0] === b[0] && a[1] === b[1]
+}
 
 export function deck(): Pile {
   const suits = [Suit.DENARI, Suit.COPPE, Suit.BASTONI, Suit.SPADE]

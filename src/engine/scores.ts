@@ -1,6 +1,6 @@
 import { flow } from '@pacote/pipe'
 import { groupBy, includes, map, reduce, sort } from 'ramda'
-import { type Card, Suit } from './cards'
+import { type Card, denari, isSuit, Suit, type Value } from './cards'
 import type { Player } from './state'
 
 interface ScoreDetail {
@@ -15,11 +15,15 @@ export interface Score {
   total: number
 }
 
-const isDenari = ([, suit]: Card) => suit === Suit.DENARI
+function isDenari<V extends Value>(
+  card: Card<V, Suit>,
+): card is Card<V, Suit.DENARI> {
+  return isSuit(card, Suit.DENARI)
+}
 
-const SETTEBELLO: Card = [7, Suit.DENARI]
+export const SETTEBELLO = denari(7)
 
-export const PRIME_POINTS: { [value: number]: number } = {
+export const PRIME_POINTS: Record<number, number> = {
   1: 16,
   2: 12,
   3: 13,
