@@ -1,10 +1,10 @@
 import { assert, integer, property } from 'fast-check'
 import { describe, expect, test } from 'vitest'
-import { bastoni, type Card, coppe, denari, spade } from './cards'
+import { bastoni, coppe, denari, spade } from './cards'
 import { score } from './scores'
 
 describe('prime', () => {
-  test.each<[string, number, Card]>([
+  test.each([
     ['sevens', 21, denari(7)],
     ['sixes', 18, denari(6)],
     ['aces', 16, denari(1)],
@@ -30,7 +30,7 @@ describe('prime', () => {
       {
         id: 0,
         hand: [],
-        pile: [denari(7), denari(6)] as Card[],
+        pile: [denari(7), denari(6)],
         scope: 0,
       },
     ]

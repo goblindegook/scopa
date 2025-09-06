@@ -31,15 +31,15 @@ export function spade<V extends Value>(value: V): Card<V, Suit.SPADE> {
 }
 
 export function isSuit<S extends Suit>(
-  card: Card<Value>,
+  card: Card,
   suit: Suit,
 ): card is Card<Value, S> {
   return card[1] === suit
 }
 
 export function isCard<V extends Value, S extends Suit>(
-  a: Card<Value, Suit>,
-  b: Card<Value, Suit>,
+  a: Card,
+  b: Card,
 ): a is Card<V, S> {
   return a[0] === b[0] && a[1] === b[1]
 }

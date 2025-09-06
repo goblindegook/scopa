@@ -25,7 +25,7 @@ function evaluateCapture(card: Card, capture: Pile, tableSize: number): number {
     score += 1000
   }
 
-  const capturedWithCard: Pile = [...capture, card]
+  const capturedWithCard = [...capture, card]
   if (hasSettebello(capturedWithCard)) {
     score += 500
   }

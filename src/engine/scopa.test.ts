@@ -1,15 +1,7 @@
 import { Err, isErr, isOk, Ok, type Result } from '@pacote/result'
 import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
-import {
-  bastoni,
-  type Card,
-  coppe,
-  deck,
-  denari,
-  type Pile,
-  spade,
-} from './cards'
+import { bastoni, coppe, deck, denari, type Pile, spade } from './cards'
 import { deal, play } from './scopa'
 import type { State } from './state'
 
@@ -113,7 +105,7 @@ describe('play', () => {
   })
 
   test('player two plays a card from their hand on the table', () => {
-    const card: Card = denari(2)
+    const card = denari(2)
     const game: State = {
       state: 'play',
       turn: 1,
@@ -131,7 +123,7 @@ describe('play', () => {
   })
 
   test(`a player cannot play a card they don't have`, () => {
-    const card: Card = denari(1)
+    const card = denari(1)
     const game: State = {
       state: 'play',
       turn: 0,
@@ -149,8 +141,8 @@ describe('play', () => {
   })
 
   test(`a player captures a card from the table if it's the same value as the card played`, () => {
-    const card: Card = denari(1)
-    const target: Card = coppe(1)
+    const card = denari(1)
+    const target = coppe(1)
     const game: State = {
       state: 'play',
       turn: 0,
@@ -172,7 +164,7 @@ describe('play', () => {
   })
 
   test('a player must choose a card from the table if more than one possible capture exists', () => {
-    const card: Card = denari(1)
+    const card = denari(1)
     const game: State = {
       state: 'play',
       turn: 0,
@@ -190,7 +182,7 @@ describe('play', () => {
   })
 
   test('a player must choose a valid capture', () => {
-    const card: Card = denari(4)
+    const card = denari(4)
     const game: State = {
       state: 'play',
       turn: 0,
@@ -212,8 +204,8 @@ describe('play', () => {
   })
 
   test('a player chooses a card from the table that is the same value as the card played', () => {
-    const card: Card = denari(1)
-    const target: Card = coppe(1)
+    const card = denari(1)
+    const target = coppe(1)
     const game: State = {
       state: 'play',
       turn: 0,
@@ -316,11 +308,11 @@ describe('play', () => {
   })
 
   test('four cards are drawn from the pile when the table is empty', () => {
-    const card: Card = denari(3)
+    const card = denari(3)
 
-    const topOfPile: Pile = [coppe(4), bastoni(4), spade(4), denari(4)]
+    const topOfPile = [coppe(4), bastoni(4), spade(4), denari(4)]
 
-    const restOfPile: Pile = [coppe(8)]
+    const restOfPile = [coppe(8)]
 
     const game: State = {
       state: 'play',
@@ -345,12 +337,9 @@ describe('play', () => {
   })
 
   test(`three cards are drawn from the pile when a player's hand is empty`, () => {
-    const card: Card = denari(3)
-
-    const topOfPile: Pile = [coppe(4), bastoni(4), spade(4)]
-
-    const restOfPile: Pile = [coppe(8)]
-
+    const card = denari(3)
+    const topOfPile = [coppe(4), bastoni(4), spade(4)]
+    const restOfPile = [coppe(8)]
     const game: State = {
       state: 'play',
       turn: 0,
