@@ -1,3 +1,4 @@
+import { shuffle } from '@pacote/shuffle'
 import fc from 'fast-check'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { bastoni, coppe, denari, type Pile, spade } from './cards'
@@ -31,7 +32,7 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-describe('opponent move', () => {
+describe('capture moves', () => {
   test('prefer to sweep the table when possible', async () => {
     const game = testGame([bastoni(2), denari(1)], [coppe(3), coppe(1)])
 
@@ -50,14 +51,17 @@ describe('opponent move', () => {
     expect(capture).toEqual([coppe(5), coppe(2)])
   })
 
-  test('prefer sweeping the table with the coins suit', async () => {
-    const game = testGame([coppe(4), coppe(2)], [denari(6), coppe(6)])
+  test.each([[[denari(6), coppe(6)]], [[coppe(6), denari(6)]]])(
+    'prefer sweeping the table with the coins suit',
+    async (hand) => {
+      const game = testGame([coppe(4), coppe(2)], hand)
 
-    const { card, capture } = await runMove(game)
+      const { card, capture } = await runMove(game)
 
-    expect(card).toEqual(denari(6))
-    expect(capture).toEqual([coppe(4), coppe(2)])
-  })
+      expect(card).toEqual(denari(6))
+      expect(capture).toEqual([coppe(4), coppe(2)])
+    },
+  )
 
   test('must pick the least number of cards when multiple combinations exist', async () => {
     const game = testGame([coppe(5), coppe(3), coppe(2)], [spade(5)])
@@ -95,19 +99,29 @@ describe('opponent move', () => {
   })
 
   test('prefer to capture with coins suit', async () => {
-    const game = testGame([coppe(1), spade(1)], [bastoni(1), denari(1)])
+    const game = testGame([coppe(1)], [bastoni(1), denari(1), spade(1)])
 
     const { card } = await runMove(game)
 
     expect(card).toEqual(denari(1))
   })
 
+  test('if all options are equal, capture with the first available suit', async () => {
+    const game = testGame([coppe(1)], [bastoni(1), spade(1)])
+
+    const { card } = await runMove(game)
+
+    expect(card).toEqual(bastoni(1))
+  })
+})
+
+describe('discard moves', () => {
   test('discard least valuable suit when no captures are available', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.constantFrom(bastoni, spade, coppe),
         async (suitToDiscard) => {
-          const game = testGame([], [denari(1), suitToDiscard(1)])
+          const game = testGame([], shuffle([denari(1), suitToDiscard(1)]))
 
           const { card, capture } = await runMove(game)
 
@@ -124,7 +138,7 @@ describe('opponent move', () => {
         fc.constantFrom(1, 2, 3, 4, 5, 6, 8, 9, 10),
         fc.constantFrom(denari, coppe, bastoni, spade),
         async (valueToDiscard, suit) => {
-          const game = testGame([], [suit(7), suit(valueToDiscard)])
+          const game = testGame([], shuffle([suit(7), suit(valueToDiscard)]))
 
           const { card, capture } = await runMove(game)
 
@@ -133,5 +147,13 @@ describe('opponent move', () => {
         },
       ),
     )
+  })
+
+  test('if all options are equal, discard the first available suit', async () => {
+    const game = testGame([], [bastoni(1), spade(1)])
+
+    const { card } = await runMove(game)
+
+    expect(card).toEqual(bastoni(1))
   })
 })
