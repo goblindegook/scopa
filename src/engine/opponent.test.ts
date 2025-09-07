@@ -94,6 +94,14 @@ describe('opponent move', () => {
     expect(capture).toEqual([denari(1)])
   })
 
+  test('prefer to capture with coins suit', async () => {
+    const game = testGame([coppe(1), spade(1)], [bastoni(1), denari(1)])
+
+    const { card } = await runMove(game)
+
+    expect(card).toEqual(denari(1))
+  })
+
   test('discard least valuable suit when no captures are available', async () => {
     await fc.assert(
       fc.asyncProperty(
@@ -110,16 +118,17 @@ describe('opponent move', () => {
     )
   })
 
-  test('discard least valuable coins card when no captures are available', async () => {
+  test('discard least valuable card when no captures are available', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.constantFrom(1, 2, 3, 4, 5, 6, 8, 9, 10),
-        async (valueToDiscard) => {
-          const game = testGame([], [denari(7), denari(valueToDiscard)])
+        fc.constantFrom(denari, coppe, bastoni, spade),
+        async (valueToDiscard, suit) => {
+          const game = testGame([], [suit(7), suit(valueToDiscard)])
 
           const { card, capture } = await runMove(game)
 
-          expect(card).toEqual(denari(valueToDiscard))
+          expect(card).toEqual(suit(valueToDiscard))
           expect(capture).toHaveLength(0)
         },
       ),

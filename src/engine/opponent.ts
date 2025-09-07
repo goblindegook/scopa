@@ -1,4 +1,4 @@
-import { sum } from 'ramda'
+import { mean, sum } from 'ramda'
 import { findCaptures } from './capture.ts'
 import { type Card, isDenari, isSettebello, type Pile } from './cards'
 import { primePoints } from './scores.ts'
@@ -9,19 +9,15 @@ function evaluateCapture(card: Card, capture: Pile, tableSize: number): number {
 
   return sum([
     capture.length,
-    scoredCards.reduce((acc, card) => acc + primePoints(card), 0) / 10,
-    scoredCards.filter(isDenari).length * 5,
+    mean(scoredCards.map(primePoints)),
+    scoredCards.filter(isDenari).length * 10,
     scoredCards.some(isSettebello) ? 500 : 0,
     capture.length === tableSize ? 1000 : 0,
   ])
 }
 
 function evaluateDiscard(card: Card): number {
-  return -sum([
-    primePoints(card),
-    isDenari(card) ? 5 : 0,
-    isSettebello(card) ? 1000 : 0,
-  ])
+  return -primePoints(card) + (isDenari(card) ? -5 : 0)
 }
 
 export async function move(game: State): Promise<Move> {

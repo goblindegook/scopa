@@ -1,5 +1,11 @@
-import { cleanup, render } from '@testing-library/react'
-import { assert, constantFrom, integer, property } from 'fast-check'
+import { cleanup, render, waitFor } from '@testing-library/react'
+import {
+  assert,
+  asyncProperty,
+  constantFrom,
+  integer,
+  property,
+} from 'fast-check'
 import { afterEach, expect, test } from 'vitest'
 import {
   bastoni,
@@ -20,14 +26,18 @@ test.each<[string, Suit]>([
   ['coppe', Suit.COPPE],
   ['denari', Suit.DENARI],
   ['spade', Suit.SPADE],
-])('render %s suit cards', (match, suit) => {
-  assert(
-    property(integer({ min: 1, max: 10 }), (value) => {
+])('render %s suit cards', async (match, suit) => {
+  await assert(
+    asyncProperty(integer({ min: 1, max: 10 }), async (value) => {
       cleanup()
       const screen = render(<Card card={[value as Value, suit]} />)
-      screen.getByTitle(`di ${match}`, {
+      const cardElement = screen.getByTitle(`di ${match}`, {
         exact: false,
       }) as HTMLImageElement
+      expect(cardElement.tagName).toBe('IMG')
+      await waitFor(() =>
+        expect(cardElement.src).toMatch(`/assets/${match}/${value}.jpg`),
+      )
     }),
   )
 })
