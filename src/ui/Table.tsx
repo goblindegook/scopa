@@ -5,6 +5,13 @@ export const Table = styled('section')`
   background-color: darkgreen;
   margin: 1rem;
   text-align: center;
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  overflow: auto;
+  min-height: 0;
   /* transform: perspective(1500px) rotateX(30deg) rotateY(0deg) rotateZ(0deg) scale(1); */
 `
 

@@ -10,6 +10,7 @@ const PlayerArea = styled('section')`
   grid-template-columns: auto 20vw;
   justify-items: center;
   padding-left: 20vw;
+  flex-shrink: 0;
 `
 
 const PlayerPile = styled(Stack)`

@@ -5,7 +5,7 @@ import { bastoni, coppe, denari, type Pile, spade } from './cards'
 import { move } from './opponent'
 import type { State } from './state'
 
-function testGame(table: Pile, hand: Pile): State {
+function setupGame(table: Pile, hand: Pile): State {
   return {
     state: 'play',
     turn: 0,
@@ -34,7 +34,7 @@ afterEach(() => {
 
 describe('capture moves', () => {
   test('prefer to sweep the table when possible', async () => {
-    const game = testGame([bastoni(2), denari(1)], [coppe(3), coppe(1)])
+    const game = setupGame([bastoni(2), denari(1)], [coppe(3), coppe(1)])
 
     const { card, capture } = await runMove(game)
 
@@ -43,7 +43,7 @@ describe('capture moves', () => {
   })
 
   test('prefer sweeping the table with a settebello', async () => {
-    const game = testGame([coppe(5), coppe(2)], [denari(7), coppe(7)])
+    const game = setupGame([coppe(5), coppe(2)], [denari(7), coppe(7)])
 
     const { card, capture } = await runMove(game)
 
@@ -54,7 +54,7 @@ describe('capture moves', () => {
   test.each([[[denari(6), coppe(6)]], [[coppe(6), denari(6)]]])(
     'prefer sweeping the table with the coins suit',
     async (hand) => {
-      const game = testGame([coppe(4), coppe(2)], hand)
+      const game = setupGame([coppe(4), coppe(2)], hand)
 
       const { card, capture } = await runMove(game)
 
@@ -64,7 +64,7 @@ describe('capture moves', () => {
   )
 
   test('must pick the least number of cards when multiple combinations exist', async () => {
-    const game = testGame([coppe(5), coppe(3), coppe(2)], [spade(5)])
+    const game = setupGame([coppe(5), coppe(3), coppe(2)], [spade(5)])
 
     const { capture } = await runMove(game)
 
@@ -72,7 +72,7 @@ describe('capture moves', () => {
   })
 
   test('capture settebello when possible', async () => {
-    const game = testGame([denari(7), bastoni(7), denari(2)], [coppe(7)])
+    const game = setupGame([denari(7), bastoni(7), denari(2)], [coppe(7)])
 
     const { card, capture } = await runMove(game)
 
@@ -81,7 +81,7 @@ describe('capture moves', () => {
   })
 
   test('capture settebello as part of a group', async () => {
-    const game = testGame([denari(7), bastoni(7), denari(2)], [coppe(9)])
+    const game = setupGame([denari(7), bastoni(7), denari(2)], [coppe(9)])
 
     const { card, capture } = await runMove(game)
 
@@ -90,7 +90,7 @@ describe('capture moves', () => {
   })
 
   test('prefer coins suit among equal single-card captures', async () => {
-    const game = testGame([denari(1), spade(1)], [coppe(1)])
+    const game = setupGame([denari(1), spade(1)], [coppe(1)])
 
     const { card, capture } = await runMove(game)
 
@@ -99,7 +99,7 @@ describe('capture moves', () => {
   })
 
   test('prefer to capture with coins suit', async () => {
-    const game = testGame([coppe(1)], [bastoni(1), denari(1), spade(1)])
+    const game = setupGame([coppe(1)], [bastoni(1), denari(1), spade(1)])
 
     const { card } = await runMove(game)
 
@@ -107,7 +107,7 @@ describe('capture moves', () => {
   })
 
   test('if all options are equal, capture with the first available suit', async () => {
-    const game = testGame([coppe(1)], [bastoni(1), spade(1)])
+    const game = setupGame([coppe(1)], [bastoni(1), spade(1)])
 
     const { card } = await runMove(game)
 
@@ -121,7 +121,7 @@ describe('discard moves', () => {
       fc.asyncProperty(
         fc.constantFrom(bastoni, spade, coppe),
         async (suitToDiscard) => {
-          const game = testGame([], shuffle([denari(1), suitToDiscard(1)]))
+          const game = setupGame([], shuffle([denari(1), suitToDiscard(1)]))
 
           const { card, capture } = await runMove(game)
 
@@ -138,7 +138,7 @@ describe('discard moves', () => {
         fc.constantFrom(1, 2, 3, 4, 5, 6, 8, 9, 10),
         fc.constantFrom(denari, coppe, bastoni, spade),
         async (valueToDiscard, suit) => {
-          const game = testGame([], shuffle([suit(7), suit(valueToDiscard)]))
+          const game = setupGame([], shuffle([suit(7), suit(valueToDiscard)]))
 
           const { card, capture } = await runMove(game)
 
@@ -150,7 +150,7 @@ describe('discard moves', () => {
   })
 
   test('if all options are equal, discard the first available suit', async () => {
-    const game = testGame([], [bastoni(1), spade(1)])
+    const game = setupGame([], [bastoni(1), spade(1)])
 
     const { card } = await runMove(game)
 

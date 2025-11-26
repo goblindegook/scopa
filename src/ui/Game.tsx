@@ -41,6 +41,13 @@ const Button = styled('button')`
   font-size: 1rem;
 `
 
+const Container = styled('div')`
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+`
+
 const GameOver = styled('main')`
   display: flex;
   flex-direction: column;
@@ -48,7 +55,15 @@ const GameOver = styled('main')`
   align-items: center;
   color: white;
   background-color: rgba(0, 0, 0, 0.25);
-  height: calc(100vh - 4rem);
+  flex: 1;
+  overflow: hidden;
+`
+
+const Main = styled('main')`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
 `
 
 interface GameProps {
@@ -119,7 +134,7 @@ export const Game = ({
   const humanPlayer = game.players[HUMAN_PLAYER]
 
   return (
-    <>
+    <Container>
       <Header>
         <Button onClick={start}>Start new game</Button>
         <Alert>{alert}</Alert>
@@ -132,7 +147,7 @@ export const Game = ({
         </GameOver>
       )}
       {game.state === 'play' && (
-        <main>
+        <Main>
           {game.players.map(
             (player) =>
               player.id !== HUMAN_PLAYER && (
@@ -179,8 +194,8 @@ export const Game = ({
               </PlayerCard>
             ))}
           </Player>
-        </main>
+        </Main>
       )}
-    </>
+    </Container>
   )
 }
