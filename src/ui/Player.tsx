@@ -11,6 +11,11 @@ const PlayerArea = styled('section')`
   justify-items: center;
   padding-left: 20vw;
   flex-shrink: 0;
+  min-height: 200px;
+`
+
+const PlayerHand = styled('div')`
+  min-height: 150px;
 `
 
 const PlayerPile = styled(Stack)`
@@ -45,7 +50,7 @@ type PlayerProps = React.PropsWithChildren<{
 
 export const Player = ({ children, index, pile }: PlayerProps) => (
   <PlayerArea>
-    <div>{children}</div>
+    <PlayerHand>{children}</PlayerHand>
     <PlayerPile
       pile={pile}
       title={`Player ${index + 1} pile: ${pile.length} cards`}

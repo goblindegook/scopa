@@ -16,6 +16,11 @@ const OpponentArea = styled('section')`
   justify-items: center;
   padding-left: 20vw;
   flex-shrink: 0;
+  min-height: 200px;
+`
+
+const OpponentHand = styled('aside')`
+  min-height: 150px;
 `
 
 const OpponentPile = styled(Stack)`
@@ -30,7 +35,7 @@ type OpponentProps = React.PropsWithChildren<{
 
 export const Opponent = ({ children, index, pile }: OpponentProps) => (
   <OpponentArea>
-    <aside data-testid={`p${index}-hand`}>{children}</aside>
+    <OpponentHand data-testid={`p${index}-hand`}>{children}</OpponentHand>
     <OpponentPile
       pile={pile}
       title={`Player ${index + 1} pile: ${pile.length} cards`}
