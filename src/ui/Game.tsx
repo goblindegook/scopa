@@ -1,4 +1,5 @@
 import styled from '@emotion/styled'
+import { AnimatePresence } from 'framer-motion'
 import { fold, type Result } from '@pacote/result'
 import { includes, without } from 'ramda'
 import React from 'react'
@@ -9,7 +10,7 @@ import { Card as DisplayCard } from './Card'
 import { Opponent, OpponentCard } from './Opponent'
 import { Player, PlayerCard } from './Player'
 import { ScoreBoard } from './ScoreBoard'
-import { Table, TableCard, TableCardSelector } from './Table'
+import { Table, TableCard, TableCardLabel, TableCardSelector } from './Table'
 
 const HUMAN_PLAYER = 0
 
@@ -166,22 +167,37 @@ export const Game = ({
                 </Opponent>
               ),
           )}
-          <Table>
-            {game.table.map((card) => {
-              const key = `card-${card.join('-')}`
-              return (
-                <label key={key} htmlFor={key}>
-                  <TableCardSelector
-                    disabled={game.turn !== HUMAN_PLAYER}
-                    type="checkbox"
-                    checked={includes(card, targets)}
-                    onChange={() => toggleTarget(card)}
-                    id={key}
-                  />
-                  <TableCard card={card} />
-                </label>
-              )
-            })}
+          <Table layout>
+            <AnimatePresence mode="popLayout">
+              {game.table.map((card) => {
+                const cardId = `card-${card.join('-')}`
+                return (
+                  <TableCardLabel
+                    key={cardId}
+                    htmlFor={cardId}
+                    layout
+                    initial={{ opacity: 0, scale: 0.8, y: -50 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.8, y: 50 }}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 300,
+                      damping: 25,
+                      opacity: { duration: 0.2 },
+                    }}
+                  >
+                    <TableCardSelector
+                      disabled={game.turn !== HUMAN_PLAYER}
+                      type="checkbox"
+                      checked={includes(card, targets)}
+                      onChange={() => toggleTarget(card)}
+                      id={cardId}
+                    />
+                    <TableCard card={card} />
+                  </TableCardLabel>
+                )
+              })}
+            </AnimatePresence>
           </Table>
           <Player index={HUMAN_PLAYER} pile={humanPlayer.pile}>
             {humanPlayer.hand.map((card) => (
