@@ -102,7 +102,7 @@ export const Game = ({
   const [animatingCard, setAnimatingCard] = React.useState<{
     card: Card
     initial: { x: number; y: number }
-    endPos: { x: number; y: number } | null
+    animate: { x: number; y: number } | null
   } | null>(null)
 
   const invalidMove = React.useCallback(
@@ -140,7 +140,7 @@ export const Game = ({
                   x: startPositionRect.left,
                   y: startPositionRect.top,
                 },
-                endPos: null,
+                animate: null,
               })
             }
             setGame(nextGame)
@@ -162,7 +162,7 @@ export const Game = ({
       if (
         cardElement == null ||
         animatingCard == null ||
-        animatingCard.endPos != null
+        animatingCard.animate != null
       )
         return
       const startPositionRect = cardRefs.current
@@ -175,7 +175,7 @@ export const Game = ({
         initial: startPositionRect
           ? { x: startPositionRect.left, y: startPositionRect.top }
           : animatingCard.initial,
-        endPos: {
+        animate: {
           x: endPositionRect.left,
           y: endPositionRect.top - 64,
         },
@@ -185,7 +185,7 @@ export const Game = ({
   )
 
   React.useLayoutEffect(() => {
-    if (animatingCard?.endPos == null && tableRef.current) {
+    if (animatingCard?.animate == null && tableRef.current) {
       const cardId = `card-${cardRef(animatingCard?.card)}`
       animateCardTo(
         tableRef.current.querySelector<HTMLElement>(
@@ -257,14 +257,14 @@ export const Game = ({
                 const isAnimating =
                   cardRef(card) === cardRef(animatingCard?.card)
                 const wasJustAnimated =
-                  isAnimating && animatingCard?.endPos != null
+                  isAnimating && animatingCard?.animate != null
                 return (
                   <TableCardLabel
                     key={cardId}
                     htmlFor={cardId}
                     layout
                     onLayoutAnimationComplete={() => {
-                      if (isAnimating && animatingCard?.endPos == null) {
+                      if (isAnimating && animatingCard?.animate == null) {
                         animateCardTo(
                           cardRefs.current.get(cardRef(animatingCard?.card)),
                         )
@@ -318,11 +318,11 @@ export const Game = ({
             </AnimatePresence>
           </Table>
           <AnimatePresence mode="wait">
-            {animatingCard?.endPos && (
+            {animatingCard?.animate && (
               <AnimatedCardOverlay
                 key={cardRef(animatingCard.card)}
                 initial={animatingCard.initial}
-                animate={animatingCard.endPos}
+                animate={animatingCard.animate}
                 exit={{ opacity: 0, transition: { duration: 0 } }}
                 transition={{
                   type: 'spring',
