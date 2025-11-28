@@ -72,8 +72,7 @@ test('renders opponent hand', () => {
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
 
-  const cards = screen.getByTestId('p1-hand').querySelectorAll('div')
-  expect(cards).toHaveLength(2)
+  expect(screen.getByTestId('p1-hand').children).toHaveLength(2)
 })
 
 test('card visibility', () => {
