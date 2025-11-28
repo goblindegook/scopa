@@ -1,6 +1,7 @@
 import styled from '@emotion/styled'
 import React from 'react'
 import { type Card as CardType, Suit } from '../engine/cards'
+import { motion, type Target } from 'framer-motion'
 
 const VALUES: { [key: number]: string } = {
   1: 'Asso',
@@ -89,9 +90,7 @@ export const Card = ({ className, faceDown = false, card }: CardProps) => {
   React.useEffect(() => {
     ;(async () => {
       const asset = await import(`./assets/${SUITS[card[1]]}/${card[0]}.jpg`)
-      if (asset.default) {
-        setSrc(asset.default)
-      }
+      if (asset.default) setSrc(asset.default)
     })()
   }, [card])
 
@@ -99,5 +98,66 @@ export const Card = ({ className, faceDown = false, card }: CardProps) => {
     <Back className={className} />
   ) : (
     <Face className={className} src={src} title={name(card)} alt={name(card)} />
+  )
+}
+
+const AnimatedCardOverlay = styled(motion.div)`
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  will-change: transform;
+  transform-style: preserve-3d;
+`
+
+const AnimatedCardContainer = styled('div')`
+  transform-style: preserve-3d;
+  position: relative;
+  width: 7.5vw;
+  height: 13.5vw;
+`
+
+const AnimatedCardFace = styled('div')<{ side: 'front' | 'back' }>`
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  transform: rotateY(${({ side }) => (side === 'front' ? '0deg' : '180deg')});
+`
+
+export interface AnimatedCardProps {
+  card: CardType
+  initial: Target
+  animate: Target
+  faceDown: boolean
+  onComplete: () => void
+}
+
+export const AnimatedCard = ({ card, initial, animate, faceDown, onComplete }: AnimatedCardProps) => {
+  return (
+    <AnimatedCardOverlay
+      initial={{ ...initial, rotateY: faceDown ? 180 : 0 }}
+      animate={{ ...animate, rotateY: 0 }}
+      exit={{ opacity: 0, transition: { duration: 0 } }}
+      transition={{
+        type: 'spring',
+        stiffness: 200,
+        damping: 20,
+        duration: 0.6,
+        rotateY: {
+          duration: 0.2,
+          delay: 0,
+        },
+      }}
+      onAnimationComplete={onComplete}
+    >
+      <AnimatedCardContainer>
+        <AnimatedCardFace side="front">
+          <Card card={card} faceDown={false} />
+        </AnimatedCardFace>
+        <AnimatedCardFace side="back">
+          <Card card={card} faceDown={true} />
+        </AnimatedCardFace>
+      </AnimatedCardContainer>
+    </AnimatedCardOverlay>
   )
 }

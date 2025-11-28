@@ -1,13 +1,13 @@
 import styled from '@emotion/styled'
 import { fold, type Result } from '@pacote/result'
-import { AnimatePresence, motion, type Target } from 'framer-motion'
+import { AnimatePresence, type Target } from 'framer-motion'
 import { includes, without } from 'ramda'
 import React from 'react'
 import { findCaptures } from '../engine/capture'
 import type { Card } from '../engine/cards'
 import type { Score } from '../engine/scores'
 import type { Move, State } from '../engine/state'
-import { Card as DisplayCard } from './Card'
+import { AnimatedCard, Card as DisplayCard } from './Card'
 import { Opponent, OpponentCard } from './Opponent'
 import { Player, PlayerCard } from './Player'
 import { ScoreBoard } from './ScoreBoard'
@@ -51,13 +51,6 @@ const Container = styled('div')`
   position: relative;
 `
 
-const AnimatedCardOverlay = styled(motion.div)`
-  position: fixed;
-  z-index: 1000;
-  pointer-events: none;
-  will-change: transform;
-`
-
 const GameOver = styled('main')`
   display: flex;
   flex-direction: column;
@@ -85,6 +78,7 @@ interface GameProps {
 
 interface AnimationState {
   readonly card: Card
+  readonly isFaceDown: boolean
   readonly initial: Target
   readonly animate: Target | null
   readonly capture: readonly Card[]
@@ -138,6 +132,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
               animate: null,
               capture: move.capture.length ? move.capture : findCaptures(move.card[0], game.table)[0],
               previousTable: game.table,
+              isFaceDown: game.turn !== HUMAN_PLAYER,
             })
           }
 
@@ -296,25 +291,18 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           </Table>
           <AnimatePresence mode="wait">
             {cardAnimation?.animate && (
-              <AnimatedCardOverlay
+              <AnimatedCard
                 key={cardRef(cardAnimation.card)}
+                card={cardAnimation.card}
                 initial={cardAnimation.initial}
                 animate={cardAnimation.animate}
-                exit={{ opacity: 0, transition: { duration: 0 } }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 200,
-                  damping: 20,
-                  duration: 0.6,
-                }}
-                onAnimationComplete={() => {
+                faceDown={cardAnimation.isFaceDown}
+                onComplete={() => {
                   setTargets([])
                   setAlert('')
                   setCardAnimation(null)
                 }}
-              >
-                <DisplayCard card={cardAnimation.card} />
-              </AnimatedCardOverlay>
+              />
             )}
           </AnimatePresence>
           <Player index={HUMAN_PLAYER} pile={humanPlayer.pile}>
