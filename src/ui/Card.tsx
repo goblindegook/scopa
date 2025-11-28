@@ -27,10 +27,6 @@ function name([value, suit]: CardType) {
   return `${VALUES[value]} di ${SUITS[suit]}`
 }
 
-export function getCardPath(card: [number, Suit]) {
-  return `./assets/${SUITS[card[1]]}/${card[0]}.jpg`
-}
-
 const Face = styled('img')`
   height: 13.5vw;
   width: 7.5vw;
@@ -92,7 +88,7 @@ export const Card = ({ className, faceDown = false, card }: CardProps) => {
   const [src, setSrc] = React.useState<string | undefined>()
 
   React.useEffect(() => {
-    import(getCardPath(card)).then((asset) => setSrc(asset?.default))
+    import(`./assets/${SUITS[card[1]]}/${card[0]}.jpg`).then((asset) => setSrc(asset?.default))
   }, [card])
 
   return faceDown ? (

@@ -1,10 +1,10 @@
 import { deck } from '../engine/cards'
-import { getCardPath } from './Card'
+import { SUITS } from './Card'
 
 export async function preloadCardAssets(): Promise<void> {
   await Promise.all(
     deck().map((card) =>
-      import(getCardPath(card))
+      import(`./assets/${SUITS[card[1]]}/${card[0]}.jpg`)
         .catch(() => null)
         .then(
           (asset) =>
