@@ -42,19 +42,13 @@ export function deal(cards: Pile, options?: Options): Result<State, Error> {
 function next({ card, capture }: Move, game: State): State {
   const { turn, table, players, pile } = game
 
-  const tableAfterMove = capture.length
-    ? without(capture, table)
-    : [...table, card]
+  const tableAfterMove = capture.length ? without(capture, table) : [...table, card]
 
   const handAfterMove = without([card], players[turn].hand)
 
-  const [nextHand, pileAfterDeal] = handAfterMove.length
-    ? [handAfterMove, pile]
-    : splitAt(3, pile)
+  const [nextHand, pileAfterDeal] = handAfterMove.length ? [handAfterMove, pile] : splitAt(3, pile)
 
-  const [nextTable, nextPile] = tableAfterMove.length
-    ? [tableAfterMove, pileAfterDeal]
-    : splitAt(4, pileAfterDeal)
+  const [nextTable, nextPile] = tableAfterMove.length ? [tableAfterMove, pileAfterDeal] : splitAt(4, pileAfterDeal)
 
   const nextPlayers = players.map((player, idx) =>
     idx !== turn
@@ -79,13 +73,9 @@ function next({ card, capture }: Move, game: State): State {
   }
 }
 
-const sort = (cards: Pile) =>
-  cards.toSorted(([va, sa], [vb, sb]) => sb * 10 + vb - (sa * 10 + va))
+const sort = (cards: Pile) => cards.toSorted(([va, sa], [vb, sb]) => sb * 10 + vb - (sa * 10 + va))
 
-export function play(
-  { card, capture }: Move,
-  game: State,
-): Result<State, Error> {
+export function play({ card, capture }: Move, game: State): Result<State, Error> {
   const { table, turn, players } = game
 
   if (!includes(card, players[turn].hand)) {
@@ -106,7 +96,5 @@ export function play(
     return Ok(next({ card, capture: [] }, game))
   }
 
-  return Ok(
-    next({ card, capture: capture.length ? capture : validCaptures[0] }, game),
-  )
+  return Ok(next({ card, capture: capture.length ? capture : validCaptures[0] }, game))
 }

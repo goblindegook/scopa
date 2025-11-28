@@ -33,9 +33,7 @@ export const ScoreBoard = ({ scores }: ScoreBoardProps) => (
       <tr>
         <th />
         {scores.map(({ playerId }) => (
-          <PlayerHeader key={`player-header-${playerId}`}>
-            Player {playerId + 1}
-          </PlayerHeader>
+          <PlayerHeader key={`player-header-${playerId}`}>Player {playerId + 1}</PlayerHeader>
         ))}
       </tr>
     </thead>

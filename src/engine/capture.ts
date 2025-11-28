@@ -18,9 +18,7 @@ function captureValue(cards: Pile): number {
 
 export function findCaptures(total: number, table: Pile): readonly Pile[] {
   const candidates = table.filter(([value]) => value <= total)
-  const availableCaptures = combinations(candidates).filter(
-    (capture) => captureValue(capture) === total,
-  )
+  const availableCaptures = combinations(candidates).filter((capture) => captureValue(capture) === total)
   const mustPick = Math.min(...availableCaptures.map((t) => t.length))
   return availableCaptures.filter((t) => t.length === mustPick)
 }

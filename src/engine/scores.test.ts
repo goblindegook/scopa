@@ -229,17 +229,13 @@ describe('single player score', () => {
 })
 
 describe('team score', () => {
-  test.todo(
-    `a team's base score is the number of scope each of its players achieved`,
-  )
+  test.todo(`a team's base score is the number of scope each of its players achieved`)
 
   test.todo('the team that captured the sette bello gets +1 point')
 
   test.todo('the team that captured most cards gets +1 point')
 
-  test.todo(
-    'the team that captured most cards in the suit of coins gets +1 point',
-  )
+  test.todo('the team that captured most cards in the suit of coins gets +1 point')
 
   test.todo('the team that captured the primiera gets +1 point')
 })

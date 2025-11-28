@@ -118,17 +118,14 @@ describe('capture moves', () => {
 describe('discard moves', () => {
   test('discard least valuable suit when no captures are available', async () => {
     await fc.assert(
-      fc.asyncProperty(
-        fc.constantFrom(bastoni, spade, coppe),
-        async (suitToDiscard) => {
-          const game = setupGame([], shuffle([denari(1), suitToDiscard(1)]))
+      fc.asyncProperty(fc.constantFrom(bastoni, spade, coppe), async (suitToDiscard) => {
+        const game = setupGame([], shuffle([denari(1), suitToDiscard(1)]))
 
-          const { card, capture } = await runMove(game)
+        const { card, capture } = await runMove(game)
 
-          expect(card).toEqual(suitToDiscard(1))
-          expect(capture).toHaveLength(0)
-        },
-      ),
+        expect(card).toEqual(suitToDiscard(1))
+        expect(capture).toHaveLength(0)
+      }),
     )
   })
 

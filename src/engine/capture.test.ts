@@ -25,10 +25,5 @@ test('matches the smallest available sets', () => {
 test('match a big table', () => {
   // Searches a binary tree up to 40 levels deep:
   const table = deck()
-  expect(findCaptures(1, table)).toEqual([
-    [denari(1)],
-    [coppe(1)],
-    [bastoni(1)],
-    [spade(1)],
-  ])
+  expect(findCaptures(1, table)).toEqual([[denari(1)], [coppe(1)], [bastoni(1)], [spade(1)]])
 })

@@ -61,14 +61,7 @@ test('renders opponent hand', () => {
       }),
     )
 
-  render(
-    <Game
-      onStart={onStart}
-      onPlay={vitest.fn()}
-      onOpponentTurn={vitest.fn()}
-      onScore={vitest.fn()}
-    />,
-  )
+  render(<Game onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />)
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
 
@@ -98,14 +91,7 @@ test('card visibility', () => {
       }),
     )
 
-  render(
-    <Game
-      onStart={onStart}
-      onPlay={vitest.fn()}
-      onOpponentTurn={vitest.fn()}
-      onScore={vitest.fn()}
-    />,
-  )
+  render(<Game onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />)
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
 
@@ -140,14 +126,7 @@ test('player piles', () => {
       }),
     )
 
-  render(
-    <Game
-      onStart={onStart}
-      onPlay={vitest.fn()}
-      onOpponentTurn={vitest.fn()}
-      onScore={vitest.fn()}
-    />,
-  )
+  render(<Game onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />)
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
 
@@ -176,22 +155,12 @@ test('allow playing a card', () => {
     ),
   )
 
-  render(
-    <Game
-      onStart={() => Ok(initialState)}
-      onPlay={onPlay}
-      onOpponentTurn={vitest.fn()}
-      onScore={() => []}
-    />,
-  )
+  render(<Game onStart={() => Ok(initialState)} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
   fireEvent.click(screen.getByAltText('Asso di denari'))
 
-  expect(onPlay).toHaveBeenCalledWith(
-    { card: denari(1), capture: [] },
-    initialState,
-  )
+  expect(onPlay).toHaveBeenCalledWith({ card: denari(1), capture: [] }, initialState)
   expect(screen.getByAltText('Due di denari')).toBeTruthy()
 })
 
@@ -211,11 +180,7 @@ test(`block interaction when not a player's turn`, () => {
   render(
     <Game
       onStart={() => Ok(initialState)}
-      onOpponentTurn={() =>
-        new Promise((resolve) =>
-          setTimeout(() => resolve({ card: denari(1), capture: [] }), 10),
-        )
-      }
+      onOpponentTurn={() => new Promise((resolve) => setTimeout(() => resolve({ card: denari(1), capture: [] }), 10))}
       onPlay={onPlay}
       onScore={() => []}
     />,
@@ -223,8 +188,7 @@ test(`block interaction when not a player's turn`, () => {
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
 
-  const checkbox = screen.getByAltText('Sette di denari')
-    .previousSibling as HTMLInputElement
+  const checkbox = screen.getByAltText('Sette di denari').previousSibling as HTMLInputElement
 
   expect(checkbox).toBeDisabled()
 
@@ -259,23 +223,13 @@ test('select targets to capture', () => {
     ),
   )
 
-  render(
-    <Game
-      onStart={() => Ok(initialState)}
-      onPlay={onPlay}
-      onOpponentTurn={vitest.fn()}
-      onScore={() => []}
-    />,
-  )
+  render(<Game onStart={() => Ok(initialState)} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
   fireEvent.click(screen.getByRole('checkbox', { name: 'Asso di coppe' }))
   fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
 
-  expect(onPlay).toHaveBeenCalledWith(
-    { card: denari(1), capture: [coppe(1)] },
-    initialState,
-  )
+  expect(onPlay).toHaveBeenCalledWith({ card: denari(1), capture: [coppe(1)] }, initialState)
 })
 
 test('invalid move handling', () => {
@@ -337,14 +291,7 @@ test('computer opponent plays a card', async () => {
     capture: [],
   })
 
-  render(
-    <Game
-      onStart={onStart}
-      onPlay={onPlay}
-      onOpponentTurn={onOpponentPlay}
-      onScore={vitest.fn()}
-    />,
-  )
+  render(<Game onStart={onStart} onPlay={onPlay} onOpponentTurn={onOpponentPlay} onScore={vitest.fn()} />)
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
 
@@ -365,14 +312,7 @@ test('end game and show scores', () => {
     { playerId: 1, total: 4, details: [] },
   ])
 
-  render(
-    <Game
-      onStart={() => Ok(state)}
-      onPlay={vitest.fn()}
-      onOpponentTurn={vitest.fn()}
-      onScore={onScore}
-    />,
-  )
+  render(<Game onStart={() => Ok(state)} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={onScore} />)
 
   fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
 

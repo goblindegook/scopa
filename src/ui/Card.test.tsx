@@ -1,20 +1,7 @@
 import { cleanup, render, waitFor } from '@testing-library/react'
-import {
-  assert,
-  asyncProperty,
-  constantFrom,
-  integer,
-  property,
-} from 'fast-check'
+import { assert, asyncProperty, constantFrom, integer, property } from 'fast-check'
 import { afterEach, expect, test } from 'vitest'
-import {
-  bastoni,
-  coppe,
-  denari,
-  Suit,
-  spade,
-  type Value,
-} from '../engine/cards'
+import { bastoni, coppe, denari, Suit, spade, type Value } from '../engine/cards'
 import { Card } from './Card'
 
 afterEach(() => {
@@ -35,9 +22,7 @@ test.each<[string, Suit]>([
         exact: false,
       }) as HTMLImageElement
       expect(cardElement.tagName).toBe('IMG')
-      await waitFor(() =>
-        expect(cardElement.src).toMatch(`/assets/${match}/${value}.jpg`),
-      )
+      await waitFor(() => expect(cardElement.src).toMatch(`/assets/${match}/${value}.jpg`))
     }),
   )
 })

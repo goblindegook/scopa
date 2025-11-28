@@ -51,9 +51,6 @@ type PlayerProps = React.PropsWithChildren<{
 export const Player = ({ children, index, pile }: PlayerProps) => (
   <PlayerArea>
     <PlayerHand>{children}</PlayerHand>
-    <PlayerPile
-      pile={pile}
-      title={`Player ${index + 1} pile: ${pile.length} cards`}
-    />
+    <PlayerPile pile={pile} title={`Player ${index + 1} pile: ${pile.length} cards`} />
   </PlayerArea>
 )

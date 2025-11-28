@@ -37,6 +37,7 @@ const prime = flow(
   sort(([, p1], [, p2]) => p2 - p1),
   groupBy(([[, suit]]) => String(suit)),
   values,
+  // biome-ignore lint/style/noNonNullAssertion: guaranteeed to exist
   map((points) => points![0]),
   reduce<CardPoints, ScoreDetail>(
     ({ cards, value, ...rest }, [card, points]) => ({
@@ -52,8 +53,7 @@ function findWinners(totals: number[]): number[] {
   const maximum = Math.max(...totals)
   if (maximum === 0) return []
   return totals.reduce<number[]>(
-    (winners, total, currentIndex) =>
-      total === maximum ? winners.concat(currentIndex) : winners,
+    (winners, total, currentIndex) => (total === maximum ? winners.concat(currentIndex) : winners),
     [],
   )
 }

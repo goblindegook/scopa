@@ -10,14 +10,13 @@ const CardWrapper = styled.div<{ opacity?: number }>`
   opacity: ${({ opacity = 1 }) => opacity};
 `
 
-export const OpponentCard = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<typeof Card> & { opacity?: number }
->(({ opacity, ...props }, ref) => (
-  <CardWrapper ref={ref} opacity={opacity}>
-    <Card {...props} />
-  </CardWrapper>
-))
+export const OpponentCard = React.forwardRef<HTMLDivElement, React.ComponentProps<typeof Card> & { opacity?: number }>(
+  ({ opacity, ...props }, ref) => (
+    <CardWrapper ref={ref} opacity={opacity}>
+      <Card {...props} />
+    </CardWrapper>
+  ),
+)
 OpponentCard.displayName = 'OpponentCard'
 
 const OpponentArea = styled('section')`
@@ -46,9 +45,6 @@ type OpponentProps = React.PropsWithChildren<{
 export const Opponent = ({ children, index, pile }: OpponentProps) => (
   <OpponentArea>
     <OpponentHand data-testid={`p${index}-hand`}>{children}</OpponentHand>
-    <OpponentPile
-      pile={pile}
-      title={`Player ${index + 1} pile: ${pile.length} cards`}
-    />
+    <OpponentPile pile={pile} title={`Player ${index + 1} pile: ${pile.length} cards`} />
   </OpponentArea>
 )

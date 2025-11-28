@@ -1,10 +1,10 @@
 import styled from '@emotion/styled'
 import { fold, type Result } from '@pacote/result'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, type Target } from 'framer-motion'
 import { includes, without } from 'ramda'
 import React from 'react'
-import type { Card } from '../engine/cards'
 import { findCaptures } from '../engine/capture'
+import type { Card } from '../engine/cards'
 import type { Score } from '../engine/scores'
 import type { Move, State } from '../engine/state'
 import { Card as DisplayCard } from './Card'
@@ -85,18 +85,13 @@ interface GameProps {
 
 interface AnimationState {
   readonly card: Card
-  readonly initial: { readonly x: number; readonly y: number }
-  readonly animate: { readonly x: number; readonly y: number } | null
+  readonly initial: Target
+  readonly animate: Target | null
   readonly capture: readonly Card[]
   readonly previousTable: readonly Card[]
 }
 
-export const Game = ({
-  onStart,
-  onPlay,
-  onOpponentTurn,
-  onScore,
-}: GameProps) => {
+export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) => {
   const [alert, setAlert] = React.useState('')
   const [targets, setTargets] = React.useState<readonly Card[]>([])
   const [game, setGame] = React.useState<State>({
@@ -108,13 +103,9 @@ export const Game = ({
   })
   const tableRef = React.useRef<HTMLElement | null>(null)
   const cardRefs = React.useRef(new Map<string, HTMLElement>())
-  const [cardAnimation, setCardAnimation] =
-    React.useState<AnimationState | null>(null)
+  const [cardAnimation, setCardAnimation] = React.useState<AnimationState | null>(null)
 
-  const invalidMove = React.useCallback(
-    async (error: Error) => setAlert(error.message),
-    [],
-  )
+  const invalidMove = React.useCallback(async (error: Error) => setAlert(error.message), [])
 
   const start = React.useCallback(
     () =>
@@ -135,9 +126,7 @@ export const Game = ({
     (move: Move) => {
       fold(
         (nextGame: State) => {
-          const startPositionRect = cardRefs.current
-            .get(cardRef(move.card))
-            ?.getBoundingClientRect()
+          const startPositionRect = cardRefs.current.get(cardRef(move.card))?.getBoundingClientRect()
 
           if (startPositionRect) {
             setCardAnimation({
@@ -147,9 +136,7 @@ export const Game = ({
                 y: startPositionRect.top,
               },
               animate: null,
-              capture: move.capture.length
-                ? move.capture
-                : findCaptures(move.card[0], game.table)[0],
+              capture: move.capture.length ? move.capture : findCaptures(move.card[0], game.table)[0],
               previousTable: game.table,
             })
           }
@@ -166,22 +153,15 @@ export const Game = ({
   )
 
   const animateCardTo = React.useCallback(
-    (cardElement?: HTMLElement | null) => {
-      if (
-        cardElement == null ||
-        cardAnimation == null ||
-        cardAnimation.animate != null
-      )
-        return
+    (placeholder?: Element | null) => {
+      if (placeholder == null || cardAnimation == null || cardAnimation.animate != null) return
       const cardKey = cardRef(cardAnimation.card)
       const initialRect = cardRefs.current.get(cardKey)?.getBoundingClientRect()
-      const animateRect = cardElement.getBoundingClientRect()
+      const animateRect = placeholder.getBoundingClientRect()
 
       setCardAnimation({
         ...cardAnimation,
-        initial: initialRect
-          ? { x: initialRect.left, y: initialRect.top }
-          : cardAnimation.initial,
+        initial: initialRect ? { x: initialRect.left, y: initialRect.top } : cardAnimation.initial,
         animate: {
           x: animateRect.left,
           y: animateRect.top - 64,
@@ -194,11 +174,7 @@ export const Game = ({
   React.useLayoutEffect(() => {
     if (cardAnimation?.animate == null && tableRef.current) {
       const cardId = `card-${cardRef(cardAnimation?.capture?.[0] ?? cardAnimation?.card)}`
-      animateCardTo(
-        tableRef.current.querySelector<HTMLElement>(
-          `label[for="${cardId}"] img, label[for="${cardId}"] div`,
-        ),
-      )
+      animateCardTo(tableRef.current.querySelector(`label[for="${cardId}"] img, label[for="${cardId}"] div`))
     }
   }, [cardAnimation, animateCardTo])
 
@@ -215,10 +191,7 @@ export const Game = ({
   }, [game, invalidMove, onOpponentTurn, play])
 
   const toggleTarget = React.useCallback(
-    (card: Card) =>
-      setTargets(
-        includes(card, targets) ? without([card], targets) : [...targets, card],
-      ),
+    (card: Card) => setTargets(includes(card, targets) ? without([card], targets) : [...targets, card]),
     [targets],
   )
 
@@ -242,11 +215,7 @@ export const Game = ({
           {game.players.map(
             (player) =>
               player.id !== HUMAN_PLAYER && (
-                <Opponent
-                  key={`opponent-${player.id}`}
-                  index={player.id}
-                  pile={player.pile}
-                >
+                <Opponent key={`opponent-${player.id}`} index={player.id} pile={player.pile}>
                   {player.hand.map((card) => (
                     <OpponentCard
                       ref={(el) => {
@@ -259,9 +228,7 @@ export const Game = ({
                       key={`${player.id}-${cardRef(card)}`}
                       card={card}
                       faceDown
-                      opacity={
-                        cardRef(cardAnimation?.card) === cardRef(card) ? 0 : 1
-                      }
+                      opacity={cardRef(cardAnimation?.card) === cardRef(card) ? 0 : 1}
                     />
                   ))}
                 </Opponent>
@@ -271,17 +238,12 @@ export const Game = ({
             <AnimatePresence mode="popLayout">
               {(() => {
                 const tableCards =
-                  cardAnimation?.capture && cardAnimation.capture.length > 0
-                    ? cardAnimation.previousTable
-                    : game.table
+                  cardAnimation?.capture && cardAnimation.capture.length > 0 ? cardAnimation.previousTable : game.table
 
                 return tableCards.map((card) => {
                   const cardId = `card-${cardRef(card)}`
-                  const isAnimating =
-                    cardRef(card) === cardRef(cardAnimation?.card)
-                  const isCaptured =
-                    cardAnimation?.capture &&
-                    includes(card, cardAnimation.capture)
+                  const isAnimating = cardRef(card) === cardRef(cardAnimation?.card)
+                  const isCaptured = includes(card, cardAnimation?.capture ?? [])
                   return (
                     <TableCardLabel
                       key={cardId}
@@ -289,17 +251,11 @@ export const Game = ({
                       layout
                       onLayoutAnimationComplete={() => {
                         if (isAnimating && cardAnimation?.animate == null) {
-                          animateCardTo(
-                            cardRefs.current.get(cardRef(cardAnimation?.card)),
-                          )
+                          animateCardTo(cardRefs.current.get(cardRef(cardAnimation?.card)))
                         }
                       }}
                       initial={isAnimating ? false : { opacity: 0, scale: 0.8 }}
-                      animate={
-                        isAnimating
-                          ? { opacity: 0, scale: 1 }
-                          : { opacity: 1, scale: 1 }
-                      }
+                      animate={isAnimating ? { opacity: 0, scale: 1 } : { opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
                       transition={
                         isAnimating
@@ -375,8 +331,7 @@ export const Game = ({
                 key={cardRef(card)}
                 onClick={() => play({ card, capture: targets })}
                 style={{
-                  opacity:
-                    cardRef(cardAnimation?.card) === cardRef(card) ? 0 : 1,
+                  opacity: cardRef(cardAnimation?.card) === cardRef(card) ? 0 : 1,
                 }}
               >
                 <DisplayCard card={card} />
