@@ -1,7 +1,7 @@
 import styled from '@emotion/styled'
+import { motion, type Target } from 'framer-motion'
 import React from 'react'
 import { type Card as CardType, Suit } from '../engine/cards'
-import { motion, type Target } from 'framer-motion'
 
 const VALUES: { [key: number]: string } = {
   1: 'Asso',
