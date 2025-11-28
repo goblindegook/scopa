@@ -12,6 +12,7 @@ import { Opponent, OpponentCard } from './Opponent'
 import { Player, PlayerCard } from './Player'
 import { ScoreBoard } from './ScoreBoard'
 import { Table, TableCard, TableCardLabel, TableCardSelector } from './Table'
+import { Button } from './Button'
 
 const HUMAN_PLAYER = 0
 
@@ -34,13 +35,6 @@ const Turn = styled('span')`
   float: right;
   border-radius: 0.25rem;
   padding: 0.25rem 1rem;
-`
-
-const Button = styled('button')`
-  border-radius: 0.25rem;
-  padding: 0.25rem 1rem;
-  color: black;
-  font-size: 1rem;
 `
 
 const Container = styled('div')`

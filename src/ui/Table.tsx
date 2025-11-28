@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 import { Card } from './Card'
 
 export const Table = styled(motion.section)`
-  background-color: darkgreen;
   margin: 1rem;
   text-align: center;
   flex: 1;
@@ -13,7 +12,6 @@ export const Table = styled(motion.section)`
   justify-content: center;
   overflow: auto;
   min-height: 0;
-  /* transform: perspective(1500px) rotateX(30deg) rotateY(0deg) rotateZ(0deg) scale(1); */
 `
 
 export const TableCard = styled(Card)`

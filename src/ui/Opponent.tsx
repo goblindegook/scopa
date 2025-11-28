@@ -20,7 +20,6 @@ export const OpponentCard = React.forwardRef<HTMLDivElement, React.ComponentProp
 OpponentCard.displayName = 'OpponentCard'
 
 const OpponentArea = styled('section')`
-  background-color: darkgreen;
   display: grid;
   grid-template-columns: auto 20vw;
   justify-items: center;
