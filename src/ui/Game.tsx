@@ -10,6 +10,7 @@ import { Button } from './Button'
 import { AnimatedCard, Card as DisplayCard } from './Card'
 import { Opponent, OpponentCard } from './Opponent'
 import { Player, PlayerCard } from './Player'
+import { preloadCardAssets } from './preload'
 import { ScoreBoard } from './ScoreBoard'
 import { Table, TableCard, TableCardLabel, TableCardSelector } from './Table'
 
@@ -62,6 +63,18 @@ const Main = styled('main')`
   overflow: hidden;
 `
 
+const LoadingScreen = styled('main')`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.25);
+  flex: 1;
+  overflow: hidden;
+  font-size: 1.5rem;
+`
+
 interface GameProps {
   onStart: () => Result<State, Error>
   onPlay: (move: Move, game: State) => Result<State, Error>
@@ -79,6 +92,7 @@ interface AnimationState {
 }
 
 export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) => {
+  const [assetsLoaded, setAssetsLoaded] = React.useState(false)
   const [alert, setAlert] = React.useState('')
   const [targets, setTargets] = React.useState<readonly Card[]>([])
   const [game, setGame] = React.useState<State>({
@@ -92,6 +106,16 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   const tableRef = React.useRef<HTMLElement | null>(null)
   const cardRefs = React.useRef(new Map<string, HTMLElement>())
   const [animationState, setAnimationState] = React.useState<AnimationState | null>(null)
+
+  React.useEffect(() => {
+    preloadCardAssets()
+      .then(() => {
+        setAssetsLoaded(true)
+      })
+      .catch(() => {
+        setAssetsLoaded(true)
+      })
+  }, [])
 
   const invalidMove = React.useCallback(async (error: Error) => setAlert(error.message), [])
 
@@ -185,6 +209,16 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   )
 
   const humanPlayer = game.players[HUMAN_PLAYER]
+
+  if (!assetsLoaded) {
+    return (
+      <Container>
+        <LoadingScreen>
+          <p>Loading...</p>
+        </LoadingScreen>
+      </Container>
+    )
+  }
 
   return (
     <Container>

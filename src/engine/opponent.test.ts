@@ -15,6 +15,7 @@ function setupGame(table: Pile, hand: Pile): State {
       { id: 1, hand: [], pile: [], scope: 0 },
     ],
     pile: [],
+    lastCaptured: [],
   }
 }
 

@@ -1,12 +1,17 @@
 import { Err, Ok } from '@pacote/result'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, expect, test, vitest } from 'vitest'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, expect, test, vi, vitest } from 'vitest'
 import { coppe, denari, spade } from '../engine/cards'
 import type { Move, State } from '../engine/state'
 import { Game } from './Game'
 
+vi.mock('./preload', () => ({
+  preloadCardAssets: vi.fn().mockResolvedValue(undefined),
+}))
+
 afterEach(() => {
   cleanup()
+  vi.clearAllMocks()
 })
 
 function testGame(overrides: Partial<State> = {}): State {
@@ -24,10 +29,19 @@ function testGame(overrides: Partial<State> = {}): State {
   }
 }
 
-test('deal new game on start', () => {
+test('preload card assets', async () => {
+  render(<Game onStart={vitest.fn()} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />)
+
+  expect(screen.getByText('Loading...')).toBeTruthy()
+
+  await waitFor(() => {
+    expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
+  })
+})
+
+test('deal new game on start', async () => {
   const turn = 0
   const onStart = vitest.fn(() => Ok(testGame({ turn })))
-
   render(
     <Game
       onStart={onStart}
@@ -38,13 +52,13 @@ test('deal new game on start', () => {
   )
   expect(screen.queryByText('Game Over')).not.toBeInTheDocument()
 
-  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
 
   expect(onStart).toHaveBeenCalled()
   expect(screen.getByText(`Player ${turn + 1}`)).toBeTruthy()
 })
 
-test('renders opponent hand', () => {
+test('renders opponent hand', async () => {
   const onStart = () =>
     Ok(
       testGame({
@@ -61,15 +75,14 @@ test('renders opponent hand', () => {
         pile: [],
       }),
     )
-
   render(<Game onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />)
 
-  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
 
   expect(screen.getByTestId('p1-hand').children).toHaveLength(2)
 })
 
-test('card visibility', () => {
+test('card visibility', async () => {
   const onStart = () =>
     Ok(
       testGame({
@@ -91,10 +104,9 @@ test('card visibility', () => {
         pile: [denari(6)],
       }),
     )
-
   render(<Game onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />)
 
-  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
 
   expect(screen.getByAltText('Asso di denari')).toBeTruthy()
   expect(screen.getByAltText('Cinque di denari')).toBeTruthy()
@@ -104,7 +116,7 @@ test('card visibility', () => {
   expect(screen.queryByTitle('Quattro di denari')).toBeFalsy()
 })
 
-test('player piles', () => {
+test('player piles', async () => {
   const onStart = () =>
     Ok(
       testGame({
@@ -126,23 +138,21 @@ test('player piles', () => {
         pile: [],
       }),
     )
-
   render(<Game onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />)
 
-  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
 
   expect(screen.getByTitle('Player 1 pile: 2 cards')).toBeTruthy()
   expect(screen.getByTitle('Player 2 pile: 3 cards')).toBeTruthy()
 })
 
-test('allow playing a card', () => {
+test('allow playing a card', async () => {
   const initialState = testGame({
     players: [
       { id: 0, hand: [denari(1)], pile: [], scope: 0 },
       { id: 1, hand: [], pile: [], scope: 0 },
     ],
   })
-
   const onPlay = vitest.fn(() =>
     Ok(
       testGame({
@@ -155,17 +165,16 @@ test('allow playing a card', () => {
       }),
     ),
   )
-
   render(<Game onStart={() => Ok(initialState)} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
 
-  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
   fireEvent.click(screen.getByAltText('Asso di denari'))
 
   expect(onPlay).toHaveBeenCalledWith({ card: denari(1), capture: [] }, initialState)
   expect(screen.getByAltText('Due di denari')).toBeTruthy()
 })
 
-test(`block interaction when not a player's turn`, () => {
+test(`block interaction when not a player's turn`, async () => {
   const initialState = testGame({
     state: 'play',
     turn: 1,
@@ -175,9 +184,7 @@ test(`block interaction when not a player's turn`, () => {
     ],
     table: [denari(7)],
   })
-
   const onPlay = vitest.fn()
-
   render(
     <Game
       onStart={() => Ok(initialState)}
@@ -187,13 +194,11 @@ test(`block interaction when not a player's turn`, () => {
     />,
   )
 
-  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
 
-  const checkbox = screen.getByAltText('Sette di denari').previousSibling as HTMLInputElement
+  expect(screen.getByAltText('Sette di denari').previousSibling).toBeDisabled()
 
-  expect(checkbox).toBeDisabled()
-
-  const card = screen.getByAltText('Asso di denari') as HTMLButtonElement
+  const card = screen.getByAltText('Asso di denari')
 
   fireEvent.click(card)
 
@@ -202,7 +207,7 @@ test(`block interaction when not a player's turn`, () => {
   expect(card).toBeEnabled()
 })
 
-test('select targets to capture', () => {
+test('select targets to capture', async () => {
   const initialState = testGame({
     players: [
       { id: 0, hand: [denari(1)], pile: [], scope: 0 },
@@ -226,14 +231,14 @@ test('select targets to capture', () => {
 
   render(<Game onStart={() => Ok(initialState)} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
 
-  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
   fireEvent.click(screen.getByRole('checkbox', { name: 'Asso di coppe' }))
   fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
 
   expect(onPlay).toHaveBeenCalledWith({ card: denari(1), capture: [coppe(1)] }, initialState)
 })
 
-test('invalid move handling', () => {
+test('invalid move handling', async () => {
   const message = 'test error message'
   const onPlay = vitest.fn(() => Err(Error(message)))
 
@@ -255,7 +260,7 @@ test('invalid move handling', () => {
     />,
   )
 
-  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
   fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
 
   expect(screen.getByText(message)).toBeTruthy()
@@ -294,12 +299,12 @@ test('computer opponent plays a card', async () => {
 
   render(<Game onStart={onStart} onPlay={onPlay} onOpponentTurn={onOpponentPlay} onScore={vitest.fn()} />)
 
-  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
 
   await screen.findByRole('button', { name: 'Asso di denari' })
 })
 
-test('end game and show scores', () => {
+test('end game and show scores', async () => {
   const state = testGame({
     state: 'stop',
     players: [
@@ -315,7 +320,7 @@ test('end game and show scores', () => {
 
   render(<Game onStart={() => Ok(state)} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={onScore} />)
 
-  fireEvent.click(screen.getByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
 
   expect(onScore).toHaveBeenCalledWith(state.players)
 

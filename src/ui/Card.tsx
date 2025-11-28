@@ -3,7 +3,7 @@ import { motion, type Target } from 'framer-motion'
 import React from 'react'
 import { type Card as CardType, Suit } from '../engine/cards'
 
-const VALUES: { [key: number]: string } = {
+export const VALUES: Record<number, string> = {
   1: 'Asso',
   2: 'Due',
   3: 'Tre',
@@ -16,7 +16,7 @@ const VALUES: { [key: number]: string } = {
   10: 'Re',
 }
 
-const SUITS = {
+export const SUITS: Record<string, string> = {
   [Suit.BASTONI]: 'bastoni',
   [Suit.COPPE]: 'coppe',
   [Suit.DENARI]: 'denari',
@@ -25,6 +25,10 @@ const SUITS = {
 
 function name([value, suit]: CardType) {
   return `${VALUES[value]} di ${SUITS[suit]}`
+}
+
+export function getCardPath(card: [number, Suit]) {
+  return `./assets/${SUITS[card[1]]}/${card[0]}.jpg`
 }
 
 const Face = styled('img')`
@@ -91,7 +95,7 @@ export const Card = ({ className, faceDown = false, card }: CardProps) => {
     let cancelled = false
     ;(async () => {
       try {
-        const asset = await import(`./assets/${SUITS[card[1]]}/${card[0]}.jpg`)
+        const asset = await import(getCardPath(card))
         if (asset.default && !cancelled) {
           React.startTransition(() => {
             if (!cancelled) setSrc(asset.default)
