@@ -38,8 +38,42 @@ const Back = styled('div')`
   width: 7.5vw;
   border-radius: 0.75vw;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-  background-color: blue;
-  border: 1px solid white;
+  background: linear-gradient(135deg, #1a2b5f 0%, #2d4a80 50%, #1a2b5f 100%);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200%;
+    height: 200%;
+    background-image: 
+      repeating-conic-gradient(
+        from 0deg at 50% 50%,
+        #2d4aff 0deg,
+        #2d4a90 5deg,
+        #1a2b5f 10deg,
+        #1a2b5f 15deg
+      );
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+      circle at center,
+      rgba(45, 74, 128, 0.4) 0%,
+      transparent 50%
+    );
+  }
 `
 
 export interface CardProps {
