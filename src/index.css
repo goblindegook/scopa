@@ -20,7 +20,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #0f5a0f;
-  background-image: 
+  background-image:
     radial-gradient(circle at 20% 50%, rgba(26, 90, 26, 0.3) 0%, transparent 50%),
     radial-gradient(circle at 80% 80%, rgba(13, 77, 13, 0.3) 0%, transparent 50%),
     radial-gradient(circle at 40% 20%, rgba(20, 70, 20, 0.2) 0%, transparent 50%);
@@ -28,7 +28,7 @@ body {
 }
 
 body::after {
-  content: '';
+  content: "";
   position: fixed;
   top: 0;
   left: 0;

@@ -35,6 +35,7 @@ export function deal(cards: Pile, options?: Options): Result<State, Error> {
         players: createPlayers(playerCards),
         pile,
         table,
+        lastCaptured: [],
       })
     : Err(Error('More than two kings on the table. Deal again.'))
 }
@@ -70,6 +71,7 @@ function next({ card, capture }: Move, game: State): State {
     table: nextTable,
     players: nextPlayers,
     turn: nextTurn,
+    lastCaptured: capture,
   }
 }
 

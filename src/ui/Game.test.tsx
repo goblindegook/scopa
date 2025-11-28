@@ -19,6 +19,7 @@ function testGame(overrides: Partial<State> = {}): State {
     ],
     pile: [],
     table: [],
+    lastCaptured: [],
     ...overrides,
   }
 }

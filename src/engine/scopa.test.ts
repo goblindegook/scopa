@@ -93,6 +93,7 @@ describe('play', () => {
       ],
       pile: [],
       table: [denari(4)],
+      lastCaptured: [],
     }
 
     const next = play({ card: denari(1), capture: [] }, game)
@@ -107,6 +108,7 @@ describe('play', () => {
         ],
         pile: [],
         table: [denari(4), denari(1)],
+        lastCaptured: [],
       }),
     )
   })
@@ -121,6 +123,7 @@ describe('play', () => {
       ],
       pile: [],
       table: [denari(4)],
+      lastCaptured: [],
     }
 
     const next = play({ card: denari(2), capture: [] }, game)
@@ -135,6 +138,7 @@ describe('play', () => {
         ],
         pile: [],
         table: [denari(4), denari(2)],
+        lastCaptured: [],
       }),
     )
   })
@@ -150,6 +154,7 @@ describe('play', () => {
       ],
       pile: [],
       table: [denari(4)],
+      lastCaptured: [],
     }
 
     const next = play({ card, capture: [] }, game)
@@ -169,6 +174,7 @@ describe('play', () => {
       ],
       pile: [],
       table: [denari(4), target],
+      lastCaptured: [],
     }
 
     const next = getGameState(play({ card, capture: [] }, game))
@@ -177,6 +183,7 @@ describe('play', () => {
     expect(next.table).not.toContain(target)
     expect(next.players[0].pile).toContain(card)
     expect(next.players[0].pile).toContain(target)
+    expect(next.lastCaptured).toEqual([target])
     expect(next.state).toBe('play')
   })
 
@@ -191,6 +198,7 @@ describe('play', () => {
       ],
       pile: [],
       table: [bastoni(1), coppe(1)],
+      lastCaptured: [],
     }
 
     const next = play({ card, capture: [] }, game)
@@ -208,6 +216,7 @@ describe('play', () => {
       ],
       pile: [],
       table: [bastoni(1), coppe(1)],
+      lastCaptured: [],
     }
 
     const next = play({ card: denari(4), capture: [bastoni(1)] }, game)
@@ -231,6 +240,7 @@ describe('play', () => {
       ],
       pile: [],
       table: [bastoni(1), target],
+      lastCaptured: [],
     }
 
     const next = getGameState(play({ card, capture: [target] }, game))
@@ -239,6 +249,7 @@ describe('play', () => {
     expect(next.table).not.toContain(target)
     expect(next.players[0].pile).toContain(card)
     expect(next.players[0].pile).toContain(target)
+    expect(next.lastCaptured).toEqual([target])
     expect(next.state).toBe('play')
   })
 
@@ -254,6 +265,7 @@ describe('play', () => {
       ],
       pile: [],
       table: [denari(4), ...capture],
+      lastCaptured: [],
     }
 
     const next = getGameState(play({ card, capture: [] }, game))
@@ -266,6 +278,7 @@ describe('play', () => {
     for (const capturedCard of capture) {
       expect(next.players[0].pile).toContain(capturedCard)
     }
+    expect(next.lastCaptured).toEqual(expect.arrayContaining(capture))
     expect(next.state).toBe('play')
   })
 
@@ -281,6 +294,7 @@ describe('play', () => {
       ],
       pile: [],
       table: [coppe(2), ...targets],
+      lastCaptured: [],
     }
 
     expect(isErr(play({ card, capture: targets }, game))).toBe(true)
@@ -298,6 +312,7 @@ describe('play', () => {
       ],
       pile: [],
       table: [bastoni(1), spade(1), coppe(1)],
+      lastCaptured: [],
     }
 
     expect(isOk(play({ card, capture: targets }, game))).toBe(true)
@@ -315,6 +330,7 @@ describe('play', () => {
       ],
       pile: [],
       table,
+      lastCaptured: [],
     }
 
     const next = play({ card, capture: [] }, game)
@@ -339,6 +355,7 @@ describe('play', () => {
       ],
       pile: [...topOfPile, ...restOfPile],
       table: [coppe(1), bastoni(1), spade(1)],
+      lastCaptured: [],
     }
 
     const next = play({ card, capture: [] }, game)
@@ -365,6 +382,7 @@ describe('play', () => {
       ],
       pile: [...topOfPile, ...restOfPile],
       table: [coppe(1)],
+      lastCaptured: [],
     }
 
     const next = play({ card, capture: [] }, game)
@@ -389,6 +407,7 @@ describe('play', () => {
       ],
       pile: [],
       table: [],
+      lastCaptured: [],
     }
 
     const next = play({ card, capture: [] }, game)

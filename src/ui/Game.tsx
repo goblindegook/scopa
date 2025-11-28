@@ -3,16 +3,15 @@ import { fold, type Result } from '@pacote/result'
 import { AnimatePresence, type Target } from 'framer-motion'
 import { includes, without } from 'ramda'
 import React from 'react'
-import { findCaptures } from '../engine/capture'
 import type { Card } from '../engine/cards'
 import type { Score } from '../engine/scores'
 import type { Move, State } from '../engine/state'
+import { Button } from './Button'
 import { AnimatedCard, Card as DisplayCard } from './Card'
 import { Opponent, OpponentCard } from './Opponent'
 import { Player, PlayerCard } from './Player'
 import { ScoreBoard } from './ScoreBoard'
 import { Table, TableCard, TableCardLabel, TableCardSelector } from './Table'
-import { Button } from './Button'
 
 const HUMAN_PLAYER = 0
 
@@ -88,6 +87,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     table: [],
     pile: [],
     players: [],
+    lastCaptured: [],
   })
   const tableRef = React.useRef<HTMLElement | null>(null)
   const cardRefs = React.useRef(new Map<string, HTMLElement>())
@@ -124,7 +124,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                 y: startPositionRect.top,
               },
               animate: null,
-              capture: move.capture.length ? move.capture : findCaptures(move.card[0], game.table)[0],
+              capture: move.capture.length ? move.capture : nextGame.lastCaptured,
               previousTable: game.table,
               isFaceDown: game.turn !== HUMAN_PLAYER,
             })
