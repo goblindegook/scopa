@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { includes, without } from 'ramda'
 import React from 'react'
 import type { Card } from '../engine/cards'
+import { findCaptures } from '../engine/capture'
 import type { Score } from '../engine/scores'
 import type { Move, State } from '../engine/state'
 import { Card as DisplayCard } from './Card'
@@ -82,6 +83,14 @@ interface GameProps {
   onScore: (game: State['players']) => readonly Score[]
 }
 
+interface AnimationState {
+  readonly card: Card
+  readonly initial: { readonly x: number; readonly y: number }
+  readonly animate: { readonly x: number; readonly y: number } | null
+  readonly capture: readonly Card[]
+  readonly previousTable: readonly Card[]
+}
+
 export const Game = ({
   onStart,
   onPlay,
@@ -99,12 +108,8 @@ export const Game = ({
   })
   const tableRef = React.useRef<HTMLElement | null>(null)
   const cardRefs = React.useRef(new Map<string, HTMLElement>())
-  const [cardAnimation, setCardAnimation] = React.useState<{
-    card: Card
-    initial: { x: number; y: number }
-    animate: { x: number; y: number } | null
-    capture: readonly Card[]
-  } | null>(null)
+  const [cardAnimation, setCardAnimation] =
+    React.useState<AnimationState | null>(null)
 
   const invalidMove = React.useCallback(
     async (error: Error) => setAlert(error.message),
@@ -133,6 +138,7 @@ export const Game = ({
           const startPositionRect = cardRefs.current
             .get(cardRef(move.card))
             ?.getBoundingClientRect()
+
           if (startPositionRect) {
             setCardAnimation({
               card: move.card,
@@ -141,7 +147,10 @@ export const Game = ({
                 y: startPositionRect.top,
               },
               animate: null,
-              capture: move.capture,
+              capture: move.capture.length
+                ? move.capture
+                : findCaptures(move.card[0], game.table)[0],
+              previousTable: game.table,
             })
           }
 
@@ -260,61 +269,73 @@ export const Game = ({
           )}
           <Table layout ref={tableRef}>
             <AnimatePresence mode="popLayout">
-              {game.table.map((card) => {
-                const cardId = `card-${cardRef(card)}`
-                const isAnimating =
-                  cardRef(card) === cardRef(cardAnimation?.card)
-                return (
-                  <TableCardLabel
-                    key={cardId}
-                    htmlFor={cardId}
-                    layout
-                    onLayoutAnimationComplete={() => {
-                      if (isAnimating && cardAnimation?.animate == null) {
-                        animateCardTo(
-                          cardRefs.current.get(cardRef(cardAnimation?.card)),
-                        )
+              {(() => {
+                const tableCards =
+                  cardAnimation?.capture && cardAnimation.capture.length > 0
+                    ? cardAnimation.previousTable
+                    : game.table
+
+                return tableCards.map((card) => {
+                  const cardId = `card-${cardRef(card)}`
+                  const isAnimating =
+                    cardRef(card) === cardRef(cardAnimation?.card)
+                  const isCaptured =
+                    cardAnimation?.capture &&
+                    includes(card, cardAnimation.capture)
+                  return (
+                    <TableCardLabel
+                      key={cardId}
+                      htmlFor={cardId}
+                      layout
+                      onLayoutAnimationComplete={() => {
+                        if (isAnimating && cardAnimation?.animate == null) {
+                          animateCardTo(
+                            cardRefs.current.get(cardRef(cardAnimation?.card)),
+                          )
+                        }
+                      }}
+                      initial={isAnimating ? false : { opacity: 0, scale: 0.8 }}
+                      animate={
+                        isAnimating
+                          ? { opacity: 0, scale: 1 }
+                          : { opacity: 1, scale: 1 }
                       }
-                    }}
-                    initial={isAnimating ? false : { opacity: 0, scale: 0.8 }}
-                    animate={
-                      isAnimating
-                        ? { opacity: 0, scale: 1 }
-                        : { opacity: 1, scale: 1 }
-                    }
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={
-                      isAnimating
-                        ? {
-                            opacity: { duration: 0 },
-                            scale: { duration: 0 },
-                            y: { duration: 0 },
-                            x: { duration: 0 },
-                          }
-                        : {
-                            type: 'spring',
-                            stiffness: 300,
-                            damping: 25,
-                            opacity: { duration: 0 },
-                          }
-                    }
-                    style={
-                      isAnimating
-                        ? { visibility: 'hidden', pointerEvents: 'none' }
-                        : undefined
-                    }
-                  >
-                    <TableCardSelector
-                      disabled={game.turn !== HUMAN_PLAYER}
-                      type="checkbox"
-                      checked={includes(card, targets)}
-                      onChange={() => toggleTarget(card)}
-                      id={cardId}
-                    />
-                    <TableCard card={card} />
-                  </TableCardLabel>
-                )
-              })}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={
+                        isAnimating
+                          ? {
+                              opacity: { duration: 0 },
+                              scale: { duration: 0 },
+                              y: { duration: 0 },
+                              x: { duration: 0 },
+                            }
+                          : {
+                              type: 'spring',
+                              stiffness: 300,
+                              damping: 25,
+                              opacity: { duration: 0 },
+                            }
+                      }
+                      style={
+                        isAnimating
+                          ? { visibility: 'hidden', pointerEvents: 'none' }
+                          : isCaptured
+                            ? { pointerEvents: 'none' }
+                            : undefined
+                      }
+                    >
+                      <TableCardSelector
+                        disabled={game.turn !== HUMAN_PLAYER || isCaptured}
+                        type="checkbox"
+                        checked={includes(card, targets)}
+                        onChange={() => toggleTarget(card)}
+                        id={cardId}
+                      />
+                      <TableCard card={card} />
+                    </TableCardLabel>
+                  )
+                })
+              })()}
             </AnimatePresence>
           </Table>
           <AnimatePresence mode="wait">
