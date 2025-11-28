@@ -1,6 +1,6 @@
 import styled from '@emotion/styled'
-import { AnimatePresence } from 'framer-motion'
 import { fold, type Result } from '@pacote/result'
+import { AnimatePresence, motion } from 'framer-motion'
 import { includes, without } from 'ramda'
 import React from 'react'
 import type { Card } from '../engine/cards'
@@ -47,6 +47,14 @@ const Container = styled('div')`
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  position: relative;
+`
+
+const AnimatedCardOverlay = styled(motion.div)`
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  will-change: transform;
 `
 
 const GameOver = styled('main')`
@@ -89,6 +97,13 @@ export const Game = ({
     pile: [],
     players: [],
   })
+  const tableRef = React.useRef<HTMLElement | null>(null)
+  const cardRefs = React.useRef(new Map<string, HTMLButtonElement>())
+  const [animatingCard, setAnimatingCard] = React.useState<{
+    card: Card
+    initial: { x: number; y: number }
+    endPos: { x: number; y: number } | null
+  } | null>(null)
 
   const invalidMove = React.useCallback(
     async (error: Error) => setAlert(error.message),
@@ -100,6 +115,7 @@ export const Game = ({
       setGame(nextGame)
       setTargets([])
       setAlert('')
+      setAnimatingCard(null)
     },
     [],
   )
@@ -110,10 +126,74 @@ export const Game = ({
   )
 
   const play = React.useCallback(
-    (move: Move) =>
-      fold(turnTransition(game, move), invalidMove, onPlay(move, game)),
+    (move: Move) => {
+      if (move.capture.length === 0 && game.turn === HUMAN_PLAYER) {
+        const startPositionRect = cardRefs.current
+          .get(cardRef(move.card))
+          ?.getBoundingClientRect()
+        fold(
+          (nextGame: State) => {
+            if (startPositionRect) {
+              setAnimatingCard({
+                card: move.card,
+                initial: {
+                  x: startPositionRect.left,
+                  y: startPositionRect.top,
+                },
+                endPos: null,
+              })
+            }
+            setGame(nextGame)
+            setTargets([])
+            setAlert('')
+          },
+          invalidMove,
+          onPlay(move, game),
+        )
+      } else {
+        fold(turnTransition(game, move), invalidMove, onPlay(move, game))
+      }
+    },
     [onPlay, game, invalidMove, turnTransition],
   )
+
+  const animateCardTo = React.useCallback(
+    (cardElement?: HTMLElement | null) => {
+      if (
+        cardElement == null ||
+        animatingCard == null ||
+        animatingCard.endPos != null
+      )
+        return
+      const startPositionRect = cardRefs.current
+        .get(cardRef(animatingCard.card))
+        ?.getBoundingClientRect()
+      const endPositionRect = cardElement.getBoundingClientRect()
+
+      setAnimatingCard({
+        card: animatingCard.card,
+        initial: startPositionRect
+          ? { x: startPositionRect.left, y: startPositionRect.top }
+          : animatingCard.initial,
+        endPos: {
+          x: endPositionRect.left,
+          y: endPositionRect.top - 64,
+        },
+      })
+    },
+    [animatingCard],
+  )
+
+  React.useLayoutEffect(() => {
+    if (animatingCard?.endPos == null && tableRef.current) {
+      const cardId = `card-${cardRef(animatingCard?.card)}`
+      animateCardTo(
+        tableRef.current.querySelector<HTMLElement>(
+          `label[for="${cardId}"] img, label[for="${cardId}"] div`,
+        ),
+      )
+    }
+  }, [animatingCard, animateCardTo])
 
   React.useEffect(() => {
     let isOpponentPlaying = true
@@ -127,10 +207,13 @@ export const Game = ({
     }
   }, [game, invalidMove, onOpponentTurn, play])
 
-  const toggleTarget = (card: Card) =>
-    setTargets(
-      includes(card, targets) ? without([card], targets) : [...targets, card],
-    )
+  const toggleTarget = React.useCallback(
+    (card: Card) =>
+      setTargets(
+        includes(card, targets) ? without([card], targets) : [...targets, card],
+      ),
+    [targets],
+  )
 
   const humanPlayer = game.players[HUMAN_PLAYER]
 
@@ -159,7 +242,7 @@ export const Game = ({
                 >
                   {player.hand.map((card) => (
                     <OpponentCard
-                      key={`${player.id}-${card.join('')}`}
+                      key={`${player.id}-${cardRef(card)}`}
                       card={card}
                       faceDown
                     />
@@ -167,24 +250,59 @@ export const Game = ({
                 </Opponent>
               ),
           )}
-          <Table layout>
+          <Table layout ref={tableRef}>
             <AnimatePresence mode="popLayout">
               {game.table.map((card) => {
-                const cardId = `card-${card.join('-')}`
+                const cardId = `card-${cardRef(card)}`
+                const isAnimating =
+                  cardRef(card) === cardRef(animatingCard?.card)
+                const wasJustAnimated =
+                  isAnimating && animatingCard?.endPos != null
                 return (
                   <TableCardLabel
                     key={cardId}
                     htmlFor={cardId}
                     layout
-                    initial={{ opacity: 0, scale: 0.8, y: -50 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.8, y: 50 }}
-                    transition={{
-                      type: 'spring',
-                      stiffness: 300,
-                      damping: 25,
-                      opacity: { duration: 0.2 },
+                    onLayoutAnimationComplete={() => {
+                      if (isAnimating && animatingCard?.endPos == null) {
+                        animateCardTo(
+                          cardRefs.current.get(cardRef(animatingCard?.card)),
+                        )
+                      }
                     }}
+                    initial={
+                      isAnimating || wasJustAnimated
+                        ? false
+                        : { opacity: 0, scale: 0.8 }
+                    }
+                    animate={
+                      isAnimating
+                        ? { opacity: 0, scale: 1 }
+                        : { opacity: 1, scale: 1 }
+                    }
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={
+                      isAnimating || wasJustAnimated
+                        ? {
+                            opacity: { duration: 0 },
+                            scale: { duration: 0 },
+                            y: { duration: 0 },
+                            x: { duration: 0 },
+                          }
+                        : {
+                            type: 'spring',
+                            stiffness: 300,
+                            damping: 25,
+                            opacity: { duration: 0.2 },
+                          }
+                    }
+                    style={
+                      isAnimating
+                        ? { visibility: 'hidden', pointerEvents: 'none' }
+                        : wasJustAnimated
+                          ? { opacity: 1 }
+                          : undefined
+                    }
                   >
                     <TableCardSelector
                       disabled={game.turn !== HUMAN_PLAYER}
@@ -199,12 +317,46 @@ export const Game = ({
               })}
             </AnimatePresence>
           </Table>
+          <AnimatePresence mode="wait">
+            {animatingCard?.endPos && (
+              <AnimatedCardOverlay
+                key={cardRef(animatingCard.card)}
+                initial={animatingCard.initial}
+                animate={animatingCard.endPos}
+                exit={{ opacity: 0, transition: { duration: 0 } }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 200,
+                  damping: 20,
+                  duration: 0.6,
+                }}
+                onAnimationComplete={() => {
+                  setTargets([])
+                  setAlert('')
+                  setAnimatingCard(null)
+                }}
+              >
+                <DisplayCard card={animatingCard.card} />
+              </AnimatedCardOverlay>
+            )}
+          </AnimatePresence>
           <Player index={HUMAN_PLAYER} pile={humanPlayer.pile}>
             {humanPlayer.hand.map((card) => (
               <PlayerCard
-                disabled={game.turn !== HUMAN_PLAYER}
-                key={card.join('')}
+                ref={(el) => {
+                  if (el) {
+                    cardRefs.current.set(cardRef(card), el)
+                  } else {
+                    cardRefs.current.delete(cardRef(card))
+                  }
+                }}
+                disabled={game.turn !== HUMAN_PLAYER || animatingCard != null}
+                key={cardRef(card)}
                 onClick={() => play({ card, capture: targets })}
+                style={{
+                  opacity:
+                    cardRef(animatingCard?.card) === cardRef(card) ? 0 : 1,
+                }}
               >
                 <DisplayCard card={card} />
               </PlayerCard>
@@ -215,3 +367,5 @@ export const Game = ({
     </Container>
   )
 }
+
+const cardRef = (card?: Card | null) => card?.join('-') ?? ''

@@ -21,7 +21,7 @@ const arbitraryCard = tuple(
 )
 
 const cardSet = (maxLength: number) =>
-  uniqueArray(arbitraryCard, { maxLength, selector: (v) => v.join(':') })
+  uniqueArray(arbitraryCard, { maxLength, selector: (v) => v.join('-') })
 
 test('renders pile', () => {
   assert(

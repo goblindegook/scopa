@@ -27,7 +27,7 @@ interface StackProps {
 export const Stack = ({ className, pile, title }: StackProps) => (
   <StackArea className={className} title={title}>
     {pile.map((card, index) => (
-      <StackedCard key={card.join('')} faceDown index={index} card={card} />
+      <StackedCard key={card.join('-')} faceDown index={index} card={card} />
     ))}
   </StackArea>
 )
