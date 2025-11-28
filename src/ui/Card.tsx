@@ -92,20 +92,7 @@ export const Card = ({ className, faceDown = false, card }: CardProps) => {
   const [src, setSrc] = React.useState<string | undefined>()
 
   React.useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      try {
-        const asset = await import(getCardPath(card))
-        if (asset.default && !cancelled) {
-          React.startTransition(() => {
-            if (!cancelled) setSrc(asset.default)
-          })
-        }
-      } catch {}
-    })()
-    return () => {
-      cancelled = true
-    }
+    import(getCardPath(card)).then((asset) => setSrc(asset?.default))
   }, [card])
 
   return faceDown ? (
