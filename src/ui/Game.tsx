@@ -98,7 +98,7 @@ export const Game = ({
     players: [],
   })
   const tableRef = React.useRef<HTMLElement | null>(null)
-  const cardRefs = React.useRef(new Map<string, HTMLButtonElement>())
+  const cardRefs = React.useRef(new Map<string, HTMLElement>())
   const [animatingCard, setAnimatingCard] = React.useState<{
     card: Card
     initial: { x: number; y: number }
@@ -127,7 +127,7 @@ export const Game = ({
 
   const play = React.useCallback(
     (move: Move) => {
-      if (move.capture.length === 0 && game.turn === HUMAN_PLAYER) {
+      if (move.capture.length === 0) {
         const startPositionRect = cardRefs.current
           .get(cardRef(move.card))
           ?.getBoundingClientRect()
@@ -165,19 +165,18 @@ export const Game = ({
         animatingCard.animate != null
       )
         return
-      const startPositionRect = cardRefs.current
-        .get(cardRef(animatingCard.card))
-        ?.getBoundingClientRect()
-      const endPositionRect = cardElement.getBoundingClientRect()
+      const cardKey = cardRef(animatingCard.card)
+      const initialRect = cardRefs.current.get(cardKey)?.getBoundingClientRect()
+      const animateRect = cardElement.getBoundingClientRect()
 
       setAnimatingCard({
         card: animatingCard.card,
-        initial: startPositionRect
-          ? { x: startPositionRect.left, y: startPositionRect.top }
+        initial: initialRect
+          ? { x: initialRect.left, y: initialRect.top }
           : animatingCard.initial,
         animate: {
-          x: endPositionRect.left,
-          y: endPositionRect.top - 64,
+          x: animateRect.left,
+          y: animateRect.top - 64,
         },
       })
     },
@@ -242,9 +241,19 @@ export const Game = ({
                 >
                   {player.hand.map((card) => (
                     <OpponentCard
+                      ref={(el) => {
+                        if (el) {
+                          cardRefs.current.set(cardRef(card), el)
+                        } else {
+                          cardRefs.current.delete(cardRef(card))
+                        }
+                      }}
                       key={`${player.id}-${cardRef(card)}`}
                       card={card}
                       faceDown
+                      opacity={
+                        cardRef(animatingCard?.card) === cardRef(card) ? 0 : 1
+                      }
                     />
                   ))}
                 </Opponent>

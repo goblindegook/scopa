@@ -1,13 +1,24 @@
 import styled from '@emotion/styled'
-import type React from 'react'
+import React from 'react'
 import type { Card as CardType } from '../engine/cards'
 import { Card } from './Card'
 import { Stack } from './Stack'
 
-export const OpponentCard = styled(Card)`
+const CardWrapper = styled.div<{ opacity?: number }>`
   display: inline-block;
   margin: 0.5rem;
+  opacity: ${({ opacity = 1 }) => opacity};
 `
+
+export const OpponentCard = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentProps<typeof Card> & { opacity?: number }
+>(({ opacity, ...props }, ref) => (
+  <CardWrapper ref={ref} opacity={opacity}>
+    <Card {...props} />
+  </CardWrapper>
+))
+OpponentCard.displayName = 'OpponentCard'
 
 const OpponentArea = styled('section')`
   background-color: darkgreen;
