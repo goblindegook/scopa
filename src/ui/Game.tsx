@@ -256,8 +256,6 @@ export const Game = ({
                 const cardId = `card-${cardRef(card)}`
                 const isAnimating =
                   cardRef(card) === cardRef(animatingCard?.card)
-                const wasJustAnimated =
-                  isAnimating && animatingCard?.animate != null
                 return (
                   <TableCardLabel
                     key={cardId}
@@ -270,11 +268,7 @@ export const Game = ({
                         )
                       }
                     }}
-                    initial={
-                      isAnimating || wasJustAnimated
-                        ? false
-                        : { opacity: 0, scale: 0.8 }
-                    }
+                    initial={isAnimating ? false : { opacity: 0, scale: 0.8 }}
                     animate={
                       isAnimating
                         ? { opacity: 0, scale: 1 }
@@ -282,7 +276,7 @@ export const Game = ({
                     }
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={
-                      isAnimating || wasJustAnimated
+                      isAnimating
                         ? {
                             opacity: { duration: 0 },
                             scale: { duration: 0 },
@@ -293,15 +287,13 @@ export const Game = ({
                             type: 'spring',
                             stiffness: 300,
                             damping: 25,
-                            opacity: { duration: 0.2 },
+                            opacity: { duration: 0 },
                           }
                     }
                     style={
                       isAnimating
                         ? { visibility: 'hidden', pointerEvents: 'none' }
-                        : wasJustAnimated
-                          ? { opacity: 1 }
-                          : undefined
+                        : undefined
                     }
                   >
                     <TableCardSelector
