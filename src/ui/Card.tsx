@@ -125,11 +125,11 @@ export interface AnimatedCardProps {
   card: CardType
   initial: Target
   animate: Target
-  faceDown: boolean
+  faceDown?: boolean
   onComplete: () => void
 }
 
-export const AnimatedCard = ({ card, initial, animate, faceDown, onComplete }: AnimatedCardProps) => {
+export const AnimatedCard: React.FC<AnimatedCardProps> = ({ card, initial, animate, faceDown, onComplete }) => {
   return (
     <AnimatedCardOverlay
       initial={{ ...initial, rotateY: faceDown ? 180 : 0 }}
@@ -137,11 +137,11 @@ export const AnimatedCard = ({ card, initial, animate, faceDown, onComplete }: A
       exit={{ opacity: 0, transition: { duration: 0 } }}
       transition={{
         type: 'spring',
-        stiffness: 200,
+        stiffness: 150,
         damping: 20,
-        duration: 0.6,
+        duration: 0.9,
         rotateY: {
-          duration: 0.2,
+          duration: 0.4,
           delay: 0,
         },
       }}
@@ -149,12 +149,44 @@ export const AnimatedCard = ({ card, initial, animate, faceDown, onComplete }: A
     >
       <AnimatedCardContainer>
         <AnimatedCardFace side="front">
-          <Card card={card} faceDown={false} />
+          <Card card={card} />
         </AnimatedCardFace>
         <AnimatedCardFace side="back">
-          <Card card={card} faceDown={true} />
+          <Card card={card} faceDown />
         </AnimatedCardFace>
       </AnimatedCardContainer>
     </AnimatedCardOverlay>
+  )
+}
+
+export type ScaleInCardProps = React.PropsWithChildren<{
+  isNew: boolean
+  index: number
+}>
+
+export const ScaleInCard: React.FC<ScaleInCardProps> = ({ isNew, index, children }) => {
+  return (
+    <motion.div
+      style={{ display: 'inline-block' }}
+      initial={isNew ? { scale: 0.5 } : false}
+      animate={isNew ? { scale: [0.5, 1.2, 1] } : { scale: 1 }}
+      transition={
+        isNew
+          ? {
+              delay: index * 0.2,
+              type: 'spring',
+              stiffness: 300,
+              damping: 20,
+              scale: {
+                duration: 0.5,
+                times: [0, 0.6, 1],
+                delay: index * 0.2,
+              },
+            }
+          : { duration: 0 }
+      }
+    >
+      {children}
+    </motion.div>
   )
 }

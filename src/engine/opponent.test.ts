@@ -107,6 +107,14 @@ describe('capture moves', () => {
     expect(card).toEqual(denari(1))
   })
 
+  test('prefer capturing the most valuable cards when multiple combinations exist', async () => {
+    const game = setupGame([bastoni(1), bastoni(2), bastoni(3), bastoni(4)], [coppe(5)])
+
+    const { capture } = await runMove(game)
+
+    expect(capture).toEqual([bastoni(1), bastoni(4)])
+  })
+
   test('if all options are equal, capture with the first available suit', async () => {
     const game = setupGame([coppe(1)], [bastoni(1), spade(1)])
 

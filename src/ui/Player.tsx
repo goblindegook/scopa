@@ -16,18 +16,17 @@ const PlayerArea = styled('section')`
 
 const PlayerHand = styled('div')`
   min-height: 150px;
+  padding: 2rem;
 `
 
 const PlayerPile = styled(Stack)`
-  margin: 1rem;
-  /* transform: perspective(1500px) rotateX(30deg) rotateY(0deg) rotateZ(0deg) scale(1); */
+  margin: 3rem;
 `
 
 export const PlayerCard = styled('button')`
   background-color: transparent;
   border: none;
   padding: 1rem;
-  margin: 0.1rem;
   transition: transform 0.2s ease-in;
 
   &:focus,
@@ -48,7 +47,7 @@ type PlayerProps = React.PropsWithChildren<{
   index: number
 }>
 
-export const Player = ({ children, index, pile }: PlayerProps) => (
+export const Player: React.FC<PlayerProps> = ({ children, index, pile }) => (
   <PlayerArea>
     <PlayerHand>{children}</PlayerHand>
     <PlayerPile pile={pile} title={`Player ${index + 1} pile: ${pile.length} cards`} />

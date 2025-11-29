@@ -6,7 +6,7 @@ import { Stack } from './Stack'
 
 const CardWrapper = styled.div<{ opacity?: number }>`
   display: inline-block;
-  margin: 0.5rem;
+  padding: 0.5rem;
   opacity: ${({ opacity = 1 }) => opacity};
 `
 
@@ -30,10 +30,11 @@ const OpponentArea = styled('section')`
 
 const OpponentHand = styled('aside')`
   min-height: 150px;
+  padding: 2rem;
 `
 
 const OpponentPile = styled(Stack)`
-  margin: 1rem;
+  margin: 3rem;
 `
 
 type OpponentProps = React.PropsWithChildren<{
