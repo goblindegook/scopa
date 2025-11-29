@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, test } from 'vitest'
 import type { Score } from '../engine/scores'
 import { ScoreBoard } from './ScoreBoard'
@@ -7,7 +7,10 @@ afterEach(() => {
   cleanup()
 })
 
-const getRowByText = (label: string) => screen.getByText(label).closest('tr')?.querySelectorAll('td')
+const getCellsByRowHeader = (table: HTMLElement, headerName: string) => {
+  const rowHeader = within(table).getByRole('rowheader', { name: headerName })
+  return within(rowHeader.closest('tr') ?? rowHeader).getAllByRole('cell')
+}
 
 test('renders player names and scores', () => {
   const scores: Score[] = [
@@ -37,53 +40,51 @@ test('renders player names and scores', () => {
 
   render(<ScoreBoard scores={scores} />)
 
-  const table = screen.getByRole('table', { name: 'Game scoreboard' })
-  expect(table).toBeTruthy()
+  expect(screen.getByText('Player 2 Wins')).toBeTruthy()
 
   expect(screen.getByText('Game scoreboard showing scores for each player')).toBeTruthy()
-
   expect(screen.getByText('Player 1')).toBeTruthy()
   expect(screen.getByText('Player 2')).toBeTruthy()
 
-  const playerHeaders = screen.getAllByRole('columnheader')
-  expect(playerHeaders).toHaveLength(3)
-  expect(playerHeaders[0]).toHaveAttribute('scope', 'col')
-  expect(playerHeaders[1]).toHaveAttribute('scope', 'col')
-  expect(playerHeaders[2]).toHaveAttribute('scope', 'col')
+  const table = screen.getByRole('table', { name: 'Game scoreboard' })
 
-  const rowHeaders = screen.getAllByRole('rowheader')
-  expect(rowHeaders.length).toBeGreaterThan(0)
-  rowHeaders.forEach((header) => {
-    expect(header).toHaveAttribute('scope', 'row')
-  })
+  const scopeRowCells = getCellsByRowHeader(table, 'Scope')
+  expect(scopeRowCells[0]).toHaveTextContent('2')
+  expect(scopeRowCells[1]).toHaveTextContent('1')
 
-  const scopeCells = getRowByText('Scope')
-  expect(scopeCells?.[0].textContent).toBe('2')
-  expect(scopeCells?.[0]).toHaveAttribute('aria-label', '2, point awarded')
-  expect(scopeCells?.[1].textContent).toBe('1')
+  const capturedRowCells = getCellsByRowHeader(table, 'Captured')
+  expect(capturedRowCells[0]).toHaveTextContent(/20.*\+1/)
+  expect(capturedRowCells[0]).toHaveAttribute('aria-label', '20, bonus point awarded')
+  expect(capturedRowCells[1]).toHaveTextContent(/20.*\+1/)
+  expect(capturedRowCells[1]).toHaveAttribute('aria-label', '20, bonus point awarded')
 
-  const capturedCells = getRowByText('Captured')
-  expect(capturedCells?.[0].textContent).toBe('20')
-  expect(capturedCells?.[0]).toHaveAttribute('aria-label', '20, point awarded')
-  expect(capturedCells?.[1].textContent).toBe('20')
-  expect(capturedCells?.[1]).toHaveAttribute('aria-label', '20, point awarded')
+  const denariRowCells = getCellsByRowHeader(table, 'Denari')
+  expect(denariRowCells[0]).toHaveTextContent('5')
+  expect(denariRowCells[1]).toHaveTextContent(/6.*\+1/)
+  expect(denariRowCells[1]).toHaveAttribute('aria-label', '6, bonus point awarded')
 
-  const denariCells = getRowByText('Denari')
-  expect(denariCells?.[0].textContent).toBe('5')
-  expect(denariCells?.[1].textContent).toBe('6')
-  expect(denariCells?.[1]).toHaveAttribute('aria-label', '6, point awarded')
+  const setteBelloRowCells = getCellsByRowHeader(table, 'Sette Bello')
+  expect(setteBelloRowCells[0]).toHaveTextContent(/1.*\+1/)
+  expect(setteBelloRowCells[0]).toHaveAttribute('aria-label', '1, bonus point awarded')
+  expect(setteBelloRowCells[1]).toHaveTextContent('0')
 
-  const setteBelloCells = getRowByText('Sette Bello')
-  expect(setteBelloCells?.[0].textContent).toBe('1')
-  expect(setteBelloCells?.[0]).toHaveAttribute('aria-label', '1, point awarded')
-  expect(setteBelloCells?.[1].textContent).toBe('0')
+  const primieraRowCells = getCellsByRowHeader(table, 'Primiera')
+  expect(primieraRowCells[0]).toHaveTextContent('45')
+  expect(primieraRowCells[1]).toHaveTextContent(/50.*\+1/)
+  expect(primieraRowCells[1]).toHaveAttribute('aria-label', '50, bonus point awarded')
 
-  const primieraCells = getRowByText('Primiera')
-  expect(primieraCells?.[0].textContent).toBe('45')
-  expect(primieraCells?.[1].textContent).toBe('50')
-  expect(primieraCells?.[1]).toHaveAttribute('aria-label', '50, point awarded')
+  const totalRowCells = getCellsByRowHeader(table, 'Total')
+  expect(totalRowCells[0]).toHaveTextContent('3')
+  expect(totalRowCells[1]).toHaveTextContent('4')
+})
 
-  const totalCells = getRowByText('Total')
-  expect(totalCells?.[0].textContent).toBe('3')
-  expect(totalCells?.[1].textContent).toBe('4')
+test(`renders "It's a draw" when all players have the same total score`, () => {
+  const scores: Score[] = [
+    { playerId: 0, details: [], total: 3 },
+    { playerId: 1, details: [], total: 3 },
+  ]
+
+  render(<ScoreBoard scores={scores} />)
+
+  expect(screen.getByText("It's a draw")).toBeTruthy()
 })

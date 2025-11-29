@@ -50,7 +50,7 @@ test('deal new game on start', async () => {
       onScore={() => []}
     />,
   )
-  expect(screen.queryByText('Game Over')).not.toBeInTheDocument()
+  expect(screen.queryByText(/Player \d+ Wins/)).not.toBeInTheDocument()
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
@@ -324,7 +324,6 @@ test('end game and show scores', async () => {
 
   expect(onScore).toHaveBeenCalledWith(state.players)
 
-  expect(screen.getByText('Game Over')).toBeTruthy()
   expect(screen.getByText('Player 1')).toBeTruthy()
   expect(screen.getByText('3')).toBeTruthy()
   expect(screen.getByText('Player 2')).toBeTruthy()

@@ -87,20 +87,6 @@ const GameOverContainer = styled('div')`
   width: 100%;
 `
 
-const GameOverTitle = styled('h2')`
-  margin: 0;
-  font-size: 2.5rem;
-  font-weight: bold;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-`
-
 const Main = styled('main')`
   display: flex;
   flex-direction: column;
@@ -306,7 +292,6 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
       {game.state === 'stop' && (
         <GameOver>
           <GameOverContainer>
-            <GameOverTitle>Game Over</GameOverTitle>
             <ScoreBoard scores={onScore(game.players)} />
             <Button onClick={start}>New Game</Button>
           </GameOverContainer>
