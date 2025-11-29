@@ -24,9 +24,23 @@ const Header = styled('header')`
   height: 4rem;
 `
 
-const Alert = styled('span')`
-  color: red;
-  padding: 0.25rem 1rem;
+const Alert = styled('aside')`
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: bold;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  white-space: nowrap;
 `
 
 const Turn = styled('span')`
@@ -224,7 +238,6 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     <Container>
       <Header>
         <Button onClick={start}>Start new game</Button>
-        <Alert>{alert}</Alert>
         {game.state === 'play' && <Turn>Player {game.turn + 1}</Turn>}
       </Header>
       {game.state === 'stop' && (
@@ -318,6 +331,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                 })
               })()}
             </AnimatePresence>
+            {alert && <Alert role="alert">{alert}</Alert>}
           </Table>
           <AnimatePresence mode="wait">
             {animationState?.animate && (

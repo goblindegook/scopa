@@ -12,6 +12,7 @@ export const Table = styled(motion.section)`
   justify-content: center;
   overflow: auto;
   min-height: 0;
+  position: relative;
 `
 
 export const TableCard = styled(Card)`
