@@ -68,6 +68,37 @@ const GameOver = styled('main')`
   background-color: rgba(0, 0, 0, 0.25);
   flex: 1;
   overflow: hidden;
+  padding: 2rem;
+  gap: 2rem;
+`
+
+const GameOverContainer = styled('div')`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  padding: 2.5rem;
+  max-width: 600px;
+  width: 100%;
+`
+
+const GameOverTitle = styled('h2')`
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: bold;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 `
 
 const Main = styled('main')`
@@ -174,7 +205,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           setGame(nextState)
           setTargets([])
 
-          const message = nextState.lastCaptured.length === game.table.length ? 'Sweep!' : ''
+          const message = nextState.lastCaptured.length === game.table.length ? 'Scopa!' : ''
           setAlert(message)
         },
         invalidMove,
@@ -269,13 +300,16 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   return (
     <Container>
       <Header>
-        <Button onClick={start}>Start new game</Button>
+        <Button onClick={start}>New Game</Button>
         {game.state === 'play' && <Turn>Player {game.turn + 1}</Turn>}
       </Header>
       {game.state === 'stop' && (
         <GameOver>
-          <h2>Game Over</h2>
-          <ScoreBoard scores={onScore(game.players)} />
+          <GameOverContainer>
+            <GameOverTitle>Game Over</GameOverTitle>
+            <ScoreBoard scores={onScore(game.players)} />
+            <Button onClick={start}>New Game</Button>
+          </GameOverContainer>
         </GameOver>
       )}
       {game.state === 'play' && (

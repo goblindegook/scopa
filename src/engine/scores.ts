@@ -37,7 +37,7 @@ const prime = flow(
   sort(([, p1], [, p2]) => p2 - p1),
   groupBy(([[, suit]]) => String(suit)),
   values,
-  // biome-ignore lint/style/noNonNullAssertion: guaranteeed to exist
+  // biome-ignore lint/style/noNonNullAssertion: guaranteed to exist
   map((points) => points![0]),
   reduce<CardPoints, ScoreDetail>(
     ({ cards, value, ...rest }, [card, points]) => ({

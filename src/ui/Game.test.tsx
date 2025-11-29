@@ -52,7 +52,7 @@ test('deal new game on start', async () => {
   )
   expect(screen.queryByText('Game Over')).not.toBeInTheDocument()
 
-  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
   expect(onStart).toHaveBeenCalled()
   expect(screen.getByText(`Player ${turn + 1}`)).toBeTruthy()
@@ -77,7 +77,7 @@ test('renders opponent hand', async () => {
     )
   render(<Game onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />)
 
-  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
   expect(screen.getByTestId('p1-hand').children).toHaveLength(2)
 })
@@ -106,7 +106,7 @@ test('card visibility', async () => {
     )
   render(<Game onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />)
 
-  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
   expect(screen.getByAltText('Asso di denari')).toBeTruthy()
   expect(screen.getByAltText('Cinque di denari')).toBeTruthy()
@@ -140,7 +140,7 @@ test('player piles', async () => {
     )
   render(<Game onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />)
 
-  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
   expect(screen.getByTitle('Player 1 pile: 2 cards')).toBeTruthy()
   expect(screen.getByTitle('Player 2 pile: 3 cards')).toBeTruthy()
@@ -167,7 +167,7 @@ test('allow playing a card', async () => {
   )
   render(<Game onStart={() => Ok(initialState)} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
 
-  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
   fireEvent.click(screen.getByAltText('Asso di denari'))
 
   expect(onPlay).toHaveBeenCalledWith({ card: denari(1), capture: [] }, initialState)
@@ -194,7 +194,7 @@ test(`block interaction when not a player's turn`, async () => {
     />,
   )
 
-  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
   expect(screen.getByAltText('Sette di denari').previousSibling).toBeDisabled()
 
@@ -231,7 +231,7 @@ test('select targets to capture', async () => {
 
   render(<Game onStart={() => Ok(initialState)} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
 
-  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
   fireEvent.click(screen.getByRole('checkbox', { name: 'Asso di coppe' }))
   fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
 
@@ -260,7 +260,7 @@ test('invalid move handling', async () => {
     />,
   )
 
-  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
   fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
 
   expect(screen.getByText(message)).toBeTruthy()
@@ -299,7 +299,7 @@ test('computer opponent plays a card', async () => {
 
   render(<Game onStart={onStart} onPlay={onPlay} onOpponentTurn={onOpponentPlay} onScore={vitest.fn()} />)
 
-  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
   await screen.findByRole('button', { name: 'Asso di denari' })
 })
@@ -320,7 +320,7 @@ test('end game and show scores', async () => {
 
   render(<Game onStart={() => Ok(state)} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={onScore} />)
 
-  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
   expect(onScore).toHaveBeenCalledWith(state.players)
 
@@ -331,7 +331,7 @@ test('end game and show scores', async () => {
   expect(screen.getByText('4')).toBeTruthy()
 })
 
-test('renders "Sweep!" when a player captures all cards on the table', async () => {
+test('renders "Scopa!" when a player captures all cards on the table', async () => {
   render(
     <Game
       onStart={() =>
@@ -364,14 +364,14 @@ test('renders "Sweep!" when a player captures all cards on the table', async () 
       onScore={vitest.fn()}
     />,
   )
-  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
   fireEvent.click(screen.getByRole('button', { name: 'Cinque di denari' }))
 
-  expect(screen.getByText('Sweep!')).toBeTruthy()
+  expect(screen.getByText('Scopa!')).toBeTruthy()
 })
 
-test('does not render "Sweep!" when a player does not capture all cards on the table', async () => {
+test('does not render "Scopa!" when a player does not capture all cards on the table', async () => {
   render(
     <Game
       onStart={() =>
@@ -404,9 +404,9 @@ test('does not render "Sweep!" when a player does not capture all cards on the t
       onScore={vitest.fn()}
     />,
   )
-  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
   fireEvent.click(screen.getByRole('button', { name: 'Due di bastoni' }))
 
-  expect(screen.queryByText('Sweep!')).not.toBeTruthy()
+  expect(screen.queryByText('Scopa!')).not.toBeTruthy()
 })
