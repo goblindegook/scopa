@@ -122,13 +122,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   const [animationState, setAnimationState] = React.useState<AnimationState | null>(null)
 
   React.useEffect(() => {
-    preloadCardAssets()
-      .then(() => {
-        setAssetsLoaded(true)
-      })
-      .catch(() => {
-        setAssetsLoaded(true)
-      })
+    preloadCardAssets().finally(() => setAssetsLoaded(true))
   }, [])
 
   const invalidMove = React.useCallback(async (error: Error) => setAlert(error.message), [])
@@ -136,8 +130,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   const start = React.useCallback(
     () =>
       fold(
-        (nextGame: State) => {
-          setGame(nextGame)
+        (nextState: State) => {
+          setGame(nextState)
           setTargets([])
           setAlert('')
           setAnimationState(null)
@@ -151,7 +145,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   const play = React.useCallback(
     (move: Move) => {
       fold(
-        (nextGame: State) => {
+        (nextState: State) => {
           const startPositionRect = cardRefs.current.get(cardRef(move.card))?.getBoundingClientRect()
 
           if (startPositionRect) {
@@ -162,15 +156,17 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                 y: startPositionRect.top,
               },
               animate: null,
-              capture: move.capture.length ? move.capture : nextGame.lastCaptured,
+              capture: move.capture.length ? move.capture : nextState.lastCaptured,
               previousTable: game.table,
               isFaceDown: game.turn !== HUMAN_PLAYER,
             })
           }
 
-          setGame(nextGame)
+          setGame(nextState)
           setTargets([])
-          setAlert('')
+
+          const message = nextState.lastCaptured.length === game.table.length ? 'Sweep!' : ''
+          setAlert(message)
         },
         invalidMove,
         onPlay(move, game),

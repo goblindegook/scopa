@@ -1,7 +1,7 @@
 import { Err, Ok } from '@pacote/result'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, expect, test, vi, vitest } from 'vitest'
-import { coppe, denari, spade } from '../engine/cards'
+import { bastoni, coppe, denari, spade } from '../engine/cards'
 import type { Move, State } from '../engine/state'
 import { Game } from './Game'
 
@@ -329,4 +329,84 @@ test('end game and show scores', async () => {
   expect(screen.getByText('3')).toBeTruthy()
   expect(screen.getByText('Player 2')).toBeTruthy()
   expect(screen.getByText('4')).toBeTruthy()
+})
+
+test('renders "Sweep!" when a player captures all cards on the table', async () => {
+  render(
+    <Game
+      onStart={() =>
+        Ok({
+          state: 'play',
+          turn: 0,
+          players: [
+            { id: 0, hand: [denari(5)], pile: [], scope: 0 },
+            { id: 1, hand: [denari(1)], pile: [], scope: 0 },
+          ],
+          pile: [],
+          table: [denari(2), denari(3)],
+          lastCaptured: [],
+        })
+      }
+      onPlay={() =>
+        Ok({
+          state: 'play',
+          turn: 1,
+          players: [
+            { id: 0, hand: [], pile: [denari(2), denari(3), denari(5)], scope: 1 },
+            { id: 1, hand: [denari(1)], pile: [], scope: 0 },
+          ],
+          pile: [],
+          table: [],
+          lastCaptured: [denari(2), denari(3)],
+        })
+      }
+      onOpponentTurn={async () => ({ card: denari(1), capture: [] })}
+      onScore={vitest.fn()}
+    />,
+  )
+  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
+
+  fireEvent.click(screen.getByRole('button', { name: 'Cinque di denari' }))
+
+  expect(screen.getByText('Sweep!')).toBeTruthy()
+})
+
+test('does not render "Sweep!" when a player does not capture all cards on the table', async () => {
+  render(
+    <Game
+      onStart={() =>
+        Ok({
+          state: 'play',
+          turn: 0,
+          players: [
+            { id: 0, hand: [bastoni(2)], pile: [], scope: 0 },
+            { id: 1, hand: [denari(1)], pile: [], scope: 0 },
+          ],
+          pile: [],
+          table: [denari(2), denari(3)],
+          lastCaptured: [],
+        })
+      }
+      onPlay={() =>
+        Ok({
+          state: 'play',
+          turn: 1,
+          players: [
+            { id: 0, hand: [], pile: [denari(2), bastoni(5)], scope: 0 },
+            { id: 1, hand: [denari(1)], pile: [], scope: 0 },
+          ],
+          pile: [],
+          table: [denari(3)],
+          lastCaptured: [denari(2)],
+        })
+      }
+      onOpponentTurn={async () => ({ card: denari(1), capture: [] })}
+      onScore={vitest.fn()}
+    />,
+  )
+  fireEvent.click(await screen.findByRole('button', { name: 'Start new game' }))
+
+  fireEvent.click(screen.getByRole('button', { name: 'Due di bastoni' }))
+
+  expect(screen.queryByText('Sweep!')).not.toBeTruthy()
 })
