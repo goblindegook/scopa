@@ -13,9 +13,14 @@ const WinnerTitle = styled('h2')`
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+
+  @media (max-height: 600px) {
+    font-size: 1.25rem;
+  }
 `
 
 const Board = styled('table')`
+  color: white;
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 0.5rem;
   min-width: 25vw;
@@ -24,9 +29,13 @@ const Board = styled('table')`
   background-color: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
-  border-collapse: separate;
   border-spacing: 0;
   overflow: hidden;
+
+  @media (max-height: 600px) {
+    font-size: 0.875rem;
+    padding: 0.5rem;
+  }
 `
 
 const PlayerHeader = styled('th')`
@@ -34,18 +43,30 @@ const PlayerHeader = styled('th')`
   padding: 1rem;
   text-align: center;
   text-transform: uppercase;
+
+  @media (max-height: 600px) {
+    padding: 0.5rem;
+  }
 `
 
 const RowHeader = styled('th')`
   padding: 1rem;
   text-align: left;
   font-weight: 600;
+
+  @media (max-height: 600px) {
+    padding: 0.5rem;
+  }
 `
 
 const Cell = styled('td')`
   color: white;
   padding: 1rem;
   text-align: center;
+
+  @media (max-height: 600px) {
+    padding: 0.5rem;
+  }
 `
 
 const ScoreCell = styled(Cell)<{ winner?: boolean }>`
@@ -58,7 +79,11 @@ const CellContent = styled('div')`
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
-  gap: .75rem;
+  gap: 0.75rem;
+
+  @media (max-height: 600px) {
+    gap: 0.5rem;
+  }
 `
 
 const ValueText = styled('span')`
@@ -74,7 +99,7 @@ const PointIndicator = styled('span')`
 
 const TotalRow = styled('tr')`
   font-weight: bold;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   text-transform: uppercase;
 `
 

@@ -8,6 +8,10 @@ const CardWrapper = styled.div<{ opacity?: number }>`
   display: inline-block;
   padding: 0.5rem;
   opacity: ${({ opacity = 1 }) => opacity};
+
+  @media (max-height: 600px) {
+    transform: scale(0.6);
+  }
 `
 
 export const OpponentCard = React.forwardRef<HTMLDivElement, React.ComponentProps<typeof Card> & { opacity?: number }>(
@@ -21,20 +25,19 @@ OpponentCard.displayName = 'OpponentCard'
 
 const OpponentArea = styled('section')`
   display: grid;
-  grid-template-columns: auto 20vw;
-  justify-items: center;
+  grid-template-columns: 1fr 20vw;
   padding-left: 20vw;
-  flex-shrink: 0;
-  min-height: 200px;
+  max-height: 20vh;
 `
 
 const OpponentHand = styled('aside')`
-  min-height: 150px;
-  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `
 
 const OpponentPile = styled(Stack)`
-  margin: 3rem;
+
 `
 
 type OpponentProps = React.PropsWithChildren<{

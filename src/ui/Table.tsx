@@ -3,21 +3,19 @@ import { motion } from 'framer-motion'
 import { Card } from './Card'
 
 export const Table = styled(motion.section)`
-  margin: 1rem;
-  text-align: center;
-  flex: 1;
+  -webkit-overflow-scrolling: touch;
+  align-content: center;
   display: flex;
   flex-wrap: wrap;
-  align-content: center;
+  flex: 1 1 35vh;
   justify-content: center;
-  overflow: auto;
-  min-height: 0;
   position: relative;
+  gap: 1rem;
 `
 
 export const TableCard = styled(Card)`
-  margin: 1rem;
   transition: transform 0.2s ease-in, box-shadow 0.2s ease-in;
+  touch-action: manipulation;
 
   input:focus + &,
   input + &:hover {

@@ -28,19 +28,23 @@ function name([value, suit]: CardType) {
 }
 
 const Face = styled('img')`
-  height: 13.5vw;
-  width: 7.5vw;
+  height: 14vw;
+  max-height: 40vh;
+  max-width: 8vw;
+  aspect-ratio: 1 / 1.66;
   border-radius: 0.75vw;
   box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
 `
 
 const Back = styled('div')`
-  height: 13.5vw;
-  width: 7.5vw;
+  height: 14vw;
+  max-height: 20vh;
+  max-width: 8vw;
+  aspect-ratio: 1 / 1.66;
   border-radius: 0.75vw;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 3px solid rgba(255, 255, 255, 0.3);
   position: relative;
   overflow: hidden;
 

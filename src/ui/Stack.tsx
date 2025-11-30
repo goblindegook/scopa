@@ -4,17 +4,23 @@ import { Card } from './Card'
 
 const StackArea = styled('aside')`
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
 `
 
 const StackedCard = styled(Card)`
   transition: transform 0.1s ease-in;
   position: absolute;
   z-index: ${({ index }) => index};
-  top: -${({ index }) => (index ?? 0) * 2}px;
-  left: 0;
+  top: calc(50% - ${({ index }) => (index ?? 0) * 2}px);
+  left: 50%;
+  transform: translate(-50%, -50%);
 
   &:hover ~ * {
-    transform: translateY(-1rem);
+    transform: translate(-50%, calc(-50% - 1rem));
   }
 `
 

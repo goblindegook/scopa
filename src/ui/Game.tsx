@@ -22,6 +22,13 @@ const Header = styled('header')`
   font-size: 1rem;
   color: white;
   height: 4rem;
+  flex-shrink: 0;
+
+  @media (max-height: 600px) {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    height: 2.5rem;
+  }
 `
 
 const Alert = styled('aside')`
@@ -55,21 +62,18 @@ const Container = styled('div')`
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   position: relative;
+  touch-action: manipulation;
 `
 
 const GameOver = styled('main')`
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  color: white;
   background-color: rgba(0, 0, 0, 0.25);
   flex: 1;
-  overflow: hidden;
-  padding: 2rem;
-  gap: 2rem;
 `
 
 const GameOverContainer = styled('div')`
@@ -83,8 +87,13 @@ const GameOverContainer = styled('div')`
   border-radius: 1rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   padding: 2.5rem;
-  max-width: 600px;
+  max-width: 540px;
   width: 100%;
+
+  @media (max-height: 600px) {
+    padding: 1rem;
+    gap: 1rem;
+  }
 `
 
 const Main = styled('main')`
@@ -92,6 +101,7 @@ const Main = styled('main')`
   flex-direction: column;
   flex: 1;
   overflow: hidden;
+  height: 100%;
 `
 
 const LoadingScreen = styled('main')`
@@ -212,7 +222,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
         initial: initialRect ? { x: initialRect.left, y: initialRect.top } : animationState.initial,
         animate: {
           x: animateRect.left,
-          y: animateRect.top - 64,
+          y: animateRect.top + (window.innerHeight <= 600 ? -40 : -64),
         },
       })
     },

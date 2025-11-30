@@ -7,27 +7,28 @@ const PlayerArea = styled('section')`
   background-color: green;
   display: grid;
   grid-gap: 0;
-  grid-template-columns: auto 20vw;
+  grid-template-columns: 1fr 20vw;
   justify-items: center;
+  align-items: center;
   padding-left: 20vw;
-  flex-shrink: 0;
-  min-height: 200px;
+  flex: 0 0 35vh;
+  overflow: hidden;
 `
 
 const PlayerHand = styled('div')`
   min-height: 150px;
-  padding: 2rem;
-`
-
-const PlayerPile = styled(Stack)`
-  margin: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
 `
 
 export const PlayerCard = styled('button')`
   background-color: transparent;
   border: none;
-  padding: 1rem;
   transition: transform 0.2s ease-in;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 
   &:focus,
   &:hover {
@@ -38,7 +39,7 @@ export const PlayerCard = styled('button')`
 
   &:focus {
     border: 2px solid red;
-    padding: calc(1rem - 2px);
+    padding: -2px;
   }
 `
 
@@ -50,6 +51,6 @@ type PlayerProps = React.PropsWithChildren<{
 export const Player: React.FC<PlayerProps> = ({ children, index, pile }) => (
   <PlayerArea>
     <PlayerHand>{children}</PlayerHand>
-    <PlayerPile pile={pile} title={`Player ${index + 1} pile: ${pile.length} cards`} />
+    <Stack pile={pile} title={`Player ${index + 1} pile: ${pile.length} cards`} />
   </PlayerArea>
 )

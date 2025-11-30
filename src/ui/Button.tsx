@@ -64,4 +64,9 @@ export const Button = styled('button')`
       background-position: 200% 50%;
     }
   }
+
+  @media (max-height: 600px) {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+  }
 `
