@@ -37,7 +37,9 @@ const OpponentHand = styled('aside')`
 `
 
 const OpponentPile = styled(Stack)`
-
+  @media (max-height: 600px) {
+    transform: scale(0.6);
+  }
 `
 
 type OpponentProps = React.PropsWithChildren<{

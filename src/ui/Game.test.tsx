@@ -6,7 +6,12 @@ import type { Move, State } from '../engine/state'
 import { Game } from './Game'
 
 vi.mock('./preload', () => ({
-  preloadCardAssets: vi.fn().mockResolvedValue(undefined),
+  preloadCardAssets: vi.fn(async (onProgress?: (progress: number) => void) => {
+    if (onProgress) {
+      onProgress(1)
+    }
+    return Promise.resolve(undefined)
+  }),
 }))
 
 afterEach(() => {
@@ -32,10 +37,8 @@ function testGame(overrides: Partial<State> = {}): State {
 test('preload card assets', async () => {
   render(<Game onStart={vitest.fn()} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />)
 
-  expect(screen.getByText('Loading...')).toBeTruthy()
-
   await waitFor(() => {
-    expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'New Game' })).toBeInTheDocument()
   })
 })
 

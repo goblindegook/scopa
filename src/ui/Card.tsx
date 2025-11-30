@@ -91,9 +91,18 @@ export interface CardProps {
 
 export const Card = ({ className, faceDown = false, card }: CardProps) => {
   const [src, setSrc] = React.useState<string | undefined>()
+  const isMountedRef = React.useRef(true)
 
   React.useEffect(() => {
-    import(`./assets/${SUITS[card[1]]}/${card[0]}.jpg`).then((asset) => setSrc(asset?.default))
+    isMountedRef.current = true
+    import(`./assets/${SUITS[card[1]]}/${card[0]}.jpg`).then((asset) => {
+      if (isMountedRef.current) {
+        setSrc(asset?.default)
+      }
+    })
+    return () => {
+      isMountedRef.current = false
+    }
   }, [card])
 
   return faceDown ? (

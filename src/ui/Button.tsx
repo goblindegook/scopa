@@ -56,6 +56,20 @@ export const Button = styled('button')`
     outline-offset: 2px;
   }
 
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+
+    &:hover {
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+
+      &::before {
+        opacity: 0;
+      }
+    }
+  }
+
   @keyframes gradientShift {
     0% {
       background-position: 0% 50%;

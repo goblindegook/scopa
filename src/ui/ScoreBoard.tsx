@@ -1,6 +1,7 @@
-import styled from '@emotion/styled/base'
+import styled from '@emotion/styled'
 import type React from 'react'
 import type { Score } from '../engine/scores'
+import { Button } from './Button'
 
 const WinnerTitle = styled('h2')`
   margin: 0;
@@ -177,6 +178,48 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores }) => {
     </>
   )
 }
+
+const GameOverContainer = styled('main')`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.25);
+  flex: 1;
+`
+
+const GameOverContent = styled('div')`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  padding: 2.5rem;
+  max-width: 540px;
+  width: 100%;
+
+  @media (max-height: 600px) {
+    padding: 1rem;
+    gap: 1rem;
+  }
+`
+
+interface GameOverProps {
+  scores: readonly Score[]
+  onStart: () => void
+}
+
+export const GameOver: React.FC<GameOverProps> = ({ scores, onStart }) => (
+  <GameOverContainer>
+    <GameOverContent>
+      <ScoreBoard scores={scores} />
+      <Button onClick={onStart}>New Game</Button>
+    </GameOverContent>
+  </GameOverContainer>
+)
 
 const getWinners = (scores: readonly Score[], index: number): Set<number> => {
   const values = scores.map(({ details: playerDetails }) => playerDetails[index]?.value ?? 0)
