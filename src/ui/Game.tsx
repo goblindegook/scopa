@@ -116,7 +116,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   })
   const previousTableRef = React.useRef<readonly Card[]>([])
   const previousPlayersHandsRef = React.useRef<readonly (readonly Card[])[]>([])
-  const [cardsToDealToTheTable, setCardsToDealToTheTable] = React.useState<readonly Card[]>([])
+  const [tableDealOrder, setTableDealOrder] = React.useState(new Map<string, number>())
 
   React.useEffect(() => {
     preloadCardAssets((progress) => setLoadingProgress(progress))
@@ -139,7 +139,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           setAnimationState({ initial: { x: 0, y: 0 } })
           previousTableRef.current = []
           previousPlayersHandsRef.current = []
-          setCardsToDealToTheTable(nextState.table)
+          setTableDealOrder(toOrder(nextState.table))
         },
         invalidMove,
         onStart(),
@@ -199,8 +199,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   React.useLayoutEffect(() => {
     if (animationState.card && animationState.animate == null && tableRef.current) {
-      const cardId = `card-${getCardId(game.lastCaptured?.[0] ?? animationState.card)}`
-      animateCardTo(tableRef.current.querySelector(`label[for="${cardId}"] img, label[for="${cardId}"] div`))
+      const tableCardId = `table-${getCardId(game.lastCaptured?.[0] ?? animationState.card)}`
+      animateCardTo(tableRef.current.querySelector(`label[for="${tableCardId}"] img, label[for="${tableCardId}"] div`))
     }
   }, [animationState, animateCardTo, game.lastCaptured])
 
@@ -218,7 +218,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
       // Wait for capture animations to complete
       const captureTimeoutId = setTimeout(() => {
         if (cardsToDeal.length) {
-          setCardsToDealToTheTable(cardsToDeal)
+          setTableDealOrder(toOrder(cardsToDeal))
         }
       }, captureAnimationsDelay)
 
@@ -227,7 +227,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
         () => {
           previousTableRef.current = game.table
           previousPlayersHandsRef.current = game.players.map((p) => p.hand)
-          setCardsToDealToTheTable([])
+          setTableDealOrder(new Map())
         },
         cardDealingAnimationsDelay + captureAnimationsDelay + 600,
       )
@@ -240,12 +240,12 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   }, [game])
 
   React.useEffect(() => {
-    if (game.state === 'play' && game.turn !== HUMAN_PLAYER && cardsToDealToTheTable.length === 0) {
-      const animationDelay = cardsToDealToTheTable.length * 0.25 + 600 + 200
+    if (game.state === 'play' && game.turn !== HUMAN_PLAYER && tableDealOrder.size === 0) {
+      const animationDelay = tableDealOrder.size * 0.25 + 600 + 200
       const timeoutId = setTimeout(() => onOpponentTurn(game).then(play).catch(invalidMove), animationDelay)
       return () => clearTimeout(timeoutId)
     }
-  }, [game, invalidMove, onOpponentTurn, play, cardsToDealToTheTable])
+  }, [game, invalidMove, onOpponentTurn, play, tableDealOrder])
 
   const toggleTarget = React.useCallback(
     (card: Card) => setTargets(includes(card, targets) ? without([card], targets) : [...targets, card]),
@@ -297,40 +297,33 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
             <Table layout ref={tableRef}>
               <AnimatePresence mode="popLayout">
                 {(() => {
-                  const cardsToDeal = game.table.filter((c) => !includes(c, previousTableRef.current ?? []))
-
                   const tableCards =
-                    game.lastCaptured.length && previousTableRef.current.length
-                      ? cardsToDealToTheTable.length
-                        ? cardsToDeal
-                        : previousTableRef.current
+                    game.lastCaptured.length && previousTableRef.current.length && !tableDealOrder.size
+                      ? previousTableRef.current
                       : game.table
 
-                  const dealtCardIndices = new Map(cardsToDealToTheTable.map((card, index) => [getCardId(card), index]))
-
                   return tableCards.map((card) => {
-                    const cardId = `card-${getCardId(card)}`
-                    const isAnimating = getCardId(card) === getCardId(animationState.card)
+                    const cardId = getCardId(card)
+                    const isAnimating = cardId === getCardId(animationState.card)
                     const isCaptured = includes(card, game.lastCaptured)
-                    const isDealt = dealtCardIndices.has(getCardId(card))
-                    const dealtCardIndex = dealtCardIndices.get(getCardId(card)) ?? 0
+                    const order = tableDealOrder.get(cardId)
                     return (
                       <TableCardLabel
-                        key={cardId}
-                        htmlFor={cardId}
-                        layout={!isDealt}
+                        key={`table-${cardId}`}
+                        htmlFor={`table-${cardId}`}
+                        layout={order == null}
                         onLayoutAnimationComplete={() => {
                           if (isAnimating && animationState.animate == null) {
                             animateCardTo(getCardRef(animationState.card))
                           }
                         }}
                         initial={
-                          isAnimating ? false : isDealt ? { opacity: 0, scale: 0.5 } : { opacity: 0, scale: 0.8 }
+                          isAnimating ? false : order != null ? { opacity: 0, scale: 0.5 } : { opacity: 0, scale: 0.8 }
                         }
                         animate={
                           isAnimating
                             ? { opacity: 0, scale: 1 }
-                            : isDealt
+                            : order != null
                               ? {
                                   opacity: 1,
                                   scale: [0.5, 1.2, 1],
@@ -351,18 +344,18 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                                   opacity: { duration: 0.6, ease: 'easeOut' },
                                   scale: { duration: 0.6, ease: 'easeOut' },
                                 }
-                              : isDealt
+                              : order != null
                                 ? {
-                                    delay: dealtCardIndex * 0.25,
+                                    delay: order * 0.25,
                                     opacity: {
                                       duration: 0.3,
-                                      delay: dealtCardIndex * 0.25,
+                                      delay: order * 0.25,
                                       ease: 'easeOut',
                                     },
                                     scale: {
                                       duration: 0.5,
                                       times: [0, 0.6, 1],
-                                      delay: dealtCardIndex * 0.25,
+                                      delay: order * 0.25,
                                       ease: [0.34, 1.56, 0.64, 1],
                                     },
                                   }
@@ -381,13 +374,14 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                               : undefined
                         }
                       >
-                        <TableCardSelector
-                          disabled={game.turn !== HUMAN_PLAYER || isCaptured}
-                          type="checkbox"
-                          checked={includes(card, targets)}
-                          onChange={() => toggleTarget(card)}
-                          id={cardId}
-                        />
+                        {game.turn === HUMAN_PLAYER && !isCaptured && !isAnimating && (
+                          <TableCardSelector
+                            type="checkbox"
+                            checked={includes(card, targets)}
+                            onChange={() => toggleTarget(card)}
+                            id={`table-${cardId}`}
+                          />
+                        )}
                         <TableCard card={card} />
                       </TableCardLabel>
                     )
@@ -450,3 +444,5 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 }
 
 const getCardId = (card?: Card | null) => card?.join('-') ?? ''
+
+const toOrder = (pile: readonly Card[]) => new Map(pile.map((card, index) => [getCardId(card), index]))
