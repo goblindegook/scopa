@@ -114,8 +114,9 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     initial: { x: 0, y: 0 },
     animate: null,
   })
-  const previousGameRef = React.useRef<State | null>(null)
-  const [newTableCards, setNewTableCards] = React.useState<readonly Card[]>([])
+  const previousTableRef = React.useRef<readonly Card[]>([])
+  const previousPlayersHandsRef = React.useRef<readonly (readonly Card[])[]>([])
+  const [cardsToDealToTheTable, setCardsToDealToTheTable] = React.useState<readonly Card[]>([])
 
   React.useEffect(() => {
     preloadCardAssets((progress) => setLoadingProgress(progress))
@@ -136,8 +137,9 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           setTargets([])
           setAlert('')
           setAnimationState({ initial: { x: 0, y: 0 } })
-          previousGameRef.current = null
-          setNewTableCards(nextState.table)
+          previousTableRef.current = []
+          previousPlayersHandsRef.current = []
+          setCardsToDealToTheTable(nextState.table)
         },
         invalidMove,
         onStart(),
@@ -162,6 +164,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
             })
           }
 
+          previousTableRef.current = game.table
+          previousPlayersHandsRef.current = game.players.map((p) => p.hand)
           setGame(nextState)
           setTargets([])
 
@@ -202,43 +206,46 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   React.useEffect(() => {
     if (game.state === 'play') {
-      const newCards = game.table.filter((c) => !includes(c, previousGameRef.current?.table ?? []))
-      if (newCards.length > 0) {
-        setNewTableCards(newCards)
-      }
+      const isScopa =
+        previousTableRef.current.length > 0 && previousTableRef.current.length === game.lastCaptured.length
 
-      const maxNewCards = Math.max(
-        newCards.length || game.table.length,
-        ...game.players.map(
-          (p) =>
-            p.hand.filter((c) => !includes(c, previousGameRef.current?.players[p.id]?.hand ?? [])).length ||
-            p.hand.length,
-        ),
-      )
+      const captureAnimationsDelay = isScopa ? 800 : 0
 
-      const timeoutId = setTimeout(
+      const cardsToDeal = isScopa ? game.table.filter((c) => !includes(c, previousTableRef.current ?? [])) : []
+
+      const cardDealingAnimationsDelay = 0.25 * cardsToDeal.length
+
+      // Wait for capture animations to complete
+      const captureTimeoutId = setTimeout(() => {
+        if (cardsToDeal.length) {
+          setCardsToDealToTheTable(cardsToDeal)
+        }
+      }, captureAnimationsDelay)
+
+      // Wait for card dealing animations to complete
+      const dealTimeoutId = setTimeout(
         () => {
-          previousGameRef.current = game
-          setNewTableCards([])
+          previousTableRef.current = game.table
+          previousPlayersHandsRef.current = game.players.map((p) => p.hand)
+          setCardsToDealToTheTable([])
         },
-        maxNewCards * 0.25 + 600,
+        cardDealingAnimationsDelay + captureAnimationsDelay + 600,
       )
 
-      return () => clearTimeout(timeoutId)
+      return () => {
+        clearTimeout(captureTimeoutId)
+        clearTimeout(dealTimeoutId)
+      }
     }
   }, [game])
 
   React.useEffect(() => {
-    let isOpponentPlaying = true
-    if (game.state === 'play' && game.turn !== HUMAN_PLAYER) {
-      onOpponentTurn(game)
-        .then((move) => (isOpponentPlaying ? play(move) : undefined))
-        .catch(invalidMove)
+    if (game.state === 'play' && game.turn !== HUMAN_PLAYER && cardsToDealToTheTable.length === 0) {
+      const animationDelay = cardsToDealToTheTable.length * 0.25 + 600 + 200
+      const timeoutId = setTimeout(() => onOpponentTurn(game).then(play).catch(invalidMove), animationDelay)
+      return () => clearTimeout(timeoutId)
     }
-    return () => {
-      isOpponentPlaying = false
-    }
-  }, [game, invalidMove, onOpponentTurn, play])
+  }, [game, invalidMove, onOpponentTurn, play, cardsToDealToTheTable])
 
   const toggleTarget = React.useCallback(
     (card: Card) => setTargets(includes(card, targets) ? without([card], targets) : [...targets, card]),
@@ -263,7 +270,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                 player.id !== HUMAN_PLAYER && (
                   <Opponent key={`opponent-${player.id}`} index={player.id} pile={player.pile}>
                     {player.hand.map((card) => {
-                      const previousHand = previousGameRef.current?.players[player.id]?.hand ?? []
+                      const previousHand = previousPlayersHandsRef.current[player.id] ?? []
                       const isNewCard = !includes(card, previousHand)
                       const newCards = player.hand.filter((c) => !includes(c, previousHand))
                       const newCardIndex = isNewCard ? newCards.findIndex((c) => getCardId(c) === getCardId(card)) : -1
@@ -290,33 +297,40 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
             <Table layout ref={tableRef}>
               <AnimatePresence mode="popLayout">
                 {(() => {
-                  const tableCards = game.lastCaptured.length ? (previousGameRef.current?.table ?? []) : game.table
+                  const cardsToDeal = game.table.filter((c) => !includes(c, previousTableRef.current ?? []))
 
-                  const newCardIndices = new Map(newTableCards.map((card, index) => [getCardId(card), index]))
+                  const tableCards =
+                    game.lastCaptured.length && previousTableRef.current.length
+                      ? cardsToDealToTheTable.length
+                        ? cardsToDeal
+                        : previousTableRef.current
+                      : game.table
+
+                  const dealtCardIndices = new Map(cardsToDealToTheTable.map((card, index) => [getCardId(card), index]))
 
                   return tableCards.map((card) => {
                     const cardId = `card-${getCardId(card)}`
                     const isAnimating = getCardId(card) === getCardId(animationState.card)
                     const isCaptured = includes(card, game.lastCaptured)
-                    const isNewCard = newTableCards.some((c) => getCardId(c) === getCardId(card))
-                    const newCardIndex = isNewCard ? (newCardIndices.get(getCardId(card)) ?? -1) : -1
+                    const isDealt = dealtCardIndices.has(getCardId(card))
+                    const dealtCardIndex = dealtCardIndices.get(getCardId(card)) ?? 0
                     return (
                       <TableCardLabel
                         key={cardId}
                         htmlFor={cardId}
-                        layout={!isNewCard}
+                        layout={!isDealt}
                         onLayoutAnimationComplete={() => {
                           if (isAnimating && animationState.animate == null) {
                             animateCardTo(getCardRef(animationState.card))
                           }
                         }}
                         initial={
-                          isAnimating ? false : isNewCard ? { opacity: 0, scale: 0.5 } : { opacity: 0, scale: 0.8 }
+                          isAnimating ? false : isDealt ? { opacity: 0, scale: 0.5 } : { opacity: 0, scale: 0.8 }
                         }
                         animate={
                           isAnimating
                             ? { opacity: 0, scale: 1 }
-                            : isNewCard
+                            : isDealt
                               ? {
                                   opacity: 1,
                                   scale: [0.5, 1.2, 1],
@@ -332,27 +346,32 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                                 y: { duration: 0 },
                                 x: { duration: 0 },
                               }
-                            : isNewCard
+                            : isCaptured
                               ? {
-                                  delay: newCardIndex * 0.25,
-                                  opacity: {
-                                    duration: 0.3,
-                                    delay: newCardIndex * 0.25,
-                                    ease: 'easeOut',
-                                  },
-                                  scale: {
-                                    duration: 0.5,
-                                    times: [0, 0.6, 1],
-                                    delay: newCardIndex * 0.25,
-                                    ease: [0.34, 1.56, 0.64, 1],
-                                  },
+                                  opacity: { duration: 0.6, ease: 'easeOut' },
+                                  scale: { duration: 0.6, ease: 'easeOut' },
                                 }
-                              : {
-                                  type: 'spring',
-                                  stiffness: 200,
-                                  damping: 25,
-                                  opacity: { duration: 0 },
-                                }
+                              : isDealt
+                                ? {
+                                    delay: dealtCardIndex * 0.25,
+                                    opacity: {
+                                      duration: 0.3,
+                                      delay: dealtCardIndex * 0.25,
+                                      ease: 'easeOut',
+                                    },
+                                    scale: {
+                                      duration: 0.5,
+                                      times: [0, 0.6, 1],
+                                      delay: dealtCardIndex * 0.25,
+                                      ease: [0.34, 1.56, 0.64, 1],
+                                    },
+                                  }
+                                : {
+                                    type: 'spring',
+                                    stiffness: 200,
+                                    damping: 25,
+                                    opacity: { duration: 0 },
+                                  }
                         }
                         style={
                           isAnimating
@@ -397,7 +416,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
             </AnimatePresence>
             <Player index={HUMAN_PLAYER} pile={humanPlayer.pile}>
               {humanPlayer.hand.map((card) => {
-                const previousHand = previousGameRef.current?.players[HUMAN_PLAYER]?.hand ?? []
+                const previousHand = previousPlayersHandsRef.current[HUMAN_PLAYER] ?? []
                 const isNewCard = !includes(card, previousHand)
                 const newCards = humanPlayer.hand.filter((c) => !includes(c, previousHand))
                 const newCardIndex = isNewCard ? newCards.findIndex((c) => getCardId(c) === getCardId(card)) : -1
