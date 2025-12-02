@@ -1,5 +1,5 @@
 import styled from '@emotion/styled'
-import type React from 'react'
+import React from 'react'
 import type { Card as CardType } from '../engine/cards'
 import { Stack } from './Stack'
 
@@ -48,9 +48,10 @@ type PlayerProps = React.PropsWithChildren<{
   index: number
 }>
 
-export const Player: React.FC<PlayerProps> = ({ children, index, pile }) => (
+export const Player = React.forwardRef<HTMLElement, PlayerProps>(({ children, index, pile }, ref) => (
   <PlayerArea>
     <PlayerHand>{children}</PlayerHand>
-    <Stack pile={pile} title={`Player ${index + 1} pile: ${pile.length} cards`} />
+    <Stack ref={ref} pile={pile} title={`Player ${index + 1} pile: ${pile.length} cards`} />
   </PlayerArea>
-)
+))
+Player.displayName = 'Player'

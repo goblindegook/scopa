@@ -89,7 +89,7 @@ export interface CardProps {
   index?: number
 }
 
-export const Card = ({ className, faceDown = false, card }: CardProps) => {
+export const Card = ({ className, faceDown, card }: CardProps) => {
   const [src, setSrc] = React.useState<string | undefined>()
   const isMountedRef = React.useRef(true)
 
@@ -112,6 +112,12 @@ export const Card = ({ className, faceDown = false, card }: CardProps) => {
   )
 }
 
+const StyledCard = styled(Card)`
+  position: absolute;
+  backface-visibility: hidden;
+  transform: rotateY(${({ faceDown }) => (faceDown ? '180deg' : '0deg')});
+`
+
 const AnimatedCardOverlay = styled(motion.div)`
   position: fixed;
   z-index: 1000;
@@ -120,19 +126,13 @@ const AnimatedCardOverlay = styled(motion.div)`
   transform-style: preserve-3d;
 `
 
-const AnimatedCardContainer = styled('div')`
+const CardContainer = styled('div')`
   transform-style: preserve-3d;
   position: relative;
-  width: 7.5vw;
-  height: 13.5vw;
-`
-
-const AnimatedCardFace = styled('div')<{ side: 'front' | 'back' }>`
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  backface-visibility: hidden;
-  transform: rotateY(${({ side }) => (side === 'front' ? '0deg' : '180deg')});
+  height: 14vw;
+  max-height: 40vh;
+  max-width: 8vw;
+  aspect-ratio: 1 / 1.66;
 `
 
 export interface AnimatedCardProps {
@@ -140,35 +140,29 @@ export interface AnimatedCardProps {
   initial: Target
   animate: Target
   faceDown?: boolean
+  flip?: boolean
   onComplete: () => void
 }
 
-export const AnimatedCard: React.FC<AnimatedCardProps> = ({ card, initial, animate, faceDown, onComplete }) => {
+export const AnimatedCard: React.FC<AnimatedCardProps> = ({ card, initial, animate, faceDown, flip, onComplete }) => {
   return (
     <AnimatedCardOverlay
       initial={{ ...initial, rotateY: faceDown ? 180 : 0 }}
-      animate={{ ...animate, rotateY: 0 }}
+      animate={{ ...animate, rotateY: !faceDown && flip ? 180 : 0 }}
       exit={{ opacity: 0, transition: { duration: 0 } }}
       transition={{
         type: 'spring',
         stiffness: 150,
         damping: 20,
         duration: 0.9,
-        rotateY: {
-          duration: 0.4,
-          delay: 0,
-        },
+        rotateY: { duration: 0.4, delay: 0 },
       }}
       onAnimationComplete={onComplete}
     >
-      <AnimatedCardContainer>
-        <AnimatedCardFace side="front">
-          <Card card={card} />
-        </AnimatedCardFace>
-        <AnimatedCardFace side="back">
-          <Card card={card} faceDown />
-        </AnimatedCardFace>
-      </AnimatedCardContainer>
+      <CardContainer>
+        <StyledCard card={card} />
+        <StyledCard card={card} faceDown />
+      </CardContainer>
     </AnimatedCardOverlay>
   )
 }

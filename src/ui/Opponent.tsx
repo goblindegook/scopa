@@ -47,9 +47,10 @@ type OpponentProps = React.PropsWithChildren<{
   index: number
 }>
 
-export const Opponent = ({ children, index, pile }: OpponentProps) => (
+export const Opponent = React.forwardRef<HTMLElement, OpponentProps>(({ children, index, pile }, ref) => (
   <OpponentArea>
     <OpponentHand data-testid={`p${index}-hand`}>{children}</OpponentHand>
-    <OpponentPile pile={pile} title={`Player ${index + 1} pile: ${pile.length} cards`} />
+    <OpponentPile ref={ref} pile={pile} title={`Player ${index + 1} pile: ${pile.length} cards`} />
   </OpponentArea>
-)
+))
+Opponent.displayName = 'Opponent'

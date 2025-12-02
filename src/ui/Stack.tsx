@@ -1,4 +1,5 @@
 import styled from '@emotion/styled'
+import React from 'react'
 import type { Card as CardType } from '../engine/cards'
 import { Card } from './Card'
 
@@ -30,10 +31,11 @@ interface StackProps {
   title: string
 }
 
-export const Stack = ({ className, pile, title }: StackProps) => (
-  <StackArea className={className} title={title}>
+export const Stack = React.forwardRef<HTMLElement, StackProps>(({ className, pile, title }, ref) => (
+  <StackArea ref={ref} className={className} title={title}>
     {pile.map((card, index) => (
       <StackedCard key={card.join('-')} faceDown index={index} card={card} />
     ))}
   </StackArea>
-)
+))
+Stack.displayName = 'Stack'
