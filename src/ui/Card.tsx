@@ -137,8 +137,8 @@ const CardContainer = styled('div')`
 
 export interface AnimatedCardProps {
   card: CardType
-  initial: Target
-  animate: Target
+  initial?: Target
+  animate?: Target
   faceDown?: boolean
   flip?: boolean
   onComplete: () => void
