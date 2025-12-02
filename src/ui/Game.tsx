@@ -347,11 +347,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                               : order != null
                                 ? {
                                     delay: order * 0.25,
-                                    opacity: {
-                                      duration: 0.3,
-                                      delay: order * 0.25,
-                                      ease: 'easeOut',
-                                    },
+                                    opacity: { duration: 0.3, delay: order * 0.25, ease: 'easeOut' },
                                     scale: {
                                       duration: 0.5,
                                       times: [0, 0.6, 1],
@@ -374,14 +370,13 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                               : undefined
                         }
                       >
-                        {game.turn === HUMAN_PLAYER && !isCaptured && !isAnimating && (
-                          <TableCardSelector
-                            type="checkbox"
-                            checked={includes(card, targets)}
-                            onChange={() => toggleTarget(card)}
-                            id={`table-${cardId}`}
-                          />
-                        )}
+                        <TableCardSelector
+                          disabled={game.turn !== HUMAN_PLAYER || isCaptured || isAnimating}
+                          type="checkbox"
+                          checked={includes(card, targets)}
+                          onChange={() => toggleTarget(card)}
+                          id={`table-${cardId}`}
+                        />
                         <TableCard card={card} />
                       </TableCardLabel>
                     )
