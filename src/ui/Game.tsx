@@ -207,7 +207,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     const isScopa = previousTableRef.current.length > 0 && previousTableRef.current.length === game.lastCaptured.length
     const captureAnimationsDelay = game.lastCaptured.length ? 800 : 0
     const cardsToDeal = isScopa ? game.table.filter((c) => !includes(c, previousTableRef.current ?? [])) : []
-    const cardDealingAnimationsDelay = 0.25 * cardsToDeal.length
+    const cardDealingAnimationsDelay = 250 * cardsToDeal.length + 800
 
     // Wait for capture animations to complete
     const captureTimeoutId = setTimeout(() => {
@@ -217,14 +217,11 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     }, captureAnimationsDelay)
 
     // Wait for card dealing animations to complete
-    const dealTimeoutId = setTimeout(
-      () => {
-        previousTableRef.current = game.table
-        previousPlayersHandsRef.current = game.players.map((p) => p.hand)
-        setTableDealOrder(new Map())
-      },
-      captureAnimationsDelay + cardDealingAnimationsDelay + 600,
-    )
+    const dealTimeoutId = setTimeout(() => {
+      previousTableRef.current = game.table
+      previousPlayersHandsRef.current = game.players.map((p) => p.hand)
+      setTableDealOrder(new Map())
+    }, captureAnimationsDelay + cardDealingAnimationsDelay)
 
     return () => {
       clearTimeout(captureTimeoutId)
@@ -234,7 +231,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   React.useEffect(() => {
     if (game.state === 'play' && game.turn !== MAIN_PLAYER && !tableDealOrder.size) {
-      const animationDelay = tableDealOrder.size * 0.25 + 600 + 500
+      const animationDelay = 250 * tableDealOrder.size + 800 + 200
       const timeoutId = setTimeout(() => onOpponentTurn(game).then(play).catch(invalidMove), animationDelay)
       return () => clearTimeout(timeoutId)
     }
@@ -317,30 +314,25 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                     <TableCardLabel
                       key={`table-${cardId}`}
                       htmlFor={`table-${cardId}`}
-                      layout={order == null}
+                      layout={!isAnimating}
                       onLayoutAnimationComplete={() =>
                         animatePlayTo(cardRefs.current.get(getCardId(playAnimation?.card)))
                       }
-                      initial={!isAnimating && { opacity: 0, scale: order != null ? 0.5 : 0.8 }}
+                      initial={{ opacity: 0 }}
                       animate={{
                         opacity: isAnimating ? 0 : 1,
                         scale: order != null ? [0.5, 1.2, 1] : 1,
                       }}
-                      exit={{ opacity: 0, scale: 0.8 }}
+                      exit={{ opacity: 0, scale: 0.3 }}
                       transition={
                         isAnimating
-                          ? {
-                              opacity: { duration: 0 },
-                              scale: { duration: 0 },
-                              y: { duration: 0 },
-                              x: { duration: 0 },
-                            }
+                          ? { duration: 0 }
                           : order != null
                             ? {
                                 delay: order * 0.25,
                                 opacity: { duration: 0.3, delay: order * 0.25, ease: 'easeOut' },
                                 scale: {
-                                  duration: 0.5,
+                                  duration: 0.7,
                                   times: [0, 0.6, 1],
                                   delay: order * 0.25,
                                   ease: [0.34, 1.56, 0.64, 1],
@@ -447,7 +439,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                 <ScaleInCard key={getCardId(card)} isNew={isNewCard} index={newCardIndex}>
                   <PlayerCard
                     ref={(el) => updateCardRefs(card, el)}
-                    disabled={game.turn !== MAIN_PLAYER || playAnimation?.card != null}
+                    disabled={game.turn !== MAIN_PLAYER || playAnimation?.card != null || captureAnimations.length > 0}
                     onClick={() => play({ card, capture })}
                     style={{ opacity: isSame(playAnimation?.card, card) ? 0 : 1 }}
                   >
