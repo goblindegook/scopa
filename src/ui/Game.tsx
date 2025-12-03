@@ -234,7 +234,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   React.useEffect(() => {
     if (game.state === 'play' && game.turn !== MAIN_PLAYER && !tableDealOrder.size) {
-      const animationDelay = tableDealOrder.size * 0.25 + 600 + 200
+      const animationDelay = tableDealOrder.size * 0.25 + 600 + 500
       const timeoutId = setTimeout(() => onOpponentTurn(game).then(play).catch(invalidMove), animationDelay)
       return () => clearTimeout(timeoutId)
     }
@@ -302,8 +302,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
               {/* Table cards */}
               {(() => {
                 const tableCards =
-                  (game.lastCaptured.length && previousTableRef.current.length && !tableDealOrder.size) ||
-                  captureAnimations.length
+                  game.lastCaptured.length && previousTableRef.current.length && !tableDealOrder.size
                     ? previousTableRef.current
                     : game.table
 
