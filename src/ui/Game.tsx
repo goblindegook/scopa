@@ -192,9 +192,11 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   )
 
   React.useLayoutEffect(() => {
-    if (playAnimation?.card && playAnimation?.animate == null && tableRef.current) {
+    if (playAnimation?.card && !playAnimation?.animate) {
       animatePlayTo(
-        tableRef.current.querySelector(`label[for="table-${getCardId(game.lastCaptured?.[0] ?? playAnimation.card)}"]`),
+        tableRef.current?.querySelector(
+          `label[for="table-${getCardId(game.lastCaptured?.[0] ?? playAnimation.card)}"]`,
+        ),
       )
     }
   }, [playAnimation, animatePlayTo, game.lastCaptured])
@@ -316,9 +318,9 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                       key={`table-${cardId}`}
                       htmlFor={`table-${cardId}`}
                       layout={order == null}
-                      onLayoutAnimationComplete={() => {
-                        if (!playAnimation?.animate) animatePlayTo(cardRefs.current.get(getCardId(playAnimation?.card)))
-                      }}
+                      onLayoutAnimationComplete={() =>
+                        animatePlayTo(cardRefs.current.get(getCardId(playAnimation?.card)))
+                      }
                       initial={!isAnimating && { opacity: 0, scale: order != null ? 0.5 : 0.8 }}
                       animate={{
                         opacity: isAnimating ? 0 : 1,
