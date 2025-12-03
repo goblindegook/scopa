@@ -121,15 +121,16 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   const invalidMove = React.useCallback(async (error: Error) => setAlert(error.message), [])
 
-  const getCardPosition = React.useCallback((card?: Card): { x: number; y: number } | null => {
-    const r = cardRefs.current.get(getCardId(card))?.getBoundingClientRect()
-    return r ? { x: r.left, y: r.top } : null
+  const getCardPosition = React.useCallback((card?: Card) => getPosition(cardRefs.current.get(getCardId(card))), [])
+
+  const updateCardRefs = React.useCallback((card: Card, el?: HTMLElement | null) => {
+    if (el) cardRefs.current.set(getCardId(card), el)
+    else cardRefs.current.delete(getCardId(card))
   }, [])
 
-  const getTableCardPosition = React.useCallback((card?: Card): { x: number; y: number } | null => {
-    const id = `table-${getCardId(card)}`
-    const r = tableRef.current?.querySelector(`label[for="${id}"] img, label[for="${id}"] div`)?.getBoundingClientRect()
-    return r ? { x: r.left, y: r.top } : null
+  const updatePlayerPileRefs = React.useCallback((playerId: number, el?: HTMLElement | null) => {
+    if (el) playerPileRefs.current.set(playerId, el)
+    else playerPileRefs.current.delete(playerId)
   }, [])
 
   const start = React.useCallback(
@@ -192,8 +193,9 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   React.useLayoutEffect(() => {
     if (playAnimation?.card && playAnimation?.animate == null && tableRef.current) {
-      const tableCardId = `table-${getCardId(game.lastCaptured?.[0] ?? playAnimation.card)}`
-      animatePlayTo(tableRef.current.querySelector(`label[for="${tableCardId}"] img, label[for="${tableCardId}"] div`))
+      animatePlayTo(
+        tableRef.current.querySelector(`label[for="table-${getCardId(game.lastCaptured?.[0] ?? playAnimation.card)}"]`),
+      )
     }
   }, [playAnimation, animatePlayTo, game.lastCaptured])
 
@@ -272,13 +274,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
               player.id !== MAIN_PLAYER && (
                 <Opponent
                   key={`opponent-${player.id}`}
-                  ref={(el) => {
-                    if (el) {
-                      playerPileRefs.current.set(player.id, el)
-                    } else {
-                      playerPileRefs.current.delete(player.id)
-                    }
-                  }}
+                  ref={(el) => updatePlayerPileRefs(player.id, el)}
                   index={player.id}
                   pile={getFilteredPile(player.id)}
                 >
@@ -290,13 +286,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                     return (
                       <ScaleInCard key={`${player.id}-${getCardId(card)}`} isNew={isNewCard} index={newCardIndex}>
                         <OpponentCard
-                          ref={(el) => {
-                            if (el) {
-                              cardRefs.current.set(getCardId(card), el)
-                            } else {
-                              cardRefs.current.delete(getCardId(card))
-                            }
-                          }}
+                          ref={(el) => updateCardRefs(card, el)}
                           card={card}
                           faceDown
                           opacity={isSame(playAnimation?.card, card) ? 0 : 1}
@@ -417,32 +407,23 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                     ?.getBoundingClientRect()
                   const tableCardId = `table-${getCardId(capturedCards[0])}`
                   const referenceCard =
-                    tableRef.current
-                      ?.querySelector(`label[for="${tableCardId}"] img, label[for="${tableCardId}"] div`)
-                      ?.getBoundingClientRect() ?? pilePosition
-
-                  const offsetX = -10 // FIXME
-                  const offsetY = 4 // FIXME
+                    tableRef.current?.querySelector(`label[for="${tableCardId}"]`)?.getBoundingClientRect() ??
+                    pilePosition
 
                   setCaptureAnimations(
                     capturedCards.map((card, index) => ({
                       card,
-                      initial: getTableCardPosition(card) ??
+                      initial: getPosition(tableRef.current?.querySelector(`label[for="table-${getCardId(card)}"]`)) ??
                         playAnimation.animate ??
                         playAnimation.initial ?? { x: 0, y: 0 },
                       animate: topCardPosition
                         ? {
-                            x: topCardPosition.left + offsetX,
+                            x: topCardPosition.left,
                             y: topCardPosition.top - (index + 1) * 2,
                           }
                         : {
-                            x: pilePosition.left + pilePosition.width / 2 - referenceCard.width / 2 + offsetX,
-                            y:
-                              pilePosition.top +
-                              pilePosition.height / 2 -
-                              referenceCard.height / 2 -
-                              (index + 1) * 2 +
-                              offsetY,
+                            x: pilePosition.left + pilePosition.width / 2 - referenceCard.width / 2,
+                            y: pilePosition.top + pilePosition.height / 2 - referenceCard.height / 2 - (index + 1) * 2,
                           },
                     })),
                   )
@@ -469,13 +450,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
               ))}
           </AnimatePresence>
           <Player
-            ref={(el) => {
-              if (el) {
-                playerPileRefs.current.set(MAIN_PLAYER, el)
-              } else {
-                playerPileRefs.current.delete(MAIN_PLAYER)
-              }
-            }}
+            ref={(el) => updatePlayerPileRefs(MAIN_PLAYER, el)}
             index={MAIN_PLAYER}
             pile={getFilteredPile(MAIN_PLAYER)}
           >
@@ -487,13 +462,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
               return (
                 <ScaleInCard key={getCardId(card)} isNew={isNewCard} index={newCardIndex}>
                   <PlayerCard
-                    ref={(el) => {
-                      if (el) {
-                        cardRefs.current.set(getCardId(card), el)
-                      } else {
-                        cardRefs.current.delete(getCardId(card))
-                      }
-                    }}
+                    ref={(el) => updateCardRefs(card, el)}
                     disabled={game.turn !== MAIN_PLAYER || playAnimation?.card != null}
                     onClick={() => play({ card, capture: targets })}
                     style={{ opacity: isSame(playAnimation?.card, card) ? 0 : 1 }}
@@ -513,3 +482,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 const getCardId = (card?: Card | null) => card?.join('-') ?? ''
 
 const toOrder = (pile: readonly Card[]) => new Map(pile.map((card, index) => [getCardId(card), index]))
+
+const getPosition = (element?: HTMLElement | null): { x: number; y: number } | null => {
+  const r = element?.getBoundingClientRect()
+  return r ? { x: r.left, y: r.top } : null
+}
