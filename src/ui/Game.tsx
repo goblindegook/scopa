@@ -96,7 +96,7 @@ interface AnimationState {
 export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) => {
   const [loadingProgress, setLoadingProgress] = React.useState(0)
   const [alert, setAlert] = React.useState('')
-  const [targets, setTargets] = React.useState<readonly Card[]>([])
+  const [capture, setCapture] = React.useState<readonly Card[]>([])
   const [game, setGame] = React.useState<State>({
     state: 'initial',
     turn: 0,
@@ -138,7 +138,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
       fold(
         (nextState: State) => {
           setGame(nextState)
-          setTargets([])
+          setCapture([])
           setAlert('')
           setTableDealOrder(toOrder(nextState.table))
           setPlayAnimation(null)
@@ -168,7 +168,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           previousTableRef.current = game.table
           previousPlayersHandsRef.current = game.players.map((p) => p.hand)
           setGame(nextState)
-          setTargets([])
+          setCapture([])
           setAlert(nextState.lastCaptured.length === game.table.length ? 'Scopa!' : '')
         },
         invalidMove,
@@ -238,12 +238,10 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     }
   }, [game, invalidMove, onOpponentTurn, play, tableDealOrder])
 
-  const toggleTarget = React.useCallback(
-    (card: Card) => setTargets(includes(card, targets) ? without([card], targets) : [...targets, card]),
-    [targets],
+  const toggleCapture = React.useCallback(
+    (card: Card) => setCapture(includes(card, capture) ? without([card], capture) : [...capture, card]),
+    [capture],
   )
-
-  const humanPlayer = game.players[MAIN_PLAYER] ?? { id: MAIN_PLAYER, hand: [], pile: [], scope: 0 }
 
   const getFilteredPile = React.useCallback(
     (playerId: number) =>
@@ -308,11 +306,9 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
                 return tableCards.map((card) => {
                   const cardId = getCardId(card)
-                  const isAnimating = isSame(card, playAnimation?.card)
                   const isCaptured = includes(card, game.lastCaptured)
-                  const isInCaptureAnimation = captureAnimations.some((a) => isSame(a.card, card))
-                  const isCapturingCard = isSame(playAnimation?.card, card) && captureAnimations.length > 0
-                  const hide = isAnimating || isInCaptureAnimation || isCapturingCard
+                  const isAnimating =
+                    isSame(card, playAnimation?.card) || captureAnimations.some((a) => isSame(a.card, card))
                   const order = tableDealOrder.get(cardId)
 
                   return (
@@ -321,21 +317,18 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                       htmlFor={`table-${cardId}`}
                       layout={order == null}
                       onLayoutAnimationComplete={() => {
-                        if (isAnimating && !playAnimation?.animate) {
+                        if (isSame(card, playAnimation?.card) && !playAnimation?.animate) {
                           animatePlayTo(cardRefs.current.get(getCardId(playAnimation?.card)))
                         }
                       }}
-                      initial={hide ? false : order != null ? { opacity: 0, scale: 0.5 } : { opacity: 0, scale: 0.8 }}
-                      animate={
-                        hide
-                          ? { opacity: 0, scale: 1 }
-                          : order != null
-                            ? { opacity: 1, scale: [0.5, 1.2, 1] }
-                            : { opacity: 1, scale: 1 }
-                      }
+                      initial={!isAnimating && { opacity: 0, scale: order != null ? 0.5 : 0.8 }}
+                      animate={{
+                        opacity: isAnimating ? 0 : 1,
+                        scale: order != null ? [0.5, 1.2, 1] : 1,
+                      }}
                       exit={{ opacity: 0, scale: 0.8 }}
                       transition={
-                        hide
+                        isAnimating
                           ? {
                               opacity: { duration: 0 },
                               scale: { duration: 0 },
@@ -360,19 +353,13 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                                 opacity: { duration: 0 },
                               }
                       }
-                      style={
-                        hide
-                          ? { visibility: 'hidden', pointerEvents: 'none' }
-                          : isCaptured
-                            ? { pointerEvents: 'none' }
-                            : undefined
-                      }
+                      style={isAnimating ? { visibility: 'hidden', pointerEvents: 'none' } : undefined}
                     >
                       <TableCardSelector
-                        disabled={game.turn !== MAIN_PLAYER || isCaptured || hide}
+                        disabled={game.turn !== MAIN_PLAYER || isCaptured || isAnimating}
                         type="checkbox"
-                        checked={includes(card, targets)}
-                        onChange={() => toggleTarget(card)}
+                        checked={includes(card, capture)}
+                        onChange={() => toggleCapture(card)}
                         id={`table-${cardId}`}
                       />
                       <TableCard card={card} />
@@ -393,7 +380,6 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                 faceDown={playAnimation.isFaceDown}
                 onComplete={() => {
                   setPlayAnimation(null)
-
                   const pileRef = playerPileRefs.current.get(activePlayerId)
 
                   if (!pileRef || !game.lastCaptured.length) return
@@ -430,8 +416,6 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                 }}
               />
             )}
-          </AnimatePresence>
-          <AnimatePresence>
             {/* Capture animations */}
             {captureAnimations
               .filter((a): a is Required<AnimationState> => a.card != null && a.animate != null)
@@ -454,17 +438,17 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
             index={MAIN_PLAYER}
             pile={getFilteredPile(MAIN_PLAYER)}
           >
-            {humanPlayer.hand.map((card) => {
+            {game.players[MAIN_PLAYER].hand.map((card, _, hand) => {
               const previousHand = previousPlayersHandsRef.current[MAIN_PLAYER] ?? []
               const isNewCard = !includes(card, previousHand)
-              const newCards = humanPlayer.hand.filter((c) => !includes(c, previousHand))
+              const newCards = hand.filter((c) => !includes(c, previousHand))
               const newCardIndex = isNewCard ? newCards.findIndex((c) => isSame(c, card)) : -1
               return (
                 <ScaleInCard key={getCardId(card)} isNew={isNewCard} index={newCardIndex}>
                   <PlayerCard
                     ref={(el) => updateCardRefs(card, el)}
                     disabled={game.turn !== MAIN_PLAYER || playAnimation?.card != null}
-                    onClick={() => play({ card, capture: targets })}
+                    onClick={() => play({ card, capture })}
                     style={{ opacity: isSame(playAnimation?.card, card) ? 0 : 1 }}
                   >
                     <DisplayCard card={card} />

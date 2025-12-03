@@ -210,7 +210,7 @@ test(`block interaction when not a player's turn`, async () => {
   expect(card).toBeEnabled()
 })
 
-test('select targets to capture', async () => {
+test('select cards to capture', async () => {
   const initialState = testGame({
     players: [
       { id: 0, hand: [denari(1)], pile: [], scope: 0 },

@@ -91,7 +91,7 @@ export function play({ card, capture }: Move, game: State): Result<State, Error>
   }
 
   if (capture.length && !includes(sort(capture), validCaptures)) {
-    return Err(Error('The targeted cards may not be captured.'))
+    return Err(Error('The chosen cards may not be captured.'))
   }
 
   if (!capture.length && validCaptures.length === 0) {

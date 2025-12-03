@@ -164,7 +164,7 @@ describe('play', () => {
 
   test(`a player captures a card from the table if it's the same value as the card played`, () => {
     const card = denari(1)
-    const target = coppe(1)
+    const capture = coppe(1)
     const game: State = {
       state: 'play',
       turn: 0,
@@ -173,17 +173,17 @@ describe('play', () => {
         { id: 1, hand: [denari(3)], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [denari(4), target],
+      table: [denari(4), capture],
       lastCaptured: [],
     }
 
     const next = getGameState(play({ card, capture: [] }, game))
 
     expect(next.table).not.toContain(card)
-    expect(next.table).not.toContain(target)
+    expect(next.table).not.toContain(capture)
     expect(next.players[0].pile).toContain(card)
-    expect(next.players[0].pile).toContain(target)
-    expect(next.lastCaptured).toEqual([target])
+    expect(next.players[0].pile).toContain(capture)
+    expect(next.lastCaptured).toEqual([capture])
     expect(next.state).toBe('play')
   })
 
@@ -223,14 +223,14 @@ describe('play', () => {
 
     expect(next).toMatchObject(
       Err({
-        message: 'The targeted cards may not be captured.',
+        message: 'The chosen cards may not be captured.',
       }),
     )
   })
 
   test('a player chooses a card from the table that is the same value as the card played', () => {
     const card = denari(1)
-    const target = coppe(1)
+    const capture = [coppe(1)]
     const game: State = {
       state: 'play',
       turn: 0,
@@ -239,17 +239,16 @@ describe('play', () => {
         { id: 1, hand: [denari(3)], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [bastoni(1), target],
+      table: [bastoni(1), ...capture],
       lastCaptured: [],
     }
 
-    const next = getGameState(play({ card, capture: [target] }, game))
+    const next = getGameState(play({ card, capture }, game))
 
     expect(next.table).not.toContain(card)
-    expect(next.table).not.toContain(target)
-    expect(next.players[0].pile).toContain(card)
-    expect(next.players[0].pile).toContain(target)
-    expect(next.lastCaptured).toEqual([target])
+    expect(next.table).not.toContain(capture)
+    expect(next.players[0].pile).toEqual([...capture, card])
+    expect(next.lastCaptured).toEqual(capture)
     expect(next.state).toBe('play')
   })
 
@@ -284,7 +283,7 @@ describe('play', () => {
 
   test('a player may only capture the least number of cards when multiple combinations exist', () => {
     const card = denari(2)
-    const targets = [coppe(1), bastoni(1)]
+    const capture = [coppe(1), bastoni(1)]
     const game: State = {
       state: 'play',
       turn: 0,
@@ -293,16 +292,16 @@ describe('play', () => {
         { id: 1, hand: [denari(10)], pile: [], scope: 0 },
       ],
       pile: [],
-      table: [coppe(2), ...targets],
+      table: [coppe(2), ...capture],
       lastCaptured: [],
     }
 
-    expect(isErr(play({ card, capture: targets }, game))).toBe(true)
+    expect(isErr(play({ card, capture }, game))).toBe(true)
   })
 
-  test('target order should not be considered when playing', () => {
+  test('capture order should not be considered when playing', () => {
     const card = denari(2)
-    const targets = [coppe(1), bastoni(1)]
+    const capture = [coppe(1), bastoni(1)]
     const game: State = {
       state: 'play',
       turn: 0,
@@ -315,7 +314,7 @@ describe('play', () => {
       lastCaptured: [],
     }
 
-    expect(isOk(play({ card, capture: targets }, game))).toBe(true)
+    expect(isOk(play({ card, capture }, game))).toBe(true)
   })
 
   test('a player scores a scopa when they capture all the cards on the table', () => {
