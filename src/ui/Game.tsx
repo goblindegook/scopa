@@ -317,9 +317,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                       htmlFor={`table-${cardId}`}
                       layout={order == null}
                       onLayoutAnimationComplete={() => {
-                        if (isSame(card, playAnimation?.card) && !playAnimation?.animate) {
-                          animatePlayTo(cardRefs.current.get(getCardId(playAnimation?.card)))
-                        }
+                        if (!playAnimation?.animate) animatePlayTo(cardRefs.current.get(getCardId(playAnimation?.card)))
                       }}
                       initial={!isAnimating && { opacity: 0, scale: order != null ? 0.5 : 0.8 }}
                       animate={{
