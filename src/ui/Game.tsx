@@ -205,7 +205,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     if (game.state !== 'play') return
 
     const isScopa = previousTableRef.current.length > 0 && previousTableRef.current.length === game.lastCaptured.length
-    const captureAnimationsDelay = isScopa ? 800 : 0
+    const captureAnimationsDelay = game.lastCaptured.length ? 800 : 0
     const cardsToDeal = isScopa ? game.table.filter((c) => !includes(c, previousTableRef.current ?? [])) : []
     const cardDealingAnimationsDelay = 0.25 * cardsToDeal.length
 
@@ -223,7 +223,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
         previousPlayersHandsRef.current = game.players.map((p) => p.hand)
         setTableDealOrder(new Map())
       },
-      cardDealingAnimationsDelay + captureAnimationsDelay + 600,
+      captureAnimationsDelay + cardDealingAnimationsDelay + 600,
     )
 
     return () => {
@@ -302,7 +302,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
               {/* Table cards */}
               {(() => {
                 const tableCards =
-                  game.lastCaptured.length && previousTableRef.current.length && !tableDealOrder.size
+                  (game.lastCaptured.length && previousTableRef.current.length && !tableDealOrder.size) ||
+                  captureAnimations.length
                     ? previousTableRef.current
                     : game.table
 
