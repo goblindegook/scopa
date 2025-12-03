@@ -205,7 +205,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     if (game.state !== 'play') return
 
     const isScopa = previousTableRef.current.length > 0 && previousTableRef.current.length === game.lastCaptured.length
-    const captureAnimationsDelay = game.lastCaptured.length ? 800 : 0
+    const captureAnimationsDelay = game.lastCaptured.length ? 600 : 0
     const cardsToDeal = isScopa ? game.table.filter((c) => !includes(c, previousTableRef.current ?? [])) : []
     const cardDealingAnimationsDelay = 250 * cardsToDeal.length + 800
 
@@ -231,7 +231,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   React.useEffect(() => {
     if (game.state === 'play' && game.turn !== MAIN_PLAYER && !tableDealOrder.size) {
-      const animationDelay = 250 * tableDealOrder.size + 800 + 200
+      const animationDelay = 250 * tableDealOrder.size + 1000
       const timeoutId = setTimeout(() => onOpponentTurn(game).then(play).catch(invalidMove), animationDelay)
       return () => clearTimeout(timeoutId)
     }
@@ -345,7 +345,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                                 opacity: { duration: 0 },
                               }
                       }
-                      style={isAnimating ? { visibility: 'hidden', pointerEvents: 'none' } : undefined}
+                      style={{ pointerEvents: isAnimating ? 'none' : 'auto' }}
                     >
                       <TableCardSelector
                         disabled={game.turn !== MAIN_PLAYER || isCaptured || isAnimating}

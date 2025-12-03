@@ -155,7 +155,7 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({ card, initial, anima
         stiffness: 150,
         damping: 20,
         duration: 0.9,
-        rotateY: { duration: 0.4, delay: 0 },
+        rotateY: { duration: 0.6, delay: 0 },
       }}
       onAnimationComplete={onComplete}
     >
