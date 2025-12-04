@@ -378,18 +378,21 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
                   // Setup capture animations:
 
-                  const topCardPosition = Array.from(pileRef.children).at(-1)?.getBoundingClientRect()
+                  const topCardPosition = getPosition(Array.from(pileRef.children).at(-1))
 
                   setCaptureAnimations(
                     [...game.lastCaptured, playAnimation.card].map((card, index) => ({
                       card,
-                      initial: getPosition(tableRef.current?.querySelector(`label[for="table-${getCardId(card)}"]`)) ??
+                      initial:
+                        getPosition(tableRef.current?.querySelector(`label[for="table-${getCardId(card)}"]`)) ??
                         playAnimation.animate ??
-                        playAnimation.initial ?? { x: 0, y: 0 },
-                      animate: topCardPosition && {
-                        x: topCardPosition.left,
-                        y: topCardPosition.top - (index + 1) * 2,
-                      },
+                        playAnimation.initial,
+                      animate: topCardPosition
+                        ? {
+                            x: topCardPosition.x,
+                            y: topCardPosition.y - (index + 1) * 2,
+                          }
+                        : undefined,
                     })),
                   )
                 }}
@@ -446,7 +449,7 @@ const getCardId = (card?: Card | null) => card?.join('-') ?? ''
 
 const toOrder = (pile: readonly Card[]) => new Map(pile.map((card, index) => [getCardId(card), index]))
 
-const getPosition = (element?: HTMLElement | null): { x: number; y: number } | null => {
+const getPosition = (element?: Element | null): { x: number; y: number } | null => {
   const r = element?.getBoundingClientRect()
   return r ? { x: r.left, y: r.top } : null
 }
