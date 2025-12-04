@@ -85,7 +85,7 @@ const Back = styled('div')`
 export interface CardProps {
   className?: string
   faceDown?: boolean
-  card: CardType
+  card?: CardType
   index?: number
 }
 
@@ -94,6 +94,7 @@ export const Card = ({ className, faceDown, card }: CardProps) => {
   const isMountedRef = React.useRef(true)
 
   React.useEffect(() => {
+    if (!card) return
     isMountedRef.current = true
     import(`./assets/${SUITS[card[1]]}/${card[0]}.jpg`).then((asset) => {
       if (isMountedRef.current) {
@@ -105,8 +106,8 @@ export const Card = ({ className, faceDown, card }: CardProps) => {
     }
   }, [card])
 
-  return faceDown ? (
-    <Back className={className} />
+  return faceDown || !card ? (
+    <Back className={className} style={!card ? { opacity: 0 } : undefined} />
   ) : (
     <Face className={className} src={src} title={name(card)} alt={name(card)} />
   )

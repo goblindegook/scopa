@@ -378,31 +378,18 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
                   // Setup capture animations:
 
-                  const capturedCards = [...game.lastCaptured, playAnimation.card]
-                  const pilePosition = pileRef.getBoundingClientRect()
-                  const topCardPosition = Array.from(pileRef.querySelectorAll('img, div'))
-                    .at(-1)
-                    ?.getBoundingClientRect()
-                  const tableCardId = `table-${getCardId(capturedCards[0])}`
-                  const referenceCard =
-                    tableRef.current?.querySelector(`label[for="${tableCardId}"]`)?.getBoundingClientRect() ??
-                    pilePosition
+                  const topCardPosition = Array.from(pileRef.children).at(-1)?.getBoundingClientRect()
 
                   setCaptureAnimations(
-                    capturedCards.map((card, index) => ({
+                    [...game.lastCaptured, playAnimation.card].map((card, index) => ({
                       card,
                       initial: getPosition(tableRef.current?.querySelector(`label[for="table-${getCardId(card)}"]`)) ??
                         playAnimation.animate ??
                         playAnimation.initial ?? { x: 0, y: 0 },
-                      animate: topCardPosition
-                        ? {
-                            x: topCardPosition.left,
-                            y: topCardPosition.top - (index + 1) * 2,
-                          }
-                        : {
-                            x: pilePosition.left + pilePosition.width / 2 - referenceCard.width / 2,
-                            y: pilePosition.top + pilePosition.height / 2 - referenceCard.height / 2 - (index + 1) * 2,
-                          },
+                      animate: topCardPosition && {
+                        x: topCardPosition.left,
+                        y: topCardPosition.top - (index + 1) * 2,
+                      },
                     })),
                   )
                 }}

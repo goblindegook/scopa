@@ -36,6 +36,7 @@ export const Stack = React.forwardRef<HTMLElement, StackProps>(({ className, pil
     {pile.map((card, index) => (
       <StackedCard key={card.join('-')} faceDown index={index} card={card} />
     ))}
+    <StackedCard />
   </StackArea>
 ))
 Stack.displayName = 'Stack'
