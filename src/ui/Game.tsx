@@ -7,7 +7,7 @@ import { type Card, isSame } from '../engine/cards'
 import type { Score } from '../engine/scores'
 import type { Move, State } from '../engine/state'
 import { Button } from './Button'
-import { AnimatedCard, Card as DisplayCard, ScaleInCard } from './Card'
+import { AnimatedCard, Card as DisplayCard, DealtCard } from './Card'
 import { Opponent, OpponentCard } from './Opponent'
 import { Player, PlayerCard } from './Player'
 import { preloadCardAssets } from './preload'
@@ -16,6 +16,14 @@ import { Table, TableCard, TableCardLabel, TableCardSelector } from './Table'
 import { TitleScreen } from './TitleScreen'
 
 const MAIN_PLAYER = 0
+
+export const Duration = {
+  CAPTURE: 0.6,
+  DEAL: 0.2,
+  FLIP: 0.6,
+  PLAY: 0.6,
+  TURN: 0.5,
+} as const
 
 const Header = styled('header')`
   display: flex;
@@ -205,23 +213,21 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     if (game.state !== 'play') return
 
     const isScopa = previousTableRef.current.length > 0 && previousTableRef.current.length === game.lastCaptured.length
-    const captureAnimationsDelay = game.lastCaptured.length ? 600 : 0
+    const captureAnimationsDelay = game.lastCaptured.length ? Duration.CAPTURE : 0
     const cardsToDeal = isScopa ? game.table.filter((c) => !includes(c, previousTableRef.current ?? [])) : []
-    const cardDealingAnimationsDelay = 250 * cardsToDeal.length + 800
+    const cardDealingAnimationsDelay = captureAnimationsDelay + Duration.DEAL * cardsToDeal.length + Duration.CAPTURE
 
-    // Wait for capture animations to complete
     const captureTimeoutId = setTimeout(() => {
       if (cardsToDeal.length) {
         setTableDealOrder(toOrder(cardsToDeal))
       }
-    }, captureAnimationsDelay)
+    }, 1000 * captureAnimationsDelay)
 
-    // Wait for card dealing animations to complete
     const dealTimeoutId = setTimeout(() => {
       previousTableRef.current = game.table
       previousPlayersHandsRef.current = game.players.map((p) => p.hand)
       setTableDealOrder(new Map())
-    }, captureAnimationsDelay + cardDealingAnimationsDelay)
+    }, 1000 * cardDealingAnimationsDelay)
 
     return () => {
       clearTimeout(captureTimeoutId)
@@ -231,8 +237,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   React.useEffect(() => {
     if (game.state === 'play' && game.turn !== MAIN_PLAYER && !tableDealOrder.size) {
-      const animationDelay = 250 * tableDealOrder.size + 1000
-      const timeoutId = setTimeout(() => onOpponentTurn(game).then(play).catch(invalidMove), animationDelay)
+      const animationDelay = Duration.TURN + Duration.PLAY + Duration.DEAL * tableDealOrder.size
+      const timeoutId = setTimeout(() => onOpponentTurn(game).then(play).catch(invalidMove), 1000 * animationDelay)
       return () => clearTimeout(timeoutId)
     }
   }, [game, invalidMove, onOpponentTurn, play, tableDealOrder])
@@ -281,14 +287,14 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                     const newCards = player.hand.filter((c) => !includes(c, previousHand))
                     const newCardIndex = isNewCard ? newCards.findIndex((c) => isSame(c, card)) : -1
                     return (
-                      <ScaleInCard key={`${player.id}-${getCardId(card)}`} isNew={isNewCard} index={newCardIndex}>
+                      <DealtCard key={`${player.id}-${getCardId(card)}`} isNew={isNewCard} index={newCardIndex}>
                         <OpponentCard
                           ref={(el) => updateCardRefs(card, el)}
                           card={card}
                           faceDown
                           opacity={isSame(playAnimation?.card, card) ? 0 : 1}
                         />
-                      </ScaleInCard>
+                      </DealtCard>
                     )
                   })}
                 </Opponent>
@@ -329,12 +335,19 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                           ? { duration: 0 }
                           : order != null
                             ? {
-                                delay: order * 0.25,
-                                opacity: { duration: 0.3, delay: order * 0.25, ease: 'easeOut' },
+                                delay: order * Duration.DEAL,
+                                type: 'spring',
+                                stiffness: 300,
+                                damping: 20,
+                                opacity: {
+                                  duration: Duration.DEAL,
+                                  delay: order * Duration.DEAL,
+                                  ease: 'easeOut',
+                                },
                                 scale: {
                                   duration: 0.7,
                                   times: [0, 0.6, 1],
-                                  delay: order * 0.25,
+                                  delay: order * Duration.DEAL,
                                   ease: [0.34, 1.56, 0.64, 1],
                                 },
                               }
@@ -426,7 +439,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
               const newCards = hand.filter((c) => !includes(c, previousHand))
               const newCardIndex = isNewCard ? newCards.findIndex((c) => isSame(c, card)) : -1
               return (
-                <ScaleInCard key={getCardId(card)} isNew={isNewCard} index={newCardIndex}>
+                <DealtCard key={getCardId(card)} isNew={isNewCard} index={newCardIndex}>
                   <PlayerCard
                     ref={(el) => updateCardRefs(card, el)}
                     disabled={game.turn !== MAIN_PLAYER || playAnimation?.card != null || captureAnimations.length > 0}
@@ -435,7 +448,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                   >
                     <DisplayCard card={card} />
                   </PlayerCard>
-                </ScaleInCard>
+                </DealtCard>
               )
             })}
           </Player>

@@ -2,6 +2,7 @@ import styled from '@emotion/styled'
 import { motion, type Target } from 'framer-motion'
 import React from 'react'
 import { type Card as CardType, Suit } from '../engine/cards'
+import { Duration } from './Game'
 
 export const VALUES: Record<number, string> = {
   1: 'Asso',
@@ -155,8 +156,9 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({ card, initial, anima
         type: 'spring',
         stiffness: 150,
         damping: 20,
-        duration: 0.9,
-        rotateY: { duration: 0.6, delay: 0 },
+        rotateY: { duration: Duration.FLIP },
+        x: { duration: Duration.PLAY },
+        y: { duration: Duration.PLAY },
       }}
       onAnimationComplete={onComplete}
     >
@@ -173,7 +175,7 @@ export type ScaleInCardProps = React.PropsWithChildren<{
   index: number
 }>
 
-export const ScaleInCard: React.FC<ScaleInCardProps> = ({ isNew, index, children }) => {
+export const DealtCard: React.FC<ScaleInCardProps> = ({ isNew, index, children }) => {
   return (
     <motion.div
       style={{ display: 'inline-block' }}
@@ -182,14 +184,20 @@ export const ScaleInCard: React.FC<ScaleInCardProps> = ({ isNew, index, children
       transition={
         isNew
           ? {
-              delay: index * 0.2,
+              delay: index * Duration.DEAL,
               type: 'spring',
               stiffness: 300,
               damping: 20,
+              opacity: {
+                delay: index * Duration.DEAL,
+                duration: Duration.DEAL,
+                ease: 'easeOut',
+              },
               scale: {
-                duration: 0.5,
+                delay: index * Duration.DEAL,
+                duration: 2 * Duration.DEAL,
                 times: [0, 0.6, 1],
-                delay: index * 0.2,
+                ease: [0.34, 1.56, 0.64, 1],
               },
             }
           : { duration: 0 }
