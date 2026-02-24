@@ -52,17 +52,17 @@ describe('capture moves', () => {
     expect(capture).toEqual([coppe(5), coppe(2)])
   })
 
-  test.each([[[denari(6), coppe(6)]], [[coppe(6), denari(6)]]])(
-    'prefer sweeping the table with the coins suit',
-    async (hand) => {
-      const game = setupGame([coppe(4), coppe(2)], hand)
+  test.each([
+    [[denari(6), coppe(6)]],
+    [[coppe(6), denari(6)]],
+  ])('prefer sweeping the table with the coins suit', async (hand) => {
+    const game = setupGame([coppe(4), coppe(2)], hand)
 
-      const { card, capture } = await runMove(game)
+    const { card, capture } = await runMove(game)
 
-      expect(card).toEqual(denari(6))
-      expect(capture).toEqual([coppe(4), coppe(2)])
-    },
-  )
+    expect(card).toEqual(denari(6))
+    expect(capture).toEqual([coppe(4), coppe(2)])
+  })
 
   test('must pick the least number of cards when multiple combinations exist', async () => {
     const game = setupGame([coppe(5), coppe(3), coppe(2)], [spade(5)])

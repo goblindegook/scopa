@@ -2,7 +2,14 @@ import styled from '@emotion/styled'
 import { motion, type Target } from 'framer-motion'
 import React from 'react'
 import { type Card as CardType, Suit } from '../engine/cards'
-import { Duration } from './Game'
+
+export const Duration = {
+  CAPTURE: 0.6,
+  DEAL: 0.2,
+  FLIP: 0.6,
+  PLAY: 0.6,
+  TURN: 0.5,
+} as const
 
 export const VALUES: Record<number, string> = {
   1: 'Asso',
