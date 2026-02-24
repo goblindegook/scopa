@@ -1,4 +1,3 @@
-import { mean } from 'ramda'
 import { findCaptures } from './capture.ts'
 import { type Card, isDenari, type Pile } from './cards'
 import { primePoints } from './scores.ts'
@@ -6,12 +5,11 @@ import type { Move, State } from './state'
 
 function evaluateCapture(card: Card, capture: Pile, tableSize: number): number {
   const scoredCards = [...capture, card]
+  const averagePrime =
+    scoredCards.reduce((total, scoredCard) => total + primePoints(scoredCard), 0) / scoredCards.length
 
   return (
-    capture.length +
-    mean(scoredCards.map(primePoints)) +
-    scoredCards.filter(isDenari).length * 10 +
-    (capture.length === tableSize ? 1000 : 0)
+    capture.length + averagePrime + scoredCards.filter(isDenari).length * 10 + (capture.length === tableSize ? 1000 : 0)
   )
 }
 

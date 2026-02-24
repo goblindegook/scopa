@@ -1,5 +1,3 @@
-import { flow } from '@pacote/pipe'
-import { groupBy, map, reduce, sort, values } from 'ramda'
 import { type Card, denari, isDenari, isSettebello, type Pile } from './cards'
 import type { Player } from './state'
 
@@ -32,22 +30,26 @@ export const primePoints = ([value]: Card): number => PRIME_POINTS[value] ?? 0
 
 type CardPoints = [Card, number]
 
-const prime = flow(
-  map((card: Card): CardPoints => [card, primePoints(card)]),
-  sort(([, p1], [, p2]) => p2 - p1),
-  groupBy(([[, suit]]) => String(suit)),
-  values,
-  // biome-ignore lint/style/noNonNullAssertion: guaranteed to exist
-  map((points) => points![0]),
-  reduce<CardPoints, ScoreDetail>(
-    ({ cards, value, ...rest }, [card, points]) => ({
-      cards: [...cards, card],
-      value: value + points,
-      ...rest,
-    }),
-    { label: 'Primiera', cards: [], value: 0 },
-  ),
-)
+const prime = (cards: Pile): ScoreDetail => {
+  const grouped = new Map<number, CardPoints[]>()
+
+  for (const card of cards) {
+    const list = grouped.get(card[1]) ?? []
+    list.push([card, primePoints(card)])
+    grouped.set(card[1], list)
+  }
+
+  return Array.from(grouped.values())
+    .map((points) => points.toSorted(([, p1], [, p2]) => p2 - p1)[0])
+    .reduce<ScoreDetail>(
+      ({ cards, value, ...rest }, [card, points]) => ({
+        cards: [...cards, card],
+        value: value + points,
+        ...rest,
+      }),
+      { label: 'Primiera', cards: [], value: 0 },
+    )
+}
 
 function findWinners(totals: number[]): number[] {
   const maximum = Math.max(...totals)

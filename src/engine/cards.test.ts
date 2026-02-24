@@ -1,7 +1,6 @@
 import { assert, constantFrom, property, tuple } from 'fast-check'
-import { includes, uniq } from 'ramda'
 import { expect, test } from 'vitest'
-import { bastoni, deck, denari, isSame, isSettebello, Suit, type Value } from './cards'
+import { bastoni, deck, denari, hasCard, isSame, isSettebello, Suit, type Value } from './cards'
 
 const arbitraryCard = tuple(
   constantFrom<Value>(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
@@ -36,11 +35,11 @@ test('a deck contains 40 cards', () => {
 
 test('a deck contains unique cards', () => {
   const cards = deck()
-  expect(uniq(cards)).toHaveLength(cards.length)
+  expect(new Set(cards.map((card) => card.join('-')))).toHaveLength(cards.length)
 })
 
 test('a deck contains Neapolitan cards', () => {
-  assert(property(arbitraryCard, (card) => includes(card, deck())))
+  assert(property(arbitraryCard, (card) => hasCard(deck(), card)))
 })
 
 test('cards with the same value and suit are the same', () => {

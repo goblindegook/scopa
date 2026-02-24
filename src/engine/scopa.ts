@@ -1,8 +1,7 @@
 import { windowed } from '@pacote/array'
 import { Err, Ok, type Result } from '@pacote/result'
-import { includes, splitAt, without } from 'ramda'
 import { findCaptures } from './capture.ts'
-import type { Pile } from './cards'
+import { hasCard, isSame, type Pile } from './cards'
 import type { Move, Player, State } from './state'
 
 interface Options {
@@ -20,6 +19,20 @@ const createPlayers = (cards: Pile): readonly Player[] =>
     pile: [],
     scope: 0,
   }))
+
+const splitAt = <T>(index: number, list: readonly T[]): readonly [readonly T[], readonly T[]] => [
+  list.slice(0, index),
+  list.slice(index),
+]
+
+const withoutCards = (toRemove: readonly Pile[number][], cards: readonly Pile[number][]): readonly Pile[number][] =>
+  cards.filter((card) => !toRemove.some((candidate) => isSame(candidate, card)))
+
+const hasCapture = (captures: readonly Pile[], capture: readonly Pile[number][]): boolean =>
+  captures.some(
+    (candidate) =>
+      candidate.length === capture.length && candidate.every((card, index) => isSame(card, capture[index])),
+  )
 
 export function deal(cards: Pile, options?: Options): Result<State, Error> {
   const { players } = { ...DEFAULT_OPTIONS, ...options }
@@ -43,9 +56,9 @@ export function deal(cards: Pile, options?: Options): Result<State, Error> {
 function next({ card, capture }: Move, game: State): State {
   const { turn, table, players, pile } = game
 
-  const tableAfterMove = capture.length ? without(capture, table) : [...table, card]
+  const tableAfterMove = capture.length ? withoutCards(capture, table) : [...table, card]
 
-  const handAfterMove = without([card], players[turn].hand)
+  const handAfterMove = withoutCards([card], players[turn].hand)
 
   const [nextHand, pileAfterDeal] = handAfterMove.length ? [handAfterMove, pile] : splitAt(3, pile)
 
@@ -80,7 +93,7 @@ const sort = (cards: Pile) => cards.toSorted(([va, sa], [vb, sb]) => sb * 10 + v
 export function play({ card, capture }: Move, game: State): Result<State, Error> {
   const { table, turn, players } = game
 
-  if (!includes(card, players[turn].hand)) {
+  if (!hasCard(players[turn].hand, card)) {
     return Err(Error('Not your turn.'))
   }
 
@@ -90,7 +103,7 @@ export function play({ card, capture }: Move, game: State): Result<State, Error>
     return Err(Error('Choose the cards to capture.'))
   }
 
-  if (capture.length && !includes(sort(capture), validCaptures)) {
+  if (capture.length && !hasCapture(validCaptures, sort(capture))) {
     return Err(Error('The chosen cards may not be captured.'))
   }
 
