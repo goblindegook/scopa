@@ -39,6 +39,10 @@ export function isSame(a?: Card | null, b?: Card | null): boolean {
   return a && b ? a[0] === b[0] && a[1] === b[1] : a === b
 }
 
+export function hasCard(cards: readonly Card[], card: Card): boolean {
+  return cards.some((c) => isSame(c, card))
+}
+
 export function deck(): Pile {
   const suits = [Suit.DENARI, Suit.COPPE, Suit.BASTONI, Suit.SPADE]
   const values: Value[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]

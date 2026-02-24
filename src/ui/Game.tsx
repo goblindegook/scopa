@@ -1,9 +1,8 @@
 import styled from '@emotion/styled'
 import { fold, type Result } from '@pacote/result'
 import { AnimatePresence, type Target } from 'framer-motion'
-import { includes, without } from 'ramda'
 import React from 'react'
-import { type Card, isSame } from '../engine/cards'
+import { type Card, hasCard, isSame } from '../engine/cards'
 import type { Score } from '../engine/scores'
 import type { Move, State } from '../engine/state'
 import { Button } from './Button'
@@ -258,7 +257,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
     const isScopa = previousTableRef.current.length > 0 && previousTableRef.current.length === game.lastCaptured.length
     const captureAnimationsDelay = game.lastCaptured.length ? Duration.CAPTURE : 0
-    const cardsToDeal = isScopa ? game.table.filter((c) => !includes(c, previousTableRef.current ?? [])) : []
+    const cardsToDeal = isScopa ? game.table.filter((c) => !hasCard(previousTableRef.current, c)) : []
     const cardDealingAnimationsDelay = captureAnimationsDelay + Duration.DEAL * cardsToDeal.length + Duration.CAPTURE
 
     const captureTimeoutId = setTimeout(() => {
@@ -287,10 +286,9 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     }
   }, [game, invalidMove, onOpponentTurn, play, tableDealOrder])
 
-  const toggleCapture = React.useCallback(
-    (card: Card) => setCapture(includes(card, capture) ? without([card], capture) : [...capture, card]),
-    [capture],
-  )
+  const toggleCapture = React.useCallback((card: Card) => {
+    setCapture((current) => (hasCard(current, card) ? current.filter((c) => !isSame(c, card)) : [...current, card]))
+  }, [])
 
   const animatingCardIds = React.useMemo(() => {
     const ids = new Set(animation.captures.map((a) => getCardId(a.card)))
@@ -301,10 +299,15 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   const getFilteredPile = React.useCallback(
     (playerId: number) =>
       game.players[playerId]?.pile.filter(
-        (card) => !includes(card, game.lastCaptured) && !animatingCardIds.has(getCardId(card)),
+        (card) => !hasCard(game.lastCaptured, card) && !animatingCardIds.has(getCardId(card)),
       ) ?? [],
     [game.players, game.lastCaptured, animatingCardIds],
   )
+
+  const tableCards =
+    animation.phase === 'play' && game.lastCaptured.length && previousTableRef.current.length && !tableDealOrder.size
+      ? previousTableRef.current
+      : game.table
 
   return (
     <Container>
@@ -344,47 +347,36 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           <Table layout ref={tableRef}>
             <AnimatePresence mode="popLayout">
               {/* Table cards */}
-              {(() => {
-                const shouldKeepPreviousTable =
-                  game.lastCaptured.length > 0 &&
-                  previousTableRef.current.length > 0 &&
-                  !tableDealOrder.size &&
-                  animation.phase === 'play'
-                const tableCards = shouldKeepPreviousTable ? previousTableRef.current : game.table
+              {tableCards.map((card) => {
+                const cardId = getCardId(card)
+                const isCaptured = hasCard(game.lastCaptured, card)
+                const isAnimating = animatingCardIds.has(cardId)
+                const order = tableDealOrder.get(cardId)
+                const motion = getTableCardMotion({ isAnimating, order })
 
-                return tableCards.map((card) => {
-                  const cardId = getCardId(card)
-                  const isCaptured = includes(card, game.lastCaptured)
-                  const isAnimating = animatingCardIds.has(cardId)
-                  const order = tableDealOrder.get(cardId)
-                  const motion = getTableCardMotion({ isAnimating, order })
-
-                  return (
-                    <TableCardLabel
-                      key={`table-${cardId}`}
-                      htmlFor={`table-${cardId}`}
-                      layout={!isAnimating}
-                      onLayoutAnimationComplete={() =>
-                        animatePlayTo(cardRefs.current.get(getCardId(animation.playCard)))
-                      }
-                      initial={{ opacity: 0 }}
-                      animate={motion.animate}
-                      exit={{ opacity: 0, scale: 0.3 }}
-                      transition={motion.transition}
-                      style={{ pointerEvents: isAnimating ? 'none' : 'auto' }}
-                    >
-                      <TableCardSelector
-                        disabled={game.turn !== MAIN_PLAYER || isCaptured || isAnimating}
-                        type="checkbox"
-                        checked={includes(card, capture)}
-                        onChange={() => toggleCapture(card)}
-                        id={`table-${cardId}`}
-                      />
-                      <TableCard card={card} />
-                    </TableCardLabel>
-                  )
-                })
-              })()}
+                return (
+                  <TableCardLabel
+                    key={`table-${cardId}`}
+                    htmlFor={`table-${cardId}`}
+                    layout={!isAnimating}
+                    onLayoutAnimationComplete={() => animatePlayTo(cardRefs.current.get(getCardId(animation.playCard)))}
+                    initial={{ opacity: 0 }}
+                    animate={motion.animate}
+                    exit={{ opacity: 0, scale: 0.3 }}
+                    transition={motion.transition}
+                    style={{ pointerEvents: isAnimating ? 'none' : 'auto' }}
+                  >
+                    <TableCardSelector
+                      disabled={game.turn !== MAIN_PLAYER || isCaptured || isAnimating}
+                      type="checkbox"
+                      checked={hasCard(capture, card)}
+                      onChange={() => toggleCapture(card)}
+                      id={`table-${cardId}`}
+                    />
+                    <TableCard card={card} />
+                  </TableCardLabel>
+                )
+              })}
             </AnimatePresence>
           </Table>
           {alert && <Alert role="alert">{alert}</Alert>}
@@ -397,14 +389,14 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                 animate={animation.playAnimate}
                 faceDown={animation.playFaceDown}
                 onComplete={() => {
-                  if (animation.activePlayerId == null || !animation.playCard) {
-                    setAnimation(IDLE_ANIMATION)
-                    return
-                  }
+                  const activePlayerId = animation.activePlayerId
+                  const playedCard = animation.playCard
+                  const pileRef =
+                    activePlayerId != null && playedCard && game.lastCaptured.length
+                      ? playerPileRefs.current.get(activePlayerId)
+                      : undefined
 
-                  const pileRef = playerPileRefs.current.get(animation.activePlayerId)
-
-                  if (!pileRef || !game.lastCaptured.length) {
+                  if (!pileRef || !playedCard) {
                     setAnimation(IDLE_ANIMATION)
                     return
                   }
@@ -425,7 +417,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
                   setAnimation({
                     phase: 'capture',
-                    captures: [...game.lastCaptured, animation.playCard].map((card, index) => ({
+                    captures: [...game.lastCaptured, playedCard].map((card, index) => ({
                       card,
                       initial:
                         getPosition(tableRef.current?.querySelector(`label[for="table-${getCardId(card)}"]`)) ??
@@ -481,23 +473,21 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   )
 }
 
-const HandCards = ({ hand, previousHand, keyPrefix = '', renderCard }: HandCardsProps) => {
-  return (
-    <>
-      {hand.map((card) => {
-        return (
-          <DealtCard
-            key={`${keyPrefix}${getCardId(card)}`}
-            isNew={!includes(card, previousHand)}
-            index={hand.filter((c) => !includes(c, previousHand)).findIndex((c) => isSame(c, card))}
-          >
-            {renderCard(card)}
-          </DealtCard>
-        )
-      })}
-    </>
-  )
-}
+const HandCards = ({ hand, previousHand, keyPrefix = '', renderCard }: HandCardsProps) => (
+  <>
+    {hand.map((card) => {
+      return (
+        <DealtCard
+          key={`${keyPrefix}${getCardId(card)}`}
+          isNew={!hasCard(previousHand, card)}
+          index={hand.filter((card) => !hasCard(previousHand, card)).findIndex((c) => isSame(c, card))}
+        >
+          {renderCard(card)}
+        </DealtCard>
+      )
+    })}
+  </>
+)
 
 const getTableCardMotion = ({ isAnimating, order }: { isAnimating: boolean; order?: number }) => {
   if (isAnimating) return { animate: { opacity: 0, scale: 1 }, transition: { duration: 0 } }
