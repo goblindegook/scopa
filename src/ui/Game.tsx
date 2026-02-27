@@ -99,21 +99,32 @@ interface HandCardsProps {
   renderCard: (card: Card) => React.ReactNode
 }
 
-type AnimationPhase = 'idle' | 'play' | 'capture'
+type AnimationController =
+  | { phase: 'idle' }
+  | {
+      phase: 'play'
+      activePlayerId: number
+      playCard: Card
+      playFaceDown: boolean
+      playInitial: Target
+      playAnimate?: Target
+    }
+  | { phase: 'capture'; captures: readonly CaptureAnimationState[] }
 
-interface AnimationController {
-  readonly phase: AnimationPhase
-  readonly activePlayerId?: number
-  readonly playCard?: Card
-  readonly playFaceDown?: boolean
-  readonly playInitial?: Target
-  readonly playAnimate?: Target
-  readonly captures: readonly CaptureAnimationState[]
-}
-
-const IDLE_ANIMATION: AnimationController = {
-  phase: 'idle',
-  captures: [],
+function useRefMap<K>() {
+  const refs = React.useRef(new Map<K, HTMLElement>())
+  const callbacks = React.useRef(new Map<K, (el?: HTMLElement | null) => void>())
+  const getRef = React.useCallback((key: K) => {
+    const existing = callbacks.current.get(key)
+    if (existing) return existing
+    const callback = (el?: HTMLElement | null) => {
+      if (el) refs.current.set(key, el)
+      else refs.current.delete(key)
+    }
+    callbacks.current.set(key, callback)
+    return callback
+  }, [])
+  return [refs, getRef] as const
 }
 
 export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) => {
@@ -129,11 +140,9 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     lastCaptured: [],
   })
   const tableRef = React.useRef<HTMLElement | null>(null)
-  const cardRefs = React.useRef(new Map<string, HTMLElement>())
-  const cardRefCallbacks = React.useRef(new Map<string, (el?: HTMLElement | null) => void>())
-  const playerPileRefs = React.useRef(new Map<number, HTMLElement>())
-  const playerPileRefCallbacks = React.useRef(new Map<number, (el?: HTMLElement | null) => void>())
-  const [animation, setAnimation] = React.useState<AnimationController>(IDLE_ANIMATION)
+  const [cardRefs, getCardRef] = useRefMap<string>()
+  const [playerPileRefs, getPlayerPileRef] = useRefMap<number>()
+  const [animation, setAnimation] = React.useState<AnimationController>({ phase: 'idle' })
   const previousTableRef = React.useRef<readonly Card[]>([])
   const previousPlayersHandsRef = React.useRef<readonly (readonly Card[])[]>([])
   const [tableDealOrder, setTableDealOrder] = React.useState(new Map<string, number>())
@@ -144,40 +153,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   const invalidMove = React.useCallback(async (error: Error) => setAlert(error.message), [])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: cardRefs is stable, empty deps are correct
   const getCardPosition = React.useCallback((card?: Card) => getPosition(cardRefs.current.get(getCardId(card))), [])
-
-  const updateCardRefs = React.useCallback((card: Card, el?: HTMLElement | null) => {
-    if (el) cardRefs.current.set(getCardId(card), el)
-    else cardRefs.current.delete(getCardId(card))
-  }, [])
-
-  const updatePlayerPileRefs = React.useCallback((playerId: number, el?: HTMLElement | null) => {
-    if (el) playerPileRefs.current.set(playerId, el)
-    else playerPileRefs.current.delete(playerId)
-  }, [])
-
-  const getCardRef = React.useCallback(
-    (card: Card) => {
-      const id = getCardId(card)
-      const existing = cardRefCallbacks.current.get(id)
-      if (existing) return existing
-      const callback = (el?: HTMLElement | null) => updateCardRefs(card, el)
-      cardRefCallbacks.current.set(id, callback)
-      return callback
-    },
-    [updateCardRefs],
-  )
-
-  const getPlayerPileRef = React.useCallback(
-    (playerId: number) => {
-      const existing = playerPileRefCallbacks.current.get(playerId)
-      if (existing) return existing
-      const callback = (el?: HTMLElement | null) => updatePlayerPileRefs(playerId, el)
-      playerPileRefCallbacks.current.set(playerId, callback)
-      return callback
-    },
-    [updatePlayerPileRefs],
-  )
 
   const start = React.useCallback(
     () =>
@@ -187,7 +164,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           setCapture([])
           setAlert('')
           setTableDealOrder(toOrder(nextState.table))
-          setAnimation(IDLE_ANIMATION)
+          setAnimation({ phase: 'idle' })
           previousTableRef.current = []
           previousPlayersHandsRef.current = []
         },
@@ -201,16 +178,13 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     (move: Move) => {
       fold(
         (nextState: State) => {
-          if (move.card || nextState.lastCaptured.length > 0) {
-            setAnimation({
-              phase: 'play',
-              activePlayerId: game.turn,
-              playCard: move.card,
-              playInitial: getCardPosition(move.card) ?? { x: 0, y: 0 },
-              playFaceDown: game.turn !== MAIN_PLAYER,
-              captures: [],
-            })
-          }
+          setAnimation({
+            phase: 'play',
+            activePlayerId: game.turn,
+            playCard: move.card,
+            playInitial: getCardPosition(move.card) ?? { x: 0, y: 0 },
+            playFaceDown: game.turn !== MAIN_PLAYER,
+          })
 
           previousTableRef.current = game.table
           previousPlayersHandsRef.current = game.players.map((p) => p.hand)
@@ -227,10 +201,10 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   const animatePlayTo = React.useCallback(
     (placeholder?: Element | null) => {
-      if (placeholder == null || animation.playCard == null || animation.playAnimate) return
+      if (placeholder == null || animation.phase !== 'play' || animation.playAnimate) return
       const animateRect = placeholder.getBoundingClientRect()
       setAnimation((prev) =>
-        prev.playCard == null || prev.playAnimate
+        prev.phase !== 'play' || prev.playAnimate
           ? prev
           : {
               ...prev,
@@ -239,18 +213,18 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
             },
       )
     },
-    [animation.playCard, animation.playAnimate, getCardPosition],
+    [animation, getCardPosition],
   )
 
   React.useLayoutEffect(() => {
-    if (animation.playCard && !animation.playAnimate) {
+    if (animation.phase === 'play' && !animation.playAnimate) {
       animatePlayTo(
         tableRef.current?.querySelector(
           `label[for="table-${getCardId(game.lastCaptured?.[0] ?? animation.playCard)}"]`,
         ),
       )
     }
-  }, [animation.playCard, animation.playAnimate, animatePlayTo, game.lastCaptured])
+  }, [animation, animatePlayTo, game.lastCaptured])
 
   React.useEffect(() => {
     if (game.state !== 'play') return
@@ -280,7 +254,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   React.useEffect(() => {
     if (game.state === 'play' && game.turn !== MAIN_PLAYER && !tableDealOrder.size) {
-      const animationDelay = Duration.TURN + Duration.PLAY + Duration.DEAL * tableDealOrder.size
+      const animationDelay = Duration.TURN + Duration.PLAY
       const timeoutId = setTimeout(() => onOpponentTurn(game).then(play).catch(invalidMove), 1000 * animationDelay)
       return () => clearTimeout(timeoutId)
     }
@@ -291,10 +265,10 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   }, [])
 
   const animatingCardIds = React.useMemo(() => {
-    const ids = new Set(animation.captures.map((a) => getCardId(a.card)))
-    if (animation.playCard) ids.add(getCardId(animation.playCard))
+    const ids = new Set(animation.phase === 'capture' ? animation.captures.map((a) => getCardId(a.card)) : [])
+    if (animation.phase === 'play') ids.add(getCardId(animation.playCard))
     return ids
-  }, [animation.captures, animation.playCard])
+  }, [animation])
 
   const getFilteredPile = React.useCallback(
     (playerId: number) =>
@@ -317,7 +291,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
         <Main>
           <Header>
             <Button onClick={start}>New Game</Button>
-            {<Turn>Player {game.turn + 1}</Turn>}
+            <Turn>Player {game.turn + 1}</Turn>
           </Header>
           {game.players.map(
             (player) =>
@@ -334,10 +308,10 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                     keyPrefix={`${player.id}-`}
                     renderCard={(card) => (
                       <OpponentCard
-                        ref={getCardRef(card)}
+                        ref={getCardRef(getCardId(card))}
                         card={card}
                         faceDown
-                        opacity={isSame(animation.playCard, card) ? 0 : 1}
+                        opacity={animation.phase === 'play' && isSame(animation.playCard, card) ? 0 : 1}
                       />
                     )}
                   />
@@ -359,7 +333,11 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                     key={`table-${cardId}`}
                     htmlFor={`table-${cardId}`}
                     layout={!isAnimating}
-                    onLayoutAnimationComplete={() => animatePlayTo(cardRefs.current.get(getCardId(animation.playCard)))}
+                    onLayoutAnimationComplete={() =>
+                      animatePlayTo(
+                        animation.phase === 'play' ? cardRefs.current.get(getCardId(animation.playCard)) : undefined,
+                      )
+                    }
                     initial={{ opacity: 0 }}
                     animate={motion.animate}
                     exit={{ opacity: 0, scale: 0.3 }}
@@ -382,22 +360,19 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           {alert && <Alert role="alert">{alert}</Alert>}
           <AnimatePresence mode="wait">
             {/* Play animation */}
-            {animation.activePlayerId != null && animation.playCard && animation.playAnimate && (
+            {animation.phase === 'play' && animation.playAnimate && (
               <AnimatedCard
                 card={animation.playCard}
-                initial={animation.playInitial ?? { x: 0, y: 0 }}
+                initial={animation.playInitial}
                 animate={animation.playAnimate}
                 faceDown={animation.playFaceDown}
                 onComplete={() => {
-                  const activePlayerId = animation.activePlayerId
-                  const playedCard = animation.playCard
-                  const pileRef =
-                    activePlayerId != null && playedCard && game.lastCaptured.length
-                      ? playerPileRefs.current.get(activePlayerId)
-                      : undefined
+                  if (animation.phase !== 'play') return
+                  const { activePlayerId, playCard: playedCard, playAnimate, playInitial } = animation
+                  const pileRef = game.lastCaptured.length ? playerPileRefs.current.get(activePlayerId) : undefined
 
-                  if (!pileRef || !playedCard) {
-                    setAnimation(IDLE_ANIMATION)
+                  if (!pileRef) {
+                    setAnimation({ phase: 'idle' })
                     return
                   }
 
@@ -421,8 +396,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                       card,
                       initial:
                         getPosition(tableRef.current?.querySelector(`label[for="table-${getCardId(card)}"]`)) ??
-                        animation.playAnimate ??
-                        animation.playInitial,
+                        playAnimate ??
+                        playInitial,
                       animate: captureTarget
                         ? {
                             x: captureTarget.x,
@@ -435,21 +410,22 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
               />
             )}
             {/* Capture animations */}
-            {animation.captures
-              .filter((a): a is CaptureAnimationState & { readonly animate: Target } => a.animate != null)
-              .map((a, index, filtered) => (
-                <AnimatedCard
-                  key={`captured-${getCardId(a.card)}-${index}`}
-                  card={a.card}
-                  initial={a.initial}
-                  animate={a.animate}
-                  faceDown={false}
-                  flip
-                  onComplete={() => {
-                    if (index === filtered.length - 1) setAnimation(IDLE_ANIMATION)
-                  }}
-                />
-              ))}
+            {animation.phase === 'capture' &&
+              animation.captures
+                .filter((a): a is CaptureAnimationState & { readonly animate: Target } => a.animate != null)
+                .map((a, index, filtered) => (
+                  <AnimatedCard
+                    key={`captured-${getCardId(a.card)}-${index}`}
+                    card={a.card}
+                    initial={a.initial}
+                    animate={a.animate}
+                    faceDown={false}
+                    flip
+                    onComplete={() => {
+                      if (index === filtered.length - 1) setAnimation({ phase: 'idle' })
+                    }}
+                  />
+                ))}
           </AnimatePresence>
           <Player ref={getPlayerPileRef(MAIN_PLAYER)} index={MAIN_PLAYER} pile={getFilteredPile(MAIN_PLAYER)}>
             <HandCards
@@ -457,10 +433,10 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
               previousHand={previousPlayersHandsRef.current[MAIN_PLAYER] ?? []}
               renderCard={(card) => (
                 <PlayerCard
-                  ref={getCardRef(card)}
+                  ref={getCardRef(getCardId(card))}
                   disabled={game.turn !== MAIN_PLAYER || animation.phase !== 'idle'}
                   onClick={() => play({ card, capture })}
-                  style={{ opacity: isSame(animation.playCard, card) ? 0 : 1 }}
+                  style={{ opacity: animation.phase === 'play' && isSame(animation.playCard, card) ? 0 : 1 }}
                 >
                   <DisplayCard card={card} />
                 </PlayerCard>
