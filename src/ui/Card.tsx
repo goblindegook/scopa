@@ -160,9 +160,6 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({ card, initial, anima
       animate={{ ...animate, rotateY: !faceDown && flip ? 180 : 0 }}
       exit={{ opacity: 0, transition: { duration: 0 } }}
       transition={{
-        type: 'spring',
-        stiffness: 150,
-        damping: 20,
         rotateY: { duration: Duration.FLIP },
         x: { duration: Duration.PLAY },
         y: { duration: Duration.PLAY },

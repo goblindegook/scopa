@@ -29,10 +29,7 @@ const withoutCards = (toRemove: readonly Pile[number][], cards: readonly Pile[nu
   cards.filter((card) => !toRemove.some((candidate) => isSame(candidate, card)))
 
 const hasCapture = (captures: readonly Pile[], capture: readonly Pile[number][]): boolean =>
-  captures.some(
-    (candidate) =>
-      candidate.length === capture.length && candidate.every((card, index) => isSame(card, capture[index])),
-  )
+  captures.some((candidate) => candidate.length === capture.length && candidate.every((card) => hasCard(capture, card)))
 
 export function deal(cards: Pile, options?: Options): Result<State, Error> {
   const { players } = { ...DEFAULT_OPTIONS, ...options }
@@ -88,8 +85,6 @@ function next({ card, capture }: Move, game: State): State {
   }
 }
 
-const sort = (cards: Pile) => cards.toSorted(([va, sa], [vb, sb]) => sb * 10 + vb - (sa * 10 + va))
-
 export function play({ card, capture }: Move, game: State): Result<State, Error> {
   const { table, turn, players } = game
 
@@ -97,13 +92,13 @@ export function play({ card, capture }: Move, game: State): Result<State, Error>
     return Err(Error('Not your turn.'))
   }
 
-  const validCaptures = findCaptures(card[0], sort(table))
+  const validCaptures = findCaptures(card[0], table)
 
   if (!capture.length && validCaptures.length > 1) {
     return Err(Error('Choose the cards to capture.'))
   }
 
-  if (capture.length && !hasCapture(validCaptures, sort(capture))) {
+  if (capture.length && !hasCapture(validCaptures, capture)) {
     return Err(Error('The chosen cards may not be captured.'))
   }
 

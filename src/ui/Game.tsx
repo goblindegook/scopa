@@ -151,7 +151,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     preloadCardAssets((progress) => setLoadingProgress(progress))
   }, [])
 
-  const invalidMove = React.useCallback(async (error: Error) => setAlert(error.message), [])
+  const invalidMove = React.useCallback((error: Error) => setAlert(error.message), [])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: cardRefs is stable, empty deps are correct
   const getCardPosition = React.useCallback((card?: Card) => getPosition(cardRefs.current.get(getCardId(card))), [])
@@ -201,7 +201,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   const animatePlayTo = React.useCallback(
     (placeholder?: Element | null) => {
-      if (placeholder == null || animation.phase !== 'play' || animation.playAnimate) return
+      if (placeholder == null) return
       const animateRect = placeholder.getBoundingClientRect()
       setAnimation((prev) =>
         prev.phase !== 'play' || prev.playAnimate
@@ -213,7 +213,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
             },
       )
     },
-    [animation, getCardPosition],
+    [getCardPosition],
   )
 
   React.useLayoutEffect(() => {
@@ -264,16 +264,16 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     setCapture((current) => (hasCard(current, card) ? current.filter((c) => !isSame(c, card)) : [...current, card]))
   }, [])
 
-  const animatingCardIds = React.useMemo(() => {
-    const ids = new Set(animation.phase === 'capture' ? animation.captures.map((a) => getCardId(a.card)) : [])
-    if (animation.phase === 'play') ids.add(getCardId(animation.playCard))
-    return ids
+  const animatingCardIds = React.useMemo<string[]>(() => {
+    if (animation.phase === 'play') return [getCardId(animation.playCard)]
+    if (animation.phase === 'capture') return animation.captures.map((a) => getCardId(a.card))
+    return []
   }, [animation])
 
   const getFilteredPile = React.useCallback(
     (playerId: number) =>
       game.players[playerId]?.pile.filter(
-        (card) => !hasCard(game.lastCaptured, card) && !animatingCardIds.has(getCardId(card)),
+        (card) => !hasCard(game.lastCaptured, card) && !animatingCardIds.includes(getCardId(card)),
       ) ?? [],
     [game.players, game.lastCaptured, animatingCardIds],
   )
@@ -324,7 +324,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
               {tableCards.map((card) => {
                 const cardId = getCardId(card)
                 const isCaptured = hasCard(game.lastCaptured, card)
-                const isAnimating = animatingCardIds.has(cardId)
+                const isAnimating = animatingCardIds.includes(cardId)
                 const order = tableDealOrder.get(cardId)
                 const motion = getTableCardMotion({ isAnimating, order })
 
@@ -449,21 +449,22 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   )
 }
 
-const HandCards = ({ hand, previousHand, keyPrefix = '', renderCard }: HandCardsProps) => (
-  <>
-    {hand.map((card) => {
-      return (
+const HandCards = ({ hand, previousHand, keyPrefix = '', renderCard }: HandCardsProps) => {
+  const newCards = hand.filter((card) => !hasCard(previousHand, card))
+  return (
+    <>
+      {hand.map((card) => (
         <DealtCard
           key={`${keyPrefix}${getCardId(card)}`}
           isNew={!hasCard(previousHand, card)}
-          index={hand.filter((card) => !hasCard(previousHand, card)).findIndex((c) => isSame(c, card))}
+          index={newCards.findIndex((c) => isSame(c, card))}
         >
           {renderCard(card)}
         </DealtCard>
-      )
-    })}
-  </>
-)
+      ))}
+    </>
+  )
+}
 
 const getTableCardMotion = ({ isAnimating, order }: { isAnimating: boolean; order?: number }) => {
   if (isAnimating) return { animate: { opacity: 0, scale: 1 }, transition: { duration: 0 } }

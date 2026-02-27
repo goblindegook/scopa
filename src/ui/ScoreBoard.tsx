@@ -112,8 +112,7 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores }) => {
   if (scores.length === 0) return null
 
   const maxTotal = Math.max(...scores.map(({ total }) => total))
-  const minTotal = Math.min(...scores.map(({ total }) => total))
-  const isDraw = maxTotal === minTotal
+  const isDraw = scores.every(({ total }) => total === maxTotal)
   const winner = scores.find(({ total }) => total === maxTotal)
 
   return (
