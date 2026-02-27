@@ -162,4 +162,13 @@ describe('discard moves', () => {
 
     expect(card).toEqual(bastoni(1))
   })
+
+  test('avoid discarding a card that enables the opponent to sweep the table', async () => {
+    const game = setupGame([denari(5)], [coppe(2), spade(7)])
+
+    const { card, capture } = await runMove(game)
+
+    expect(card).toEqual(spade(7))
+    expect(capture).toHaveLength(0)
+  })
 })

@@ -13,8 +13,15 @@ function evaluateCapture(card: Card, capture: Pile, tableSize: number): number {
   )
 }
 
-function evaluateDiscard(card: Card): number {
-  return -primePoints(card) - (isDenari(card) ? 10 : 0)
+function enablesOpponentScopa(card: Card, table: Pile): boolean {
+  const newTable = [...table, card]
+  return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].some((value) =>
+    findCaptures(value, newTable).some((capture) => capture.length === newTable.length),
+  )
+}
+
+function evaluateDiscard(card: Card, table: Pile): number {
+  return -primePoints(card) - (isDenari(card) ? 10 : 0) - (enablesOpponentScopa(card, table) ? 500 : 0)
 }
 
 export async function move(game: State): Promise<Move> {
@@ -27,7 +34,7 @@ export async function move(game: State): Promise<Move> {
   let bestScore = -Infinity
 
   for (const card of hand) {
-    const score = evaluateDiscard(card)
+    const score = evaluateDiscard(card, table)
     if (score > bestScore) {
       bestScore = score
       bestMove = { card, capture: [] }
