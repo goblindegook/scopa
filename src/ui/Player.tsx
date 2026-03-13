@@ -26,18 +26,20 @@ const PlayerHand = styled('div')`
 export const PlayerCard = styled('button')`
   background-color: transparent;
   border: none;
+  border-radius: 0.75vw;
+  overflow: hidden;
   transition: transform 0.2s ease-in;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 
-  &:focus,
-  &:hover {
+  &:not(:disabled):focus,
+  &:not(:disabled):hover {
     outline: 0;
     transform: translateY(-20px);
     border-radius: 1rem;
   }
 
-  &:focus {
+  &:not(:disabled):focus {
     border: 2px solid red;
     padding: -2px;
   }

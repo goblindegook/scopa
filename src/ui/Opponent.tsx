@@ -27,13 +27,15 @@ const OpponentArea = styled('section')`
   display: grid;
   grid-template-columns: 1fr 20vw;
   padding-left: 20vw;
-  max-height: 20vh;
+  flex: 0 0 20vh;
+  height: 20vh;
 `
 
 const OpponentHand = styled('aside')`
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 100%;
 `
 
 const OpponentPile = styled(Stack)`

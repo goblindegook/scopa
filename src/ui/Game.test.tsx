@@ -177,6 +177,64 @@ test('allow playing a card', async () => {
   expect(screen.getByAltText('Due di denari')).toBeTruthy()
 })
 
+test('allow playing a card by dragging it to the table', async () => {
+  const initialState = testGame({
+    players: [
+      { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+      { id: 1, hand: [], pile: [], scope: 0 },
+    ],
+  })
+  const onPlay = vitest.fn(() =>
+    Ok(
+      testGame({
+        players: [
+          { id: 0, hand: [], pile: [], scope: 0 },
+          { id: 1, hand: [], pile: [], scope: 0 },
+        ],
+        table: [denari(2)],
+      }),
+    ),
+  )
+
+  render(<Game onStart={() => Ok(initialState)} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
+
+  const card = screen.getByRole('button', { name: 'Asso di denari' })
+  const table = screen.getByTestId('table')
+  vitest.spyOn(table, 'getBoundingClientRect').mockReturnValue({
+    left: 0,
+    top: 0,
+    right: 400,
+    bottom: 300,
+    width: 400,
+    height: 300,
+    x: 0,
+    y: 0,
+    toJSON: () => ({}),
+  } as DOMRect)
+  vitest.spyOn(card, 'getBoundingClientRect').mockReturnValue({
+    left: 0,
+    top: 0,
+    right: 80,
+    bottom: 140,
+    width: 80,
+    height: 140,
+    x: 0,
+    y: 0,
+    toJSON: () => ({}),
+  } as DOMRect)
+
+  fireEvent.pointerDown(card, { button: 0, pointerId: 1, clientX: 10, clientY: 10 })
+  fireEvent.pointerMove(window, { pointerId: 1, clientX: 100, clientY: 100 })
+  fireEvent.pointerUp(window, { pointerId: 1, clientX: 100, clientY: 100 })
+
+  await waitFor(() => {
+    expect(onPlay).toHaveBeenCalledWith({ card: denari(1), capture: [] }, initialState)
+  })
+  expect(screen.getByAltText('Due di denari')).toBeTruthy()
+})
+
 test(`block interaction when not a player's turn`, async () => {
   const initialState = testGame({
     state: 'play',

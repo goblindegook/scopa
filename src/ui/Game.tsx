@@ -1,6 +1,6 @@
 import styled from '@emotion/styled'
 import { fold, type Result } from '@pacote/result'
-import { AnimatePresence, type Target } from 'framer-motion'
+import { AnimatePresence, motion, type Target } from 'framer-motion'
 import React from 'react'
 import { type Card, hasCard, isSame } from '../engine/cards'
 import type { Score } from '../engine/scores'
@@ -127,6 +127,139 @@ function useRefMap<K>() {
   return [refs, getRef] as const
 }
 
+interface Position {
+  x: number
+  y: number
+}
+
+interface PointerDragState {
+  readonly type: 'pointer'
+  readonly card: Card
+  readonly pointerId: number
+  readonly origin: Position
+  readonly offset: Position
+  readonly position: Position
+  readonly active: boolean
+}
+
+interface ReturnDragState {
+  readonly type: 'returning'
+  readonly card: Card
+  readonly from: Position
+  readonly to: Position
+}
+
+type DragState = PointerDragState | ReturnDragState | null
+
+type OnDropCallback = (card: Card, position: { x: number; y: number }, pointer: { x: number; y: number }) => boolean
+
+function useDragState(enabled: boolean, onDrop: OnDropCallback) {
+  const [dragState, setDragStateState] = React.useState<DragState>(null)
+  const dragStateRef = React.useRef<DragState>(dragState)
+  const suppressClickRef = React.useRef(false)
+
+  React.useEffect(() => {
+    if (!enabled) {
+      dragStateRef.current = null
+      setDragStateState(null)
+      return
+    }
+
+    if (dragState?.type !== 'pointer') return
+
+    const finishDrag = (wasActive: boolean, nextState: DragState) => {
+      suppressClickRef.current = wasActive
+      dragStateRef.current = nextState
+      setDragStateState(nextState)
+      if (!wasActive) return
+      window.setTimeout(() => {
+        suppressClickRef.current = false
+      }, 0)
+    }
+
+    const onPointerDragMove = (event: PointerEvent) => {
+      const current = dragStateRef.current
+      if (current?.type !== 'pointer' || event.pointerId !== current.pointerId) return
+      const dx = event.clientX - current.origin.x
+      const dy = event.clientY - current.origin.y
+      const active = current.active || Math.hypot(dx, dy) > 6
+      const nextState = { ...current, active, position: { x: event.clientX, y: event.clientY } }
+      dragStateRef.current = nextState
+      setDragStateState(nextState)
+    }
+
+    const onPointerDragEnd = (event: PointerEvent) => {
+      const current = dragStateRef.current
+      if (current?.type !== 'pointer' || event.pointerId !== current.pointerId) return
+
+      if (!current.active) {
+        finishDrag(false, null)
+        return
+      }
+
+      const dropPosition = {
+        x: current.position.x - current.offset.x,
+        y: current.position.y - current.offset.y,
+      }
+
+      if (enabled && onDrop(current.card, dropPosition, { x: event.clientX, y: event.clientY })) {
+        finishDrag(true, null)
+        return
+      }
+
+      const originalPosition = { x: current.origin.x - current.offset.x, y: current.origin.y - current.offset.y }
+
+      finishDrag(true, {
+        type: 'returning',
+        card: current.card,
+        from: dropPosition,
+        to: originalPosition,
+      })
+    }
+
+    window.addEventListener('pointermove', onPointerDragMove)
+    window.addEventListener('pointerup', onPointerDragEnd)
+    window.addEventListener('pointercancel', onPointerDragEnd)
+
+    return () => {
+      window.removeEventListener('pointermove', onPointerDragMove)
+      window.removeEventListener('pointerup', onPointerDragEnd)
+      window.removeEventListener('pointercancel', onPointerDragEnd)
+    }
+  }, [dragState, enabled, onDrop])
+
+  const startDragging = React.useCallback(
+    (card: Card, element: Element, position: Position, pointerId: number) => {
+      if (!enabled) return
+      const rect = element.getBoundingClientRect()
+      const nextState: DragState = {
+        type: 'pointer',
+        card,
+        pointerId,
+        origin: position,
+        offset: { x: position.x - rect.left, y: position.y - rect.top },
+        position: position,
+        active: false,
+      }
+      dragStateRef.current = nextState
+      setDragStateState(nextState)
+    },
+    [enabled],
+  )
+
+  const isClickSuppressed = React.useCallback(() => suppressClickRef.current, [])
+
+  return {
+    isClickSuppressed,
+    dragState,
+    startDragging,
+    clearDragging: () => {
+      dragStateRef.current = null
+      setDragStateState(null)
+    },
+  } as const
+}
+
 export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) => {
   const [loadingProgress, setLoadingProgress] = React.useState(0)
   const [alert, setAlert] = React.useState('')
@@ -146,6 +279,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   const previousTableRef = React.useRef<readonly Card[]>([])
   const previousPlayersHandsRef = React.useRef<readonly (readonly Card[])[]>([])
   const [tableDealOrder, setTableDealOrder] = React.useState(new Map<string, number>())
+  const playCardFromRef = React.useRef<{ card: Card; position: Position } | null>(null)
 
   React.useEffect(() => {
     preloadCardAssets((progress) => setLoadingProgress(progress))
@@ -178,11 +312,17 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     (move: Move) => {
       fold(
         (nextState: State) => {
+          const playCardFrom = playCardFromRef.current
+          playCardFromRef.current = null
+
           setAnimation({
             phase: 'play',
             activePlayerId: game.turn,
             playCard: move.card,
-            playInitial: getCardPosition(move.card) ?? { x: 0, y: 0 },
+            playInitial:
+              getCardId(playCardFrom?.card) === getCardId(move.card)
+                ? { ...playCardFrom?.position }
+                : (getCardPosition(move.card) ?? { x: 0, y: 0 }),
             playFaceDown: game.turn !== MAIN_PLAYER,
           })
 
@@ -197,6 +337,27 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
       )
     },
     [onPlay, game, invalidMove, getCardPosition],
+  )
+
+  const { dragState, isClickSuppressed, startDragging, clearDragging } = useDragState(
+    game.turn === MAIN_PLAYER && animation.phase === 'idle',
+    React.useCallback(
+      (card: Card, position: { x: number; y: number }, pointer: { x: number; y: number }) => {
+        const rect = tableRef.current?.getBoundingClientRect()
+        const isOnTable =
+          rect != null &&
+          pointer.x >= rect.left &&
+          pointer.x <= rect.right &&
+          pointer.y >= rect.top &&
+          pointer.y <= rect.bottom
+        if (isOnTable) {
+          playCardFromRef.current = { card, position }
+          play({ card, capture })
+        }
+        return isOnTable
+      },
+      [capture, play],
+    ),
   )
 
   const animatePlayTo = React.useCallback(
@@ -318,7 +479,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                 </Opponent>
               ),
           )}
-          <Table layout ref={tableRef}>
+          <Table data-testid="table" layout ref={tableRef}>
             <AnimatePresence mode="popLayout">
               {/* Table cards */}
               {tableCards.map((card) => {
@@ -435,18 +596,68 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                 <PlayerCard
                   ref={getCardRef(getCardId(card))}
                   disabled={game.turn !== MAIN_PLAYER || animation.phase !== 'idle'}
-                  onClick={() => play({ card, capture })}
-                  style={{ opacity: animation.phase === 'play' && isSame(animation.playCard, card) ? 0 : 1 }}
+                  draggable={false}
+                  onPointerDown={(event) => {
+                    if (event.button !== 0) return
+                    startDragging(card, event.currentTarget, { x: event.clientX, y: event.clientY }, event.pointerId)
+                  }}
+                  onClick={() => {
+                    if (!isClickSuppressed()) play({ card, capture })
+                  }}
+                  style={
+                    isSame(dragState?.card, card) && (dragState?.type === 'returning' || dragState?.active)
+                      ? { opacity: 0, visibility: 'hidden' }
+                      : {
+                          opacity: animation.phase === 'play' && isSame(animation.playCard, card) ? 0 : 1,
+                        }
+                  }
                 >
                   <DisplayCard card={card} />
                 </PlayerCard>
               )}
             />
           </Player>
+          <DragOverlay dragState={dragState} onSpringBackComplete={clearDragging} />
         </Main>
       )}
     </Container>
   )
+}
+
+interface DragOverlayProps {
+  dragState: DragState
+  onSpringBackComplete: () => void
+}
+
+const DragOverlay = ({ dragState, onSpringBackComplete }: DragOverlayProps) => {
+  if (dragState?.type === 'returning') {
+    return (
+      <motion.div
+        initial={{ x: dragState.from.x, y: dragState.from.y }}
+        animate={{ x: dragState.to.x, y: dragState.to.y }}
+        transition={{ duration: 0.14, ease: 'easeOut' }}
+        onAnimationComplete={onSpringBackComplete}
+        style={{ position: 'fixed', zIndex: 10001, pointerEvents: 'none' }}
+      >
+        <DisplayCard card={dragState.card} />
+      </motion.div>
+    )
+  }
+
+  if (dragState?.active)
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          left: dragState.position.x - dragState.offset.x,
+          top: dragState.position.y - dragState.offset.y,
+          zIndex: 10001,
+          pointerEvents: 'none',
+        }}
+      >
+        <DisplayCard card={dragState.card} />
+      </div>
+    )
 }
 
 const HandCards = ({ hand, previousHand, keyPrefix = '', renderCard }: HandCardsProps) => {

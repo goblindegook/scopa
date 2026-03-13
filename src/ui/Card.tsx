@@ -42,6 +42,10 @@ const Face = styled('img')`
   aspect-ratio: 1 / 1.66;
   border-radius: 0.75vw;
   box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+  -webkit-user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 `
 
 const Back = styled('div')`
@@ -117,7 +121,14 @@ export const Card = ({ className, faceDown, card }: CardProps) => {
   return faceDown || !card ? (
     <Back className={className} style={!card ? { opacity: 0 } : undefined} />
   ) : (
-    <Face className={className} src={src} title={name(card)} alt={name(card)} />
+    <Face
+      className={className}
+      src={src}
+      title={name(card)}
+      alt={name(card)}
+      draggable={false}
+      onDragStart={(event) => event.preventDefault()}
+    />
   )
 }
 

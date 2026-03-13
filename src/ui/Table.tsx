@@ -18,7 +18,7 @@ export const TableCard = styled(Card)`
   touch-action: manipulation;
 
   input:focus + &,
-  input + &:hover {
+  input:not(:disabled) + &:hover {
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
     transform: scale(1.1);
   }
