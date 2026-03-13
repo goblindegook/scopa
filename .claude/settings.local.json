@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mise exec -- npm run build)",
+      "Bash(mise exec -- npx vitest run)",
+      "Bash(mise exec -- npm run lint)",
+      "Bash(mise exec -- npx vitest run src/ui/Game.test.tsx)"
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": false
+  }
+}

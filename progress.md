@@ -1,0 +1,135 @@
+Original prompt: I want to be able to play cards by dragging them from my hand to the table
+
+- Initialized progress log.
+- Inspected UI structure (`Game.tsx`, `Player.tsx`, `Table.tsx`, `Card.tsx`) to locate play interaction points.
+
+- Implemented drag-and-drop play from hand to table in `src/ui/Game.tsx`.
+  - Added drag state (`draggedCard`, `isTableDragOver`).
+  - Wired table `onDragOver`/`onDragLeave`/`onDrop` to trigger existing `play({ card, capture })` path.
+  - Made player hand cards draggable only when it is the main player's turn and animations are idle.
+  - Kept click-to-play behavior intact.
+- Added UI regression test `allow playing a card by dragging it to the table` in `src/ui/Game.test.tsx`.
+- Validation blocked in this environment: `node`, `npm`, and `npx` are not installed/available, so Vitest and Playwright client could not be run.
+
+TODOs / next agent:
+- Run `npm test -- --run src/ui/Game.test.tsx src/ui/Player.test.tsx` once Node is available.
+- Run the develop-web-game Playwright loop against `http://localhost:5173` and inspect screenshot/text artifacts for drag/drop behavior.
+- Confirmed Node toolchain access via `mise exec nodejs@22.18.0 -- ...` (shell PATH does not include mise shims by default).
+- Ran tests successfully:
+  - `mise exec nodejs@22.18.0 -- npm test -- --run src/ui/Game.test.tsx src/ui/Player.test.tsx`
+  - Result: 2 test files passed, 15 tests passed.
+- Ran develop-web-game Playwright client against local Vite server:
+  - Started server with `mise exec nodejs@22.18.0 -- npm run dev -- --host 127.0.0.1 --port 5173`
+  - Ran client: `node .../web_game_playwright_client.js --url http://127.0.0.1:5173 --click-selector "text=New Game" --actions-json '{"steps":[]}' --iterations 1 --pause-ms 250 --screenshot-dir output/web-game`
+  - Artifacts: `output/web-game/shot-0.png`
+  - Console errors: none emitted by client (`errors-0.json` not present)
+  - `render_game_to_text`: not implemented in this app (`state-0.json` not present)
+- Visual inspection of screenshot confirms gameplay screen renders correctly with player hand/table visible after New Game.
+- UX refinement request implemented for dragging hand cards:
+  - Keep rounded border during drag by using a custom drag preview cloned from the card element.
+  - Keep drag image opaque (`opacity: 1`) and force move semantics (`effectAllowed = 'move'`).
+  - Hide the original card in-hand while dragging (`visibility: hidden`) so it appears to move, not duplicate.
+- Added guard for environments where `dataTransfer.setDragImage` is unavailable (jsdom).
+- Re-ran tests:
+  - `mise exec nodejs@22.18.0 -- npm test -- --run src/ui/Game.test.tsx src/ui/Player.test.tsx`
+  - Result: 2 test files passed, 15 tests passed.
+- Fixed drag regression reported by user.
+  - Drag/drop logic now uses `draggedCardRef` for immediate access during native drag events (avoids timing issues from async state updates).
+  - Replaced source-card `visibility: hidden` with `opacity: 0` while dragging to avoid browser drag cancellation.
+- Re-ran tests: 2 files passed, 15 tests passed.
+- User reported drag stopped working.
+- Reverted `Game.tsx` drag logic to the original native HTML5 drag/drop implementation (the known-good version before pointer-drag rewrite).
+- Confirmed test status unchanged: 2 files passed, 15 tests passed.
+- Added cross-browser drag-visual fixes while keeping native drag/drop logic:
+  - Custom drag image clone (`setDragImage`) with explicit rounded clipping + full opacity.
+  - Hide source hand card while dragging by setting opacity to 0.
+  - Cleanup temporary drag preview node on drag end/unmount.
+- Re-ran tests: 2 files passed, 15 tests passed.
+- Implemented Safari-focused canvas drag image fallback:
+  - Build drag preview from the card `<img>` rendered into a rounded-clipped canvas.
+  - Use canvas as `setDragImage` target; fallback to DOM clone if canvas/image unavailable.
+- Re-ran tests: 2 files passed, 15 tests passed.
+- Added Safari fallback rounding on the actual draggable source element (`PlayerCard`):
+  - `border-radius`, `overflow: hidden`, and `-webkit-mask-image`.
+  - This covers Safari paths that ignore/override custom `setDragImage` visuals.
+- Re-ran tests: 2 files passed, 15 tests passed.
+- Safari still showed square drag corners with native drag image.
+- Implemented Safari-only pointer drag overlay in `Game.tsx`:
+  - Detect Safari and disable native HTML5 drag for player cards there.
+  - Use pointer move/up tracking with a floating `<DisplayCard>` overlay (naturally rounded).
+  - Hide source hand card while dragging; preserve drop-to-table behavior and click suppression after drag.
+  - Keep existing native drag/drop path for Chrome and other browsers.
+- Re-ran tests: 2 files passed, 15 tests passed.
+- Cleanup pass after Safari overlay fix:
+  - Removed obsolete drag-image experiments that were no longer needed (canvas-based drag preview, rounded canvas helpers, extra clip/mask preview styling).
+  - Removed `-webkit-mask-image` fallback from `PlayerCard` since Safari now uses pointer-overlay drag path.
+  - Kept only essential code paths:
+    - Safari: pointer-overlay drag.
+    - Chrome/others: native drag/drop with simple custom preview and source-card hiding.
+- Re-ran tests: 2 files passed, 15 tests passed.
+- Addressed cancel-drag UX issues reported after Safari overlay rollout:
+  - Safari: added explicit snap-back animation to hand on canceled drag via `returningDrag` overlay.
+  - Chrome/native drag: removed delayed re-show timeout and switched dragged source hiding to `visibility: hidden` (prevents fade cycle).
+- Re-ran tests: 2 files passed, 15 tests passed.
+- Consolidated drag-state abstraction cleanup in `src/ui/Game.tsx`:
+  - Removed leftover dead `useDragState()` stub that was causing lint errors.
+  - Renamed `useDragStateController` to `useDragState` and kept pointer/returning drag behavior inside that hook.
+  - Kept `DragOverlay` purely presentational and retained existing hand-card hide/click suppression behavior.
+- Validation:
+  - `mise exec nodejs@22.18.0 -- npm run lint` (pass)
+  - `mise exec nodejs@22.18.0 -- npm test -- --run src/ui/Game.test.tsx` (pass, 14 tests)
+- Implemented engine end-of-game rule: remaining table cards are awarded to the player who made the last capture.
+  - Added `lastCapturer` to game state (`src/engine/state.ts`, `src/engine/scopa.ts`) to track capture ownership across non-capture turns.
+  - On transition to `state: 'stop'`, engine now moves remaining `table` cards into `players[lastCapturer].pile` and clears `table`.
+- Added tests in `src/engine/scopa.test.ts`:
+  - `when the game ends, any cards left on the table go to the player who made the last capture`
+  - `the last capturer is tracked across turns and gets remaining table cards at game end`
+- Validation:
+  - `mise exec nodejs@22.18.0 -- npm test -- --run src/engine/scopa.test.ts` (pass)
+  - `mise exec nodejs@22.18.0 -- npm test -- --run src/engine/*.test.ts` (pass)
+- Implemented round-tracking UI and flow updates:
+  - Added running round wins in `Game` header with emoji indicator: `🧑 <score> 🤖 <score>`.
+  - Active player highlighting now follows `game.turn` via `data-active` + visual emphasis.
+  - End-of-round screen button now reads `Next Round`.
+  - `Next Round` starts a new round while preserving running wins.
+  - Top-left `New Game` now starts a fresh round and resets running wins to 0-0.
+- API simplification after review:
+  - Removed unnecessary configurability from `GameOver` button label; it is now always `Next Round`.
+- Added/updated UI tests in `src/ui/Game.test.tsx` for:
+  - round-score indicator rendering + active highlight
+  - `Next Round` button visibility on game over
+  - round wins carrying across rounds
+  - top-left `New Game` resetting running wins
+- Validation:
+  - `mise exec nodejs@22.18.0 -- npm test -- --run src/ui/Game.test.tsx src/ui/ScoreBoard.test.tsx` (pass)
+  - `mise exec nodejs@22.18.0 -- npm test -- --run` (pass)
+- Updated round flow terminology and thresholds to hand/game progression:
+  - Replaced end-of-hand CTA `Next Round` with `New Hand`.
+  - End-of-hand title now reads `Player X wins the hand` (or draw fallback).
+  - Added game-win threshold at 11 hands; when reached, title changes to `Player X wins the game` and CTA switches to `New Game`.
+  - Clicking `New Game` from the game-win screen resets running hand wins before starting a fresh game.
+- Refactored UI state in `Game.tsx`:
+  - `roundWins` -> `handWins`, with `handScores`, `handWinner`, `gameWinner`.
+  - Centralized hand result registration from computed score totals.
+  - Header indicator remains `🧑 <score> 🤖 <score>` with active-player highlight.
+- Updated `ScoreBoard.tsx`:
+  - Added optional `title` override for precise hand/game messaging from parent.
+  - `GameOver` now accepts `title` and `buttonLabel` to support `New Hand` and `New Game` transitions.
+- Added/updated tests in `src/ui/Game.test.tsx`:
+  - end-of-hand messaging and `New Hand` button.
+  - hand-win carryover across hands.
+  - top-left `New Game` reset behavior.
+  - 11-hand game-win transition with `Player 1 wins the game` + `New Game` and post-reset score check.
+- Validation:
+  - `mise exec nodejs@22.18.0 -- npm test -- --run src/ui/Game.test.tsx src/ui/ScoreBoard.test.tsx` (pass)
+  - `mise exec nodejs@22.18.0 -- npm test -- --run` (pass)
+- Scoreboard now displays running hand totals directly under the title:
+  - Added `handWins` display line in `ScoreBoard`: `Hands won: Player 1 X - Player 2 Y`.
+  - Wired `handWins` from `Game` into `GameOver`/`ScoreBoard`.
+- Normalized winner title wording in game-over flow to `wins` (hand/game).
+- Tests updated:
+  - `src/ui/ScoreBoard.test.tsx`: added running-hands-total assertion.
+  - `src/ui/Game.test.tsx`: verifies running hands total appears on end-of-hand scoreboard.
+- Validation:
+  - `mise exec nodejs@22.18.0 -- npm test -- --run src/ui/Game.test.tsx src/ui/ScoreBoard.test.tsx` (pass)
+  - `mise exec nodejs@22.18.0 -- npm test -- --run` (pass)
