@@ -55,10 +55,19 @@ const Alert = styled('aside')`
 `
 
 const Turn = styled('span')`
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+`
+
+const TurnScore = styled('span')<{ active: boolean }>`
   color: white;
-  background-color: rgba(255, 255, 255, 0.15);
   border-radius: 0.25rem;
-  padding: 0.25rem 1rem;
+  padding: 0.25rem 0.5rem;
+  border: 2px solid
+    ${({ active }) => (active ? 'rgba(74, 222, 128, 0.9)' : 'rgba(255, 255, 255, 0.25)')};
+  background-color: ${({ active }) => (active ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.1)')};
+  font-weight: ${({ active }) => (active ? 700 : 500)};
 `
 
 const Container = styled('div')`
@@ -264,6 +273,10 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   const [loadingProgress, setLoadingProgress] = React.useState(0)
   const [alert, setAlert] = React.useState('')
   const [capture, setCapture] = React.useState<readonly Card[]>([])
+  const [handWins, setHandWins] = React.useState<[number, number]>([0, 0])
+  const [handScores, setHandScores] = React.useState<readonly Score[]>([])
+  const [handWinner, setHandWinner] = React.useState<number | null>(null)
+  const [gameWinner, setGameWinner] = React.useState<number | null>(null)
   const [game, setGame] = React.useState<State>({
     state: 'initial',
     turn: 0,
@@ -273,6 +286,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     lastCaptured: [],
   })
   const tableRef = React.useRef<HTMLElement | null>(null)
+  const handWinsRef = React.useRef<[number, number]>([0, 0])
   const [cardRefs, getCardRef] = useRefMap<string>()
   const [playerPileRefs, getPlayerPileRef] = useRefMap<number>()
   const [animation, setAnimation] = React.useState<AnimationController>({ phase: 'idle' })
@@ -285,18 +299,60 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     preloadCardAssets((progress) => setLoadingProgress(progress))
   }, [])
 
+  React.useEffect(() => {
+    handWinsRef.current = handWins
+  }, [handWins])
+
   const invalidMove = React.useCallback((error: Error) => setAlert(error.message), [])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: cardRefs is stable, empty deps are correct
   const getCardPosition = React.useCallback((card?: Card) => getPosition(cardRefs.current.get(getCardId(card))), [])
 
+  const getWinner = React.useCallback((scores: readonly Score[]): number | null => {
+    const maxTotal = Math.max(...scores.map((player) => player.total))
+    const winners = scores.filter((player) => player.total === maxTotal)
+    return winners.length === 1 ? winners[0].playerId : null
+  }, [])
+
+  const registerHandResult = React.useCallback(
+    (scores: readonly Score[]) => {
+      setHandScores(scores)
+      const winnerId = getWinner(scores)
+      setHandWinner(winnerId)
+
+      if (winnerId !== MAIN_PLAYER && winnerId !== 1) return
+      const nextWins: [number, number] =
+        winnerId === MAIN_PLAYER
+          ? [handWinsRef.current[0] + 1, handWinsRef.current[1]]
+          : [handWinsRef.current[0], handWinsRef.current[1] + 1]
+      handWinsRef.current = nextWins
+      setHandWins(nextWins)
+      if (nextWins[winnerId] >= 11) {
+        setGameWinner(winnerId)
+      }
+    },
+    [getWinner],
+  )
+
   const start = React.useCallback(
-    () =>
+    ({ resetScore }: { resetScore: boolean }) =>
       fold(
         (nextState: State) => {
+          if (resetScore) {
+            handWinsRef.current = [0, 0]
+            setHandWins([0, 0])
+            setGameWinner(null)
+          }
           setGame(nextState)
           setCapture([])
           setAlert('')
+          if (nextState.state === 'stop') {
+            const nextScores = onScore(nextState.players)
+            registerHandResult(nextScores)
+          } else {
+            setHandScores([])
+            setHandWinner(null)
+          }
           setTableDealOrder(toOrder(nextState.table))
           setAnimation({ phase: 'idle' })
           previousTableRef.current = []
@@ -305,8 +361,11 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
         invalidMove,
         onStart(),
       ),
-    [invalidMove, onStart],
+    [invalidMove, onScore, onStart, registerHandResult],
   )
+
+  const startNewGame = React.useCallback(() => start({ resetScore: true }), [start])
+  const startNewHand = React.useCallback(() => start({ resetScore: false }), [start])
 
   const play = React.useCallback(
     (move: Move) => {
@@ -331,12 +390,19 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           setGame(nextState)
           setCapture([])
           setAlert(nextState.lastCaptured.length === game.table.length ? 'Scopa!' : '')
+          if (nextState.state === 'stop') {
+            const nextScores = onScore(nextState.players)
+            registerHandResult(nextScores)
+          } else {
+            setHandScores([])
+            setHandWinner(null)
+          }
         },
         invalidMove,
         onPlay(move, game),
       )
     },
-    [onPlay, game, invalidMove, getCardPosition],
+    [onPlay, game, invalidMove, getCardPosition, onScore, registerHandResult],
   )
 
   const { dragState, isClickSuppressed, startDragging, clearDragging } = useDragState(
@@ -446,13 +512,34 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   return (
     <Container>
-      {game.state === 'initial' && <TitleScreen loadingProgress={loadingProgress} onStart={start} />}
-      {game.state === 'stop' && <GameOver scores={onScore(game.players)} onStart={start} />}
+      {game.state === 'initial' && <TitleScreen loadingProgress={loadingProgress} onStart={startNewGame} />}
+      {game.state === 'stop' && (
+        <GameOver
+          scores={handScores}
+          handWins={handWins}
+          title={
+            handWinner == null
+              ? "It's a draw"
+              : gameWinner === handWinner
+                ? `${handWinner === MAIN_PLAYER ? '🧑' : '🤖'} wins the game`
+                : `${handWinner === MAIN_PLAYER ? '🧑' : '🤖'} wins the hand`
+          }
+          buttonLabel={gameWinner == null ? 'Next Hand' : 'New Game'}
+          onStart={gameWinner == null ? startNewHand : startNewGame}
+        />
+      )}
       {game.state === 'play' && (
         <Main>
           <Header>
-            <Button onClick={start}>New Game</Button>
-            <Turn>Player {game.turn + 1}</Turn>
+            <Button onClick={startNewGame}>New Game</Button>
+            <Turn aria-label="Round score">
+              <TurnScore active={game.turn === MAIN_PLAYER} data-active={game.turn === MAIN_PLAYER}>
+                🧑 {handWins[0]}
+              </TurnScore>
+              <TurnScore active={game.turn !== MAIN_PLAYER} data-active={game.turn !== MAIN_PLAYER}>
+                🤖 {handWins[1]}
+              </TurnScore>
+            </Turn>
           </Header>
           {game.players.map(
             (player) =>

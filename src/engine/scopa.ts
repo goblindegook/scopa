@@ -52,6 +52,7 @@ export function deal(cards: Pile, options?: Options): Result<State, Error> {
 
 function next({ card, capture }: Move, game: State): State {
   const { turn, table, players, pile } = game
+  const lastCapturer = capture.length ? turn : game.lastCapturer
 
   const tableAfterMove = capture.length ? withoutCards(capture, table) : [...table, card]
 
@@ -75,14 +76,27 @@ function next({ card, capture }: Move, game: State): State {
   const nextTurn = turn < players.length - 1 ? turn + 1 : 0
   const nextState = nextPlayers[nextTurn].hand.length ? 'play' : 'stop'
 
-  return {
-    state: nextState,
-    pile: nextPile,
-    table: nextTable,
-    players: nextPlayers,
-    turn: nextTurn,
-    lastCaptured: capture,
-  }
+  return nextState === 'stop' && lastCapturer != null
+    ? {
+        state: nextState,
+        pile: nextPile,
+        table: [],
+        players: nextPlayers.map((player, idx) =>
+          idx === lastCapturer && nextState === 'stop' ? { ...player, pile: [...player.pile, ...nextTable] } : player,
+        ),
+        turn: nextTurn,
+        lastCaptured: capture,
+        lastCapturer,
+      }
+    : {
+        state: nextState,
+        pile: nextPile,
+        table: nextTable,
+        players: nextPlayers,
+        turn: nextTurn,
+        lastCaptured: capture,
+        lastCapturer,
+      }
 }
 
 export function play({ card, capture }: Move, game: State): Result<State, Error> {

@@ -14,6 +14,7 @@ export interface State {
   readonly players: readonly Player[]
   readonly table: Pile
   readonly lastCaptured: Pile
+  readonly lastCapturer?: number
 }
 
 export interface Move {

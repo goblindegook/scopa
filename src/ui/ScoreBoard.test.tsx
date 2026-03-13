@@ -38,13 +38,13 @@ test('renders player names and scores', () => {
     },
   ]
 
-  render(<ScoreBoard scores={scores} />)
+  render(<ScoreBoard scores={scores} title="🤖 Wins" handWins={[0, 0]} />)
 
-  expect(screen.getByText('Player 2 Wins')).toBeTruthy()
+  expect(screen.getByText('🤖 Wins')).toBeTruthy()
 
   expect(screen.getByText('Game scoreboard showing scores for each player')).toBeTruthy()
-  expect(screen.getByText('Player 1')).toBeTruthy()
-  expect(screen.getByText('Player 2')).toBeTruthy()
+  expect(screen.getByRole('columnheader', { name: '🧑' })).toBeTruthy()
+  expect(screen.getByRole('columnheader', { name: '🤖' })).toBeTruthy()
 
   const table = screen.getByRole('table', { name: 'Game scoreboard' })
 
@@ -84,7 +84,20 @@ test(`renders "It's a draw" when all players have the same total score`, () => {
     { playerId: 1, details: [], total: 3 },
   ]
 
-  render(<ScoreBoard scores={scores} />)
+  render(<ScoreBoard scores={scores} title="It's a draw" handWins={[0, 0]} />)
 
   expect(screen.getByText("It's a draw")).toBeTruthy()
+})
+
+test('renders running total of hands won when provided', () => {
+  const scores: Score[] = [
+    { playerId: 0, details: [], total: 1 },
+    { playerId: 1, details: [], total: 0 },
+  ]
+
+  render(<ScoreBoard scores={scores} title="🧑 wins the hand" handWins={[3, 2]} />)
+
+  expect(screen.getByLabelText('Hands won')).toBeTruthy()
+  expect(screen.getByText('🧑 3')).toBeTruthy()
+  expect(screen.getByText('🤖 2')).toBeTruthy()
 })

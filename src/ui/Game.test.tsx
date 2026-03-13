@@ -58,7 +58,9 @@ test('deal new game on start', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
   expect(onStart).toHaveBeenCalled()
-  expect(screen.getByText(`Player ${turn + 1}`)).toBeTruthy()
+  expect(screen.getByLabelText('Round score')).toBeTruthy()
+  expect(screen.getByText('🧑 0')).toHaveAttribute('data-active', 'true')
+  expect(screen.getByText('🤖 0')).toHaveAttribute('data-active', 'false')
 })
 
 test('renders opponent hand', async () => {
@@ -385,10 +387,200 @@ test('end game and show scores', async () => {
 
   expect(onScore).toHaveBeenCalledWith(state.players)
 
-  expect(screen.getByText('Player 1')).toBeTruthy()
+  expect(screen.getByRole('columnheader', { name: '🧑' })).toBeTruthy()
   expect(screen.getByText('3')).toBeTruthy()
-  expect(screen.getByText('Player 2')).toBeTruthy()
+  expect(screen.getByRole('columnheader', { name: '🤖' })).toBeTruthy()
   expect(screen.getByText('4')).toBeTruthy()
+  expect(screen.getByText('🤖 wins the hand')).toBeTruthy()
+  expect(screen.getByLabelText('Hands won')).toBeTruthy()
+  expect(screen.getByText('🧑 0')).toBeTruthy()
+  expect(screen.getByText('🤖 1')).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Next Hand' })).toBeTruthy()
+})
+
+test('tracks hands won and carries them to next hand', async () => {
+  const onStart = vitest
+    .fn<() => ReturnType<typeof Ok<State>>>()
+    .mockImplementationOnce(() =>
+      Ok(
+        testGame({
+          turn: 0,
+          players: [
+            { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+            { id: 1, hand: [], pile: [], scope: 0 },
+          ],
+          table: [coppe(1)],
+        }),
+      ),
+    )
+    .mockImplementationOnce(() =>
+      Ok(
+        testGame({
+          turn: 0,
+          players: [
+            { id: 0, hand: [bastoni(2)], pile: [], scope: 0 },
+            { id: 1, hand: [denari(3)], pile: [], scope: 0 },
+          ],
+        }),
+      ),
+    )
+
+  const onPlay = vitest.fn(() =>
+    Ok(
+      testGame({
+        state: 'stop',
+        turn: 1,
+        players: [
+          { id: 0, hand: [], pile: [coppe(1), denari(1)], scope: 0 },
+          { id: 1, hand: [], pile: [], scope: 0 },
+        ],
+        table: [],
+        lastCaptured: [coppe(1)],
+      }),
+    ),
+  )
+
+  const onScore = vitest
+    .fn()
+    .mockReturnValueOnce([
+      { playerId: 0, total: 2, details: [] },
+      { playerId: 1, total: 0, details: [] },
+    ])
+    .mockReturnValue([])
+
+  render(<Game onStart={onStart} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={onScore} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Next Hand' }))
+
+  expect(screen.getByText('🧑 1')).toBeTruthy()
+  expect(screen.getByText('🤖 0')).toBeTruthy()
+})
+
+test('top-left new game resets running round wins', async () => {
+  const onStart = vitest
+    .fn<() => ReturnType<typeof Ok<State>>>()
+    .mockImplementationOnce(() =>
+      Ok(
+        testGame({
+          turn: 0,
+          players: [
+            { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+            { id: 1, hand: [], pile: [], scope: 0 },
+          ],
+          table: [coppe(1)],
+        }),
+      ),
+    )
+    .mockImplementationOnce(() =>
+      Ok(
+        testGame({
+          turn: 0,
+          players: [
+            { id: 0, hand: [bastoni(2)], pile: [], scope: 0 },
+            { id: 1, hand: [denari(3)], pile: [], scope: 0 },
+          ],
+        }),
+      ),
+    )
+    .mockImplementationOnce(() =>
+      Ok(
+        testGame({
+          turn: 0,
+          players: [
+            { id: 0, hand: [spade(2)], pile: [], scope: 0 },
+            { id: 1, hand: [coppe(3)], pile: [], scope: 0 },
+          ],
+        }),
+      ),
+    )
+
+  const onPlay = vitest.fn(() =>
+    Ok(
+      testGame({
+        state: 'stop',
+        turn: 1,
+        players: [
+          { id: 0, hand: [], pile: [coppe(1), denari(1)], scope: 0 },
+          { id: 1, hand: [], pile: [], scope: 0 },
+        ],
+        table: [],
+        lastCaptured: [coppe(1)],
+      }),
+    ),
+  )
+
+  const onScore = vitest
+    .fn()
+    .mockReturnValueOnce([
+      { playerId: 0, total: 2, details: [] },
+      { playerId: 1, total: 0, details: [] },
+    ])
+    .mockReturnValue([])
+
+  render(<Game onStart={onStart} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={onScore} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Next Hand' }))
+  expect(screen.getByText('🧑 1')).toBeTruthy()
+
+  fireEvent.click(screen.getByRole('button', { name: 'New Game' }))
+
+  expect(screen.getByText('🧑 0')).toBeTruthy()
+  expect(screen.getByText('🤖 0')).toBeTruthy()
+})
+
+test('when a player reaches 11 hands, show game winner and switch to New Game', async () => {
+  const stopState = testGame({
+    state: 'stop',
+    players: [
+      { id: 0, hand: [], pile: [], scope: 0 },
+      { id: 1, hand: [], pile: [], scope: 0 },
+    ],
+  })
+
+  const playState = testGame({
+    turn: 0,
+    players: [
+      { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+      { id: 1, hand: [denari(2)], pile: [], scope: 0 },
+    ],
+  })
+
+  const onStart = vitest
+    .fn<() => ReturnType<typeof Ok<State>>>()
+    .mockImplementationOnce(() => Ok(stopState))
+    .mockImplementationOnce(() => Ok(stopState))
+    .mockImplementationOnce(() => Ok(stopState))
+    .mockImplementationOnce(() => Ok(stopState))
+    .mockImplementationOnce(() => Ok(stopState))
+    .mockImplementationOnce(() => Ok(stopState))
+    .mockImplementationOnce(() => Ok(stopState))
+    .mockImplementationOnce(() => Ok(stopState))
+    .mockImplementationOnce(() => Ok(stopState))
+    .mockImplementationOnce(() => Ok(stopState))
+    .mockImplementationOnce(() => Ok(stopState))
+    .mockImplementationOnce(() => Ok(playState))
+
+  const onScore = vitest.fn(() => [
+    { playerId: 0, total: 2, details: [] },
+    { playerId: 1, total: 0, details: [] },
+  ])
+
+  render(<Game onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={onScore} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
+  for (let index = 0; index < 10; index++) {
+    fireEvent.click(await screen.findByRole('button', { name: 'Next Hand' }))
+  }
+
+  expect(screen.getByText('🧑 wins the game')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'New Game' }))
+
+  expect(screen.getByText('🧑 0')).toBeTruthy()
+  expect(screen.getByText('🤖 0')).toBeTruthy()
 })
 
 test('renders "Scopa!" when a player captures all cards on the table', async () => {

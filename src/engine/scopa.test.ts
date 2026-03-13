@@ -413,4 +413,48 @@ describe('play', () => {
 
     expect(next).toMatchObject(Ok({ state: 'stop' }))
   })
+
+  test('when the game ends, any cards left on the table go to the player who made the last capture', () => {
+    const card = denari(3)
+    const tableCards = [coppe(1), bastoni(1)]
+    const game: State = {
+      state: 'play',
+      turn: 1,
+      players: [
+        { id: 0, hand: [], pile: [denari(7)], scope: 0 },
+        { id: 1, hand: [card], pile: [], scope: 0 },
+      ],
+      pile: [],
+      table: tableCards,
+      lastCaptured: [],
+      lastCapturer: 0,
+    }
+
+    const next = getGameState(play({ card, capture: [] }, game))
+
+    expect(next.state).toBe('stop')
+    expect(next.table).toHaveLength(0)
+    expect(next.players[0].pile).toEqual([denari(7), ...tableCards, card])
+  })
+
+  test('the last capturer is tracked across turns and gets remaining table cards at game end', () => {
+    const game: State = {
+      state: 'play',
+      turn: 0,
+      players: [
+        { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+        { id: 1, hand: [denari(3)], pile: [], scope: 0 },
+      ],
+      pile: [],
+      table: [coppe(1), bastoni(2)],
+      lastCaptured: [],
+    }
+
+    const afterCapture = getGameState(play({ card: denari(1), capture: [coppe(1)] }, game))
+    const finalState = getGameState(play({ card: denari(3), capture: [] }, afterCapture))
+
+    expect(finalState.state).toBe('stop')
+    expect(finalState.table).toEqual([])
+    expect(finalState.players[0].pile).toEqual([coppe(1), denari(1), bastoni(2), denari(3)])
+  })
 })

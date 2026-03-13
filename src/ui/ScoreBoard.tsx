@@ -5,29 +5,28 @@ import { Button } from './Button'
 
 const WinnerTitle = styled('h2')`
   margin: 0;
+  padding-bottom: 1rem;
   font-size: 2.5rem;
   font-weight: bold;
   text-align: center;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: white;
 
   @media (max-height: 600px) {
+    padding-bottom: 0.5rem;
     font-size: 1.25rem;
   }
 `
 
 const Board = styled('table')`
+  margin: 0;
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 0.5rem;
   min-width: 25vw;
   padding: 1rem;
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
   border-spacing: 0;
@@ -41,6 +40,7 @@ const Board = styled('table')`
 
 const PlayerHeader = styled('th')`
   font-weight: 600;
+  font-size: 2rem;
   padding: 1rem;
   text-align: center;
   text-transform: uppercase;
@@ -48,6 +48,7 @@ const PlayerHeader = styled('th')`
   @media (max-height: 600px) {
     padding: 0.5rem;
   }
+
 `
 
 const RowHeader = styled('th')`
@@ -104,24 +105,64 @@ const TotalRow = styled('tr')`
   text-transform: uppercase;
 `
 
+const ScoreBoardStack = styled('section')`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  @media (max-height: 600px) {
+    gap: 0.5rem;
+  };
+`
+
+const RunningTotal = styled('p')`
+  margin: 0;
+  width: 100%;
+  display: flex;
+  gap: 1rem;
+  @media (max-height: 600px) {
+    gap: 0.5rem;
+  };
+`
+
+const RunningTotalBox = styled('span')`
+  flex: 1;
+  min-width: 0;
+  color: white;
+  text-align: center;
+  font-weight: 600;
+  font-size: 2.5rem;
+  line-height: 1;
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0.5rem;
+  letter-spacing: 0.35rem;
+
+  @media (max-height: 600px) {
+    font-size: 1.8rem;
+    padding: 0.5rem;
+  }
+`
+
 interface ScoreBoardProps {
   scores: readonly Score[]
+  title: string
+  handWins: readonly [number, number]
 }
 
-export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores }) => {
+export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, handWins }) => {
   if (scores.length === 0) return null
 
-  const maxTotal = Math.max(...scores.map(({ total }) => total))
-  const isDraw = scores.every(({ total }) => total === maxTotal)
-  const winner = scores.find(({ total }) => total === maxTotal)
-
   return (
-    <>
-      {isDraw ? (
-        <WinnerTitle>It's a draw</WinnerTitle>
-      ) : (
-        winner && <WinnerTitle>Player {winner.playerId + 1} Wins</WinnerTitle>
-      )}
+    <ScoreBoardStack>
+      <WinnerTitle>{title}</WinnerTitle>
+      <RunningTotal aria-label="Hands won">
+        <RunningTotalBox>🧑 {handWins[0]}</RunningTotalBox>
+        <RunningTotalBox>🤖 {handWins[1]}</RunningTotalBox>
+      </RunningTotal>
       <Board aria-label="Game scoreboard">
         <caption className="sr-only">Game scoreboard showing scores for each player</caption>
         <thead>
@@ -131,7 +172,7 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores }) => {
             </th>
             {scores.map(({ playerId }) => (
               <PlayerHeader key={`player-header-${playerId}`} scope="col">
-                Player {playerId + 1}
+                {playerId === 0 ? '🧑' : playerId === 1 ? '🤖' : `Player ${playerId + 1}`}
               </PlayerHeader>
             ))}
           </tr>
@@ -174,7 +215,7 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores }) => {
           </TotalRow>
         </tbody>
       </Board>
-    </>
+    </ScoreBoardStack>
   )
 }
 
@@ -208,14 +249,17 @@ const GameOverContent = styled('div')`
 
 interface GameOverProps {
   scores: readonly Score[]
+  title: string
+  buttonLabel: string
+  handWins: readonly [number, number]
   onStart: () => void
 }
 
-export const GameOver: React.FC<GameOverProps> = ({ scores, onStart }) => (
+export const GameOver: React.FC<GameOverProps> = ({ scores, title, buttonLabel, handWins, onStart }) => (
   <GameOverContainer>
     <GameOverContent>
-      <ScoreBoard scores={scores} />
-      <Button onClick={onStart}>New Game</Button>
+      <ScoreBoard scores={scores} title={title} handWins={handWins} />
+      <Button onClick={onStart}>{buttonLabel}</Button>
     </GameOverContent>
   </GameOverContainer>
 )
