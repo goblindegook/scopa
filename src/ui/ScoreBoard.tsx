@@ -40,7 +40,7 @@ const Board = styled('table')`
 
 const PlayerHeader = styled('th')`
   font-weight: 600;
-  font-size: 2rem;
+  font-size: 1.5rem;
   padding: 1rem;
   text-align: center;
   text-transform: uppercase;
@@ -131,7 +131,7 @@ const RunningTotalBox = styled('span')`
   color: white;
   text-align: center;
   font-weight: 600;
-  font-size: 2.5rem;
+  font-size: 2rem;
   line-height: 1;
   padding: 1rem;
   background-color: rgba(255, 255, 255, 0.05);
@@ -151,17 +151,21 @@ interface ScoreBoardProps {
   scores: readonly Score[]
   title: string
   handWins: readonly [number, number]
+  playerAvatars: readonly string[]
 }
 
-export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, handWins }) => {
+export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, handWins, playerAvatars }) => {
   if (scores.length === 0) return null
 
   return (
     <ScoreBoardStack>
       <WinnerTitle>{title}</WinnerTitle>
       <RunningTotal aria-label="Hands won">
-        <RunningTotalBox>🧑 {handWins[0]}</RunningTotalBox>
-        <RunningTotalBox>🤖 {handWins[1]}</RunningTotalBox>
+        {playerAvatars.map((playerAvatar, index) => (
+          <RunningTotalBox key={`running-total-${playerAvatar}`}>
+            {playerAvatar} {handWins[index]}
+          </RunningTotalBox>
+        ))}
       </RunningTotal>
       <Board aria-label="Game scoreboard">
         <caption className="sr-only">Game scoreboard showing scores for each player</caption>
@@ -172,7 +176,7 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, handWins 
             </th>
             {scores.map(({ playerId }) => (
               <PlayerHeader key={`player-header-${playerId}`} scope="col">
-                {playerId === 0 ? '🧑' : playerId === 1 ? '🤖' : `Player ${playerId + 1}`}
+                {playerAvatars[playerId]}
               </PlayerHeader>
             ))}
           </tr>
@@ -251,17 +255,38 @@ const GameOverContent = styled('div')`
 
 interface GameOverProps {
   scores: readonly Score[]
-  title: string
-  buttonLabel: string
   handWins: readonly [number, number]
-  onStart: () => void
+  playerAvatars: string[]
+  handWinner?: number | null
+  gameWinner?: number | null
+  onNextHand: () => void
+  onReset: () => void
 }
 
-export const GameOver: React.FC<GameOverProps> = ({ scores, title, buttonLabel, handWins, onStart }) => (
+export const GameOver: React.FC<GameOverProps> = ({
+  scores,
+  gameWinner,
+  handWinner,
+  handWins,
+  playerAvatars,
+  onNextHand,
+  onReset,
+}) => (
   <GameOverContainer>
     <GameOverContent>
-      <ScoreBoard scores={scores} title={title} handWins={handWins} />
-      <Button onClick={onStart}>{buttonLabel}</Button>
+      <ScoreBoard
+        scores={scores}
+        title={
+          handWinner == null
+            ? "It's a draw"
+            : gameWinner == null
+              ? `${playerAvatars[handWinner]} wins the hand`
+              : `${playerAvatars[gameWinner]} wins the game`
+        }
+        handWins={handWins}
+        playerAvatars={playerAvatars}
+      />
+      <Button onClick={gameWinner == null ? onNextHand : onReset}>{gameWinner == null ? 'Next Hand' : 'OK'}</Button>
     </GameOverContent>
   </GameOverContainer>
 )

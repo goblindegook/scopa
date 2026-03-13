@@ -60,8 +60,25 @@ test('deal new game on start', async () => {
 
   expect(onStart).toHaveBeenCalled()
   expect(screen.getByLabelText('Hands won')).toBeTruthy()
-  expect(screen.getByText('🧑 0')).toHaveAttribute('data-active', 'true')
+  expect(screen.getByText('🐵 0')).toHaveAttribute('data-active', 'true')
   expect(screen.getByText('🤖 0')).toHaveAttribute('data-active', 'false')
+})
+
+test('selected avatar appears in header after starting game', async () => {
+  const onStart = vitest.fn(() => Ok(testGame({ turn: 0 })))
+  render(
+    <Game
+      onStart={onStart}
+      onPlay={vitest.fn()}
+      onOpponentTurn={async () => ({ card: denari(1), capture: [] })}
+      onScore={() => []}
+    />,
+  )
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Select avatar 🦊' }))
+  fireEvent.click(screen.getByRole('button', { name: 'New Game' }))
+
+  expect(screen.getByText('🦊 0')).toHaveAttribute('data-active', 'true')
 })
 
 test('show re-deal message when opening table has too many kings', async () => {
@@ -427,13 +444,13 @@ test('end game and show scores', async () => {
 
   expect(onScore).toHaveBeenCalledWith(state.players)
 
-  expect(screen.getByRole('columnheader', { name: '🧑' })).toBeTruthy()
+  expect(screen.getByRole('columnheader', { name: '🐵' })).toBeTruthy()
   expect(screen.getByText('3')).toBeTruthy()
   expect(screen.getByRole('columnheader', { name: '🤖' })).toBeTruthy()
   expect(screen.getByText('4')).toBeTruthy()
   expect(screen.getByText('🤖 wins the hand')).toBeTruthy()
   expect(screen.getByLabelText('Hands won')).toBeTruthy()
-  expect(screen.getByText('🧑 0')).toBeTruthy()
+  expect(screen.getByText('🐵 0')).toBeTruthy()
   expect(screen.getByText('🤖 1')).toBeTruthy()
   expect(screen.getByRole('button', { name: 'Next Hand' })).toBeTruthy()
 })
@@ -494,7 +511,7 @@ test('tracks hands won and carries them to next hand', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
   fireEvent.click(await screen.findByRole('button', { name: 'Next Hand' }))
 
-  expect(screen.getByText('🧑 1')).toBeTruthy()
+  expect(screen.getByText('🐵 1')).toBeTruthy()
   expect(screen.getByText('🤖 0')).toBeTruthy()
 })
 
@@ -564,11 +581,11 @@ test('top-left new game resets running round wins', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
   fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
   fireEvent.click(await screen.findByRole('button', { name: 'Next Hand' }))
-  expect(screen.getByText('🧑 1')).toBeTruthy()
+  expect(screen.getByText('🐵 1')).toBeTruthy()
 
   fireEvent.click(screen.getByRole('button', { name: 'New Game' }))
 
-  expect(screen.getByText('🧑 0')).toBeTruthy()
+  expect(screen.getByText('🐵 0')).toBeTruthy()
   expect(screen.getByText('🤖 0')).toBeTruthy()
 })
 
@@ -616,10 +633,10 @@ test('when a player reaches 11 hands, show game winner and switch to New Game', 
     fireEvent.click(await screen.findByRole('button', { name: 'Next Hand' }))
   }
 
-  expect(screen.getByText('🧑 wins the game')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'OK' }))
   fireEvent.click(screen.getByRole('button', { name: 'New Game' }))
 
-  expect(screen.getByText('🧑 0')).toBeTruthy()
+  expect(screen.getByText('🐵 0')).toBeTruthy()
   expect(screen.getByText('🤖 0')).toBeTruthy()
 })
 

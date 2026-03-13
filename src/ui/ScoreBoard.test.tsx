@@ -38,7 +38,7 @@ test('renders player names and scores', () => {
     },
   ]
 
-  render(<ScoreBoard scores={scores} title="🤖 Wins" handWins={[0, 0]} />)
+  render(<ScoreBoard scores={scores} title="🤖 Wins" handWins={[0, 0]} playerAvatars={['🧑', '🤖']} />)
 
   expect(screen.getByText('🤖 Wins')).toBeTruthy()
 
@@ -84,7 +84,7 @@ test(`renders "It's a draw" when all players have the same total score`, () => {
     { playerId: 1, details: [], total: 3 },
   ]
 
-  render(<ScoreBoard scores={scores} title="It's a draw" handWins={[0, 0]} />)
+  render(<ScoreBoard scores={scores} title="It's a draw" handWins={[0, 0]} playerAvatars={['🧑', '🤖']} />)
 
   expect(screen.getByText("It's a draw")).toBeTruthy()
 })
@@ -95,7 +95,7 @@ test('renders running total of hands won when provided', () => {
     { playerId: 1, details: [], total: 0 },
   ]
 
-  render(<ScoreBoard scores={scores} title="🧑 wins the hand" handWins={[3, 2]} />)
+  render(<ScoreBoard scores={scores} title="🧑 wins the hand" handWins={[3, 2]} playerAvatars={['🧑', '🤖']} />)
 
   expect(screen.getByLabelText('Hands won')).toBeTruthy()
   expect(screen.getByText('🧑 3')).toBeTruthy()

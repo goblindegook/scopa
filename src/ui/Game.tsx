@@ -273,6 +273,7 @@ function useDragState(enabled: boolean, onDrop: OnDropCallback) {
 export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) => {
   const [loadingProgress, setLoadingProgress] = React.useState(0)
   const [alert, showAlert] = useAlerts(4000)
+  const [playerAvatars, setPlayerAvatars] = React.useState(['🐵', '🤖'])
   const [capture, setCapture] = React.useState<readonly Card[]>([])
   const [handWins, setHandWins] = React.useState<[number, number]>([0, 0])
   const [handScores, setHandScores] = React.useState<readonly Score[]>([])
@@ -377,7 +378,14 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   )
 
   const startNewGame = React.useCallback(() => start({ resetScore: true }), [start])
+
   const startNewHand = React.useCallback(() => start({ resetScore: false }), [start])
+
+  const resetToTitle = React.useCallback(() => {
+    handWinsRef.current = [0, 0]
+    setHandWins([0, 0])
+    setGame({ state: 'initial', turn: 0, table: [], pile: [], players: [], lastCaptured: [] })
+  }, [])
 
   const play = React.useCallback(
     (move: Move) => {
@@ -526,7 +534,15 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   return (
     <Container>
-      {game.state === 'initial' && <TitleScreen loadingProgress={loadingProgress} onStart={startNewGame} />}
+      {game.state === 'initial' && (
+        <TitleScreen
+          loadingProgress={loadingProgress}
+          onStart={(avatar) => {
+            setPlayerAvatars([avatar, '🤖'])
+            startNewGame()
+          }}
+        />
+      )}
       {game.state !== 'initial' && (
         <Main>
           {game.state === 'play' && (
@@ -534,10 +550,10 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
               <Button onClick={startNewGame}>New Game</Button>
               <Turn aria-label="Hands won">
                 <TurnScore active={game.turn === MAIN_PLAYER} data-active={game.turn === MAIN_PLAYER}>
-                  🧑 {handWins[0]}
+                  {playerAvatars[0]} {handWins[0]}
                 </TurnScore>
                 <TurnScore active={game.turn !== MAIN_PLAYER} data-active={game.turn !== MAIN_PLAYER}>
-                  🤖 {handWins[1]}
+                  {playerAvatars[1]} {handWins[1]}
                 </TurnScore>
               </Turn>
             </Header>
@@ -710,17 +726,13 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
       )}
       {game.state === 'stop' && (
         <GameOver
+          playerAvatars={playerAvatars}
           scores={handScores}
           handWins={handWins}
-          title={
-            handWinner == null
-              ? "It's a draw"
-              : gameWinner === handWinner
-                ? `${handWinner === MAIN_PLAYER ? '🧑' : '🤖'} wins the game`
-                : `${handWinner === MAIN_PLAYER ? '🧑' : '🤖'} wins the hand`
-          }
-          buttonLabel={gameWinner == null ? 'Next Hand' : 'New Game'}
-          onStart={gameWinner == null ? startNewHand : startNewGame}
+          handWinner={handWinner}
+          gameWinner={gameWinner}
+          onNextHand={startNewHand}
+          onReset={resetToTitle}
         />
       )}
     </Container>
