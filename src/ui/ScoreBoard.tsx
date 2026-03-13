@@ -220,11 +220,13 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, handWins 
 }
 
 const GameOverContainer = styled('main')`
+  position: absolute;
+  inset: 0;
+  z-index: 10002;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: rgba(0, 0, 0, 0.25);
-  flex: 1;
 `
 
 const GameOverContent = styled('div')`

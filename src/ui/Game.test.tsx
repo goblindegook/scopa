@@ -17,6 +17,7 @@ vi.mock('./preload', () => ({
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+  vi.useRealTimers()
 })
 
 function testGame(overrides: Partial<State> = {}): State {
@@ -58,9 +59,48 @@ test('deal new game on start', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
   expect(onStart).toHaveBeenCalled()
-  expect(screen.getByLabelText('Round score')).toBeTruthy()
+  expect(screen.getByLabelText('Hands won')).toBeTruthy()
   expect(screen.getByText('🧑 0')).toHaveAttribute('data-active', 'true')
   expect(screen.getByText('🤖 0')).toHaveAttribute('data-active', 'false')
+})
+
+test('show re-deal message when opening table has too many kings', async () => {
+  render(
+    <Game
+      onStart={vitest.fn().mockReturnValueOnce(Err(Error())).mockReturnValueOnce(Ok(testGame()))}
+      onPlay={vitest.fn()}
+      onOpponentTurn={vitest.fn()}
+      onScore={() => []}
+    />,
+  )
+
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
+
+  expect(screen.getByRole('alert')).toHaveTextContent('Opening table with more than two kings, re-dealing hand.')
+})
+
+test('alerts auto-dismiss after 5 seconds', async () => {
+  render(
+    <Game
+      onStart={() =>
+        Ok(
+          testGame({
+            players: [
+              { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+              { id: 1, hand: [], pile: [], scope: 0 },
+            ],
+          }),
+        )
+      }
+      onPlay={() => Err(Error('test error message'))}
+      onOpponentTurn={vitest.fn()}
+      onScore={vitest.fn()}
+    />,
+  )
+
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
+  expect(screen.getByRole('alert')).toHaveTextContent('test error message')
 })
 
 test('renders opponent hand', async () => {

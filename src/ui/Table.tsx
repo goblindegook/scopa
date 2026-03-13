@@ -24,13 +24,12 @@ export const TableCard = styled(Card)`
   }
 
   input:focus + & {
-    border: 2px solid red;
-    margin: calc(1rem - 2px);
+    box-shadow: 0 0 0 2px #22c55e, 0 5px 10px rgba(0, 0, 0, 0.5);
   }
 
   input:checked + & {
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.5);
-    transform: translateY(-20px) scale(1.2);
+    box-shadow: 0 0 0 2px #22c55e, 0 10px 15px rgba(0, 0, 0, 0.5);
+    transform: scale(1.1);
   }
 `
 
