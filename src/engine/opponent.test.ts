@@ -5,14 +5,14 @@ import { bastoni, coppe, denari, type Pile, spade } from './cards'
 import { move } from './opponent'
 import type { State } from './state'
 
-function setupGame(table: Pile, hand: Pile): State {
+function setupGame(table: Pile, hand: Pile, pile: Pile = []): State {
   return {
     state: 'play',
     turn: 0,
     wins: [0, 0],
     table,
     players: [
-      { id: 0, hand, pile: [], scope: 0 },
+      { id: 0, hand, pile, scope: 0 },
       { id: 1, hand: [], pile: [], scope: 0 },
     ],
     pile: [],
@@ -122,6 +122,26 @@ describe('capture moves', () => {
     const { card } = await runMove(game)
 
     expect(card).toEqual(bastoni(1))
+  })
+
+  test('deprioritise capturing denari when already captured more than half', async () => {
+    const manyDenari = [denari(1), denari(2), denari(4), denari(5), denari(6), denari(8)]
+    const game = setupGame([denari(3), bastoni(7)], [coppe(3), spade(7)], manyDenari)
+
+    const { card, capture } = await runMove(game)
+
+    expect(card).toEqual(spade(7))
+    expect(capture).toEqual([bastoni(7)])
+  })
+
+  test('still capture settebello when already captured more than half of denari', async () => {
+    const manyDenari = [denari(1), denari(2), denari(4), denari(5), denari(6), denari(8)]
+    const game = setupGame([denari(7), bastoni(3)], [coppe(7), coppe(3)], manyDenari)
+
+    const { card, capture } = await runMove(game)
+
+    expect(card).toEqual(coppe(7))
+    expect(capture).toEqual([denari(7)])
   })
 })
 
