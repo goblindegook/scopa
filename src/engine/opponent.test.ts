@@ -124,7 +124,7 @@ describe('capture moves', () => {
     expect(card).toEqual(bastoni(1))
   })
 
-  test('deprioritise capturing denari when already captured more than half', async () => {
+  test('deprioritise capturing coins suit cards when already captured more than half', async () => {
     const manyDenari = [denari(1), denari(2), denari(4), denari(5), denari(6), denari(8)]
     const game = setupGame([denari(3), bastoni(7)], [coppe(3), spade(7)], manyDenari)
 
@@ -134,7 +134,7 @@ describe('capture moves', () => {
     expect(capture).toEqual([bastoni(7)])
   })
 
-  test('still capture settebello when already captured more than half of denari', async () => {
+  test('still capture settebello when already captured more than half of all coins suit cards', async () => {
     const manyDenari = [denari(1), denari(2), denari(4), denari(5), denari(6), denari(8)]
     const game = setupGame([denari(7), bastoni(3)], [coppe(7), coppe(3)], manyDenari)
 
