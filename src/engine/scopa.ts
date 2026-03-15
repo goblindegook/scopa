@@ -63,13 +63,11 @@ function next({ card, capture }: Move, game: State): State {
   const { turn, table, players, pile } = game
   const lastCapturer = capture.length ? turn : game.lastCapturer
 
-  const tableAfterMove = capture.length ? withoutCards(capture, table) : [...table, card]
+  const nextTable = capture.length ? withoutCards(capture, table) : [...table, card]
 
   const handAfterMove = withoutCards([card], players[turn].hand)
 
-  const [nextHand, pileAfterDeal] = handAfterMove.length ? [handAfterMove, pile] : splitAt(3, pile)
-
-  const [nextTable, nextPile] = tableAfterMove.length ? [tableAfterMove, pileAfterDeal] : splitAt(4, pileAfterDeal)
+  const [nextHand, nextPile] = handAfterMove.length ? [handAfterMove, pile] : splitAt(3, pile)
 
   const nextPlayers = players.map((player, idx) =>
     idx !== turn
@@ -78,7 +76,7 @@ function next({ card, capture }: Move, game: State): State {
           ...player,
           hand: nextHand,
           pile: [...player.pile, ...capture, ...(capture.length ? [card] : [])],
-          scope: tableAfterMove.length ? player.scope : player.scope + 1,
+          scope: nextTable.length ? player.scope : player.scope + 1,
         },
   )
 

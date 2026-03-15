@@ -357,13 +357,9 @@ describe('play', () => {
     expect(next).toMatchObject(Ok({ state: 'play' }))
   })
 
-  test('four cards are drawn from the pile when the table is empty', () => {
+  test('when the table is swept, it stays empty', () => {
     const card = denari(3)
-
-    const topOfPile = [coppe(4), bastoni(4), spade(4), denari(4)]
-
-    const restOfPile = [coppe(8)]
-
+    const pile = [coppe(4), bastoni(4), spade(4), denari(4)]
     const game: State = {
       state: 'play',
       turn: 0,
@@ -372,7 +368,7 @@ describe('play', () => {
         { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
         { id: 1, hand: [denari(5)], pile: [], scope: 0 },
       ],
-      pile: [...topOfPile, ...restOfPile],
+      pile,
       table: [coppe(1), bastoni(1), spade(1)],
       lastCaptured: [],
     }
@@ -381,8 +377,8 @@ describe('play', () => {
 
     expect(next).toMatchObject(
       Ok({
-        table: topOfPile,
-        pile: restOfPile,
+        table: [],
+        pile,
         state: 'play',
       }),
     )
