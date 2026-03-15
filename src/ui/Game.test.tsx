@@ -634,7 +634,7 @@ test('when a player reaches 11 hands, show game winner and switch to New Game', 
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Back to Title Screen' }))
   fireEvent.click(screen.getByRole('button', { name: 'New Game' }))
 
   expect(screen.getByText('🐵 0')).toBeTruthy()

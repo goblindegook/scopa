@@ -286,7 +286,9 @@ export const GameOver: React.FC<GameOverProps> = ({
         handWins={handWins}
         playerAvatars={playerAvatars}
       />
-      <Button onClick={gameWinner == null ? onNextHand : onReset}>{gameWinner == null ? 'Next Hand' : 'OK'}</Button>
+      <Button onClick={gameWinner == null ? onNextHand : onReset}>
+        {gameWinner == null ? 'Next Hand' : 'Back to Title Screen'}
+      </Button>
     </GameOverContent>
   </GameOverContainer>
 )
