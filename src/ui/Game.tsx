@@ -466,7 +466,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
             </AnimatePresence>
           </Table>
           {alert && <Alert role="alert">{alert}</Alert>}
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {/* Play animation */}
             {animation.phase === 'play' && animation.playAnimate && (
               <AnimatedCard
@@ -484,19 +484,11 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                     return
                   }
 
-                  // Setup capture animations:
-                  const lastPileCard = Array.from(pileRef.children).at(-1)
-                  const topCardPosition = getPosition(lastPileCard)
-                  let captureTarget = topCardPosition
-                  if (!captureTarget) {
-                    const pileRect = pileRef.getBoundingClientRect()
-                    const pileCardWidth = Math.min(window.innerWidth * 0.08, (window.innerHeight * 0.2) / 1.66)
-                    const pileCardHeight = pileCardWidth * 1.66
-                    captureTarget = {
-                      x: pileRect.left + (pileRect.width - pileCardWidth) / 2,
-                      y: pileRect.top + (pileRect.height - pileCardHeight) / 2,
-                    }
-                  }
+                  const animatedW = Math.min(window.innerWidth * 0.08, (window.innerHeight * 0.4) / 1.66)
+                  const animatedH = animatedW * 1.66
+
+                  const pileAreaRect = pileRef.getBoundingClientRect()
+                  const targetRect = Array.from(pileRef.children).at(-1)?.getBoundingClientRect() ?? pileAreaRect
 
                   setAnimation({
                     phase: 'capture',
@@ -506,12 +498,11 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                         getPosition(tableRef.current?.querySelector(`label[for="table-${getCardId(card)}"]`)) ??
                         playAnimate ??
                         playInitial,
-                      animate: captureTarget
-                        ? {
-                            x: captureTarget.x,
-                            y: captureTarget.y - (index + 1) * 2,
-                          }
-                        : undefined,
+                      animate: {
+                        x: targetRect.left + targetRect.width / 2 - animatedW / 2,
+                        y: targetRect.top + targetRect.height / 2 - animatedH / 2 - (index + 1) * 2,
+                        scale: pileRef.offsetWidth > 0 ? pileAreaRect.width / pileRef.offsetWidth : 1,
+                      },
                     })),
                   })
                 }}

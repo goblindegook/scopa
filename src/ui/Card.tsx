@@ -50,7 +50,7 @@ const Face = styled('img')`
 
 const Back = styled('div')`
   height: 14vw;
-  max-height: 20vh;
+  max-height: 40vh;
   max-width: 8vw;
   aspect-ratio: 1 / 1.66;
   border-radius: 0.75vw;
@@ -140,6 +140,8 @@ const StyledCard = styled(Card)`
 
 const AnimatedCardOverlay = styled(motion.div)`
   position: fixed;
+  top: 0;
+  left: 0;
   z-index: 1000;
   pointer-events: none;
   will-change: transform;
@@ -169,7 +171,7 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({ card, initial, anima
     <AnimatedCardOverlay
       initial={{ ...initial, rotateY: faceDown ? 180 : 0 }}
       animate={{ ...animate, rotateY: !faceDown && flip ? 180 : 0 }}
-      exit={{ opacity: 0, transition: { duration: 0 } }}
+      exit={{ opacity: 0, rotateY: !faceDown && flip ? 180 : 0, transition: { duration: 0 } }}
       transition={{
         rotateY: { duration: Duration.FLIP },
         x: { duration: Duration.PLAY },
