@@ -25,6 +25,7 @@ function testGame(overrides: Partial<State> = {}): State {
   return {
     state: 'play',
     turn: 0,
+    wins: [0, 0],
     players: [
       { id: 0, hand: [], pile: [], scope: 0 },
       { id: 1, hand: [], pile: [], scope: 0 },
@@ -428,6 +429,7 @@ test('computer opponent plays a card', async () => {
 test('end game and show scores', async () => {
   const state = testGame({
     state: 'stop',
+    wins: [0, 1],
     players: [
       { id: 0, hand: [], pile: [], scope: 1 },
       { id: 1, hand: [], pile: [], scope: 2 },
@@ -458,7 +460,7 @@ test('end game and show scores', async () => {
 
 test('tracks hands won and carries them to next hand', async () => {
   const onStart = vitest
-    .fn<() => ReturnType<typeof Ok<State>>>()
+    .fn<(wins?: readonly number[]) => ReturnType<typeof Ok<State>>>()
     .mockImplementationOnce(() =>
       Ok(
         testGame({
@@ -471,10 +473,11 @@ test('tracks hands won and carries them to next hand', async () => {
         }),
       ),
     )
-    .mockImplementationOnce(() =>
+    .mockImplementationOnce((_wins) =>
       Ok(
         testGame({
           turn: 0,
+          wins: [1, 0],
           players: [
             { id: 0, hand: [bastoni(2)], pile: [], scope: 0 },
             { id: 1, hand: [denari(3)], pile: [], scope: 0 },
@@ -488,6 +491,7 @@ test('tracks hands won and carries them to next hand', async () => {
       testGame({
         state: 'stop',
         turn: 1,
+        wins: [1, 0],
         players: [
           { id: 0, hand: [], pile: [coppe(1), denari(1)], scope: 0 },
           { id: 1, hand: [], pile: [], scope: 0 },
@@ -518,7 +522,7 @@ test('tracks hands won and carries them to next hand', async () => {
 
 test('top-left new game resets running round wins', async () => {
   const onStart = vitest
-    .fn<() => ReturnType<typeof Ok<State>>>()
+    .fn<(wins?: readonly number[]) => ReturnType<typeof Ok<State>>>()
     .mockImplementationOnce(() =>
       Ok(
         testGame({
@@ -531,10 +535,11 @@ test('top-left new game resets running round wins', async () => {
         }),
       ),
     )
-    .mockImplementationOnce(() =>
+    .mockImplementationOnce((_wins) =>
       Ok(
         testGame({
           turn: 0,
+          wins: [1, 0],
           players: [
             { id: 0, hand: [bastoni(2)], pile: [], scope: 0 },
             { id: 1, hand: [denari(3)], pile: [], scope: 0 },
@@ -546,6 +551,7 @@ test('top-left new game resets running round wins', async () => {
       Ok(
         testGame({
           turn: 0,
+          wins: [0, 0],
           players: [
             { id: 0, hand: [spade(2)], pile: [], scope: 0 },
             { id: 1, hand: [coppe(3)], pile: [], scope: 0 },
@@ -559,6 +565,7 @@ test('top-left new game resets running round wins', async () => {
       testGame({
         state: 'stop',
         turn: 1,
+        wins: [1, 0],
         players: [
           { id: 0, hand: [], pile: [coppe(1), denari(1)], scope: 0 },
           { id: 1, hand: [], pile: [], scope: 0 },
@@ -591,36 +598,32 @@ test('top-left new game resets running round wins', async () => {
 })
 
 test('when a player reaches 11 hands, show game winner and switch to New Game', async () => {
-  const stopState = testGame({
-    state: 'stop',
-    players: [
-      { id: 0, hand: [], pile: [], scope: 0 },
-      { id: 1, hand: [], pile: [], scope: 0 },
-    ],
-  })
-
-  const playState = testGame({
-    turn: 0,
-    players: [
-      { id: 0, hand: [denari(1)], pile: [], scope: 0 },
-      { id: 1, hand: [denari(2)], pile: [], scope: 0 },
-    ],
-  })
-
   const onStart = vitest
-    .fn<() => ReturnType<typeof Ok<State>>>()
-    .mockImplementationOnce(() => Ok(stopState))
-    .mockImplementationOnce(() => Ok(stopState))
-    .mockImplementationOnce(() => Ok(stopState))
-    .mockImplementationOnce(() => Ok(stopState))
-    .mockImplementationOnce(() => Ok(stopState))
-    .mockImplementationOnce(() => Ok(stopState))
-    .mockImplementationOnce(() => Ok(stopState))
-    .mockImplementationOnce(() => Ok(stopState))
-    .mockImplementationOnce(() => Ok(stopState))
-    .mockImplementationOnce(() => Ok(stopState))
-    .mockImplementationOnce(() => Ok(stopState))
-    .mockImplementationOnce(() => Ok(playState))
+    .fn()
+    .mockImplementationOnce(() =>
+      Ok(
+        testGame({
+          state: 'stop',
+          wins: [11, 0],
+          players: [
+            { id: 0, hand: [], pile: [], scope: 0 },
+            { id: 1, hand: [], pile: [], scope: 0 },
+          ],
+        }),
+      ),
+    )
+    .mockImplementationOnce(() =>
+      Ok(
+        testGame({
+          turn: 0,
+          wins: [0, 0],
+          players: [
+            { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+            { id: 1, hand: [denari(2)], pile: [], scope: 0 },
+          ],
+        }),
+      ),
+    )
 
   const onScore = vitest.fn(() => [
     { playerId: 0, total: 2, details: [] },
@@ -630,9 +633,6 @@ test('when a player reaches 11 hands, show game winner and switch to New Game', 
   render(<Game onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={onScore} />)
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
-  for (let index = 0; index < 10; index++) {
-    fireEvent.click(await screen.findByRole('button', { name: 'Next Hand' }))
-  }
 
   fireEvent.click(screen.getByRole('button', { name: 'OK' }))
   fireEvent.click(screen.getByRole('button', { name: 'New Game' }))
@@ -648,6 +648,7 @@ test('renders "Scopa!" when a player captures all cards on the table', async () 
         Ok({
           state: 'play',
           turn: 0,
+          wins: [0, 0],
           players: [
             { id: 0, hand: [denari(5)], pile: [], scope: 0 },
             { id: 1, hand: [denari(1)], pile: [], scope: 0 },
@@ -661,6 +662,7 @@ test('renders "Scopa!" when a player captures all cards on the table', async () 
         Ok({
           state: 'play',
           turn: 1,
+          wins: [0, 0],
           players: [
             { id: 0, hand: [], pile: [denari(2), denari(3), denari(5)], scope: 1 },
             { id: 1, hand: [denari(1)], pile: [], scope: 0 },
@@ -688,6 +690,7 @@ test('does not render "Scopa!" when a player does not capture all cards on the t
         Ok({
           state: 'play',
           turn: 0,
+          wins: [0, 0],
           players: [
             { id: 0, hand: [bastoni(2)], pile: [], scope: 0 },
             { id: 1, hand: [denari(1)], pile: [], scope: 0 },
@@ -701,6 +704,7 @@ test('does not render "Scopa!" when a player does not capture all cards on the t
         Ok({
           state: 'play',
           turn: 1,
+          wins: [0, 0],
           players: [
             { id: 0, hand: [], pile: [denari(2), bastoni(5)], scope: 0 },
             { id: 1, hand: [denari(1)], pile: [], scope: 0 },

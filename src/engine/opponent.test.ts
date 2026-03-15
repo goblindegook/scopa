@@ -9,6 +9,7 @@ function setupGame(table: Pile, hand: Pile): State {
   return {
     state: 'play',
     turn: 0,
+    wins: [0, 0],
     table,
     players: [
       { id: 0, hand, pile: [], scope: 0 },

@@ -2,15 +2,15 @@ import { windowed } from '@pacote/array'
 import { Err, Ok, type Result } from '@pacote/result'
 import { findCaptures } from './capture.ts'
 import { hasCard, isSame, type Pile } from './cards'
+import { score } from './scores.ts'
 import type { Move, Player, State } from './state'
 
 interface Options {
   players?: 2 | 3 | 4 | 6
+  wins?: readonly number[]
 }
 
-const DEFAULT_OPTIONS: Required<Options> = {
-  players: 2,
-}
+const DEFAULT_PLAYERS = 2
 
 const createPlayers = (cards: Pile): readonly Player[] =>
   windowed(3, 3, cards).map((hand, index) => ({
@@ -31,8 +31,16 @@ const withoutCards = (toRemove: readonly Pile[number][], cards: readonly Pile[nu
 const hasCapture = (captures: readonly Pile[], capture: readonly Pile[number][]): boolean =>
   captures.some((candidate) => candidate.length === capture.length && candidate.every((card) => hasCard(capture, card)))
 
+function computeHandWinner(players: readonly Player[]): number | null {
+  const scores = score(players)
+  const maxTotal = Math.max(...scores.map((s) => s.total))
+  const winners = scores.filter((s) => s.total === maxTotal)
+  return winners.length === 1 ? winners[0].playerId : null
+}
+
 export function deal(cards: Pile, options?: Options): Result<State, Error> {
-  const { players } = { ...DEFAULT_OPTIONS, ...options }
+  const players = options?.players ?? DEFAULT_PLAYERS
+  const wins = options?.wins ?? Array.from({ length: players }, () => 0)
   const [table, rest] = splitAt(4, cards)
   const dealtKings = table.filter(([value]) => value === 10).length
 
@@ -46,6 +54,7 @@ export function deal(cards: Pile, options?: Options): Result<State, Error> {
         pile,
         table,
         lastCaptured: [],
+        wins,
       })
     : Err(Error('More than two kings on the table. Deal again.'))
 }
@@ -76,27 +85,40 @@ function next({ card, capture }: Move, game: State): State {
   const nextTurn = turn < players.length - 1 ? turn + 1 : 0
   const nextState = nextPlayers[nextTurn].hand.length ? 'play' : 'stop'
 
-  return nextState === 'stop' && lastCapturer != null
-    ? {
-        state: nextState,
-        pile: nextPile,
-        table: [],
-        players: nextPlayers.map((player, idx) =>
-          idx === lastCapturer && nextState === 'stop' ? { ...player, pile: [...player.pile, ...nextTable] } : player,
-        ),
-        turn: nextTurn,
-        lastCaptured: capture,
-        lastCapturer,
-      }
-    : {
-        state: nextState,
-        pile: nextPile,
-        table: nextTable,
-        players: nextPlayers,
-        turn: nextTurn,
-        lastCaptured: capture,
-        lastCapturer,
-      }
+  const finalPlayers =
+    nextState === 'stop' && lastCapturer != null
+      ? nextPlayers.map((player, idx) =>
+          idx === lastCapturer ? { ...player, pile: [...player.pile, ...nextTable] } : player,
+        )
+      : nextPlayers
+
+  const finalTable = nextState === 'stop' && lastCapturer != null ? [] : nextTable
+
+  if (nextState === 'stop') {
+    const winner = computeHandWinner(finalPlayers)
+    const wins = game.wins.map((w, idx) => (idx === winner ? w + 1 : w))
+    return {
+      state: nextState,
+      pile: nextPile,
+      table: finalTable,
+      players: finalPlayers,
+      turn: nextTurn,
+      lastCaptured: capture,
+      lastCapturer,
+      wins,
+    }
+  }
+
+  return {
+    state: nextState,
+    pile: nextPile,
+    table: finalTable,
+    players: finalPlayers,
+    turn: nextTurn,
+    lastCaptured: capture,
+    lastCapturer,
+    wins: game.wins,
+  }
 }
 
 export function play({ card, capture }: Move, game: State): Result<State, Error> {

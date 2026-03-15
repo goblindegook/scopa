@@ -18,6 +18,14 @@ describe('deal', () => {
     expect(deal(deck())).toMatchObject(Ok({ state: 'play' }))
   })
 
+  test('deal starts with zero wins', () => {
+    expect(getGameState(deal(deck())).wins).toEqual([0, 0])
+  })
+
+  test('deal carries over wins from a previous hand', () => {
+    expect(getGameState(deal(deck(), { wins: [3, 5] })).wins).toEqual([3, 5])
+  })
+
   test('deal four cards on the table', () => {
     expect(getGameState(deal(deck())).table).toHaveLength(4)
   })
@@ -87,6 +95,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      wins: [0, 0],
       players: [
         { id: 0, hand: [denari(1), denari(2)], pile: [], scope: 0 },
         { id: 1, hand: [denari(3)], pile: [], scope: 0 },
@@ -117,6 +126,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 1,
+      wins: [0, 0],
       players: [
         { id: 0, hand: [denari(1)], pile: [], scope: 0 },
         { id: 1, hand: [denari(2), denari(3)], pile: [], scope: 0 },
@@ -148,6 +158,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      wins: [0, 0],
       players: [
         { id: 0, hand: [denari(2)], pile: [], scope: 0 },
         { id: 1, hand: [denari(3)], pile: [], scope: 0 },
@@ -168,6 +179,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      wins: [0, 0],
       players: [
         { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
         { id: 1, hand: [denari(3)], pile: [], scope: 0 },
@@ -192,6 +204,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      wins: [0, 0],
       players: [
         { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
         { id: 1, hand: [denari(3)], pile: [], scope: 0 },
@@ -210,6 +223,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      wins: [0, 0],
       players: [
         { id: 0, hand: [denari(4), denari(2)], pile: [], scope: 0 },
         { id: 1, hand: [denari(3)], pile: [], scope: 0 },
@@ -234,6 +248,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      wins: [0, 0],
       players: [
         { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
         { id: 1, hand: [denari(3)], pile: [], scope: 0 },
@@ -258,6 +273,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      wins: [0, 0],
       players: [
         { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
         { id: 1, hand: [denari(5)], pile: [], scope: 0 },
@@ -287,6 +303,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      wins: [0, 0],
       players: [
         { id: 0, hand: [card], pile: [], scope: 0 },
         { id: 1, hand: [denari(10)], pile: [], scope: 0 },
@@ -305,6 +322,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      wins: [0, 0],
       players: [
         { id: 0, hand: [card], pile: [], scope: 0 },
         { id: 1, hand: [], pile: [], scope: 0 },
@@ -323,6 +341,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      wins: [0, 0],
       players: [
         { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
         { id: 1, hand: [denari(5)], pile: [], scope: 0 },
@@ -348,6 +367,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      wins: [0, 0],
       players: [
         { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
         { id: 1, hand: [denari(5)], pile: [], scope: 0 },
@@ -375,6 +395,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      wins: [0, 0],
       players: [
         { id: 0, hand: [card], pile: [], scope: 0 },
         { id: 1, hand: [denari(5)], pile: [], scope: 0 },
@@ -400,6 +421,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 1,
+      wins: [0, 0],
       players: [
         { id: 0, hand: [], pile: [], scope: 0 },
         { id: 1, hand: [card], pile: [], scope: 0 },
@@ -420,6 +442,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 1,
+      wins: [0, 0],
       players: [
         { id: 0, hand: [], pile: [denari(7)], scope: 0 },
         { id: 1, hand: [card], pile: [], scope: 0 },
@@ -441,6 +464,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      wins: [0, 0],
       players: [
         { id: 0, hand: [denari(1)], pile: [], scope: 0 },
         { id: 1, hand: [denari(3)], pile: [], scope: 0 },
@@ -456,5 +480,51 @@ describe('play', () => {
     expect(finalState.state).toBe('stop')
     expect(finalState.table).toEqual([])
     expect(finalState.players[0].pile).toEqual([coppe(1), denari(1), bastoni(2), denari(3)])
+  })
+
+  test('wins are updated when the hand ends with a clear winner', () => {
+    const game: State = {
+      state: 'play',
+      turn: 1,
+      wins: [2, 1],
+      players: [
+        {
+          id: 0,
+          hand: [],
+          pile: [denari(7), denari(1), coppe(7), bastoni(7), spade(7)],
+          scope: 0,
+        },
+        { id: 1, hand: [spade(1)], pile: [], scope: 0 },
+      ],
+      pile: [],
+      table: [denari(2)],
+      lastCaptured: [],
+      lastCapturer: 0,
+    }
+
+    const next = getGameState(play({ card: spade(1), capture: [] }, game))
+
+    expect(next.state).toBe('stop')
+    expect(next.wins).toEqual([3, 1])
+  })
+
+  test('wins are not updated when the hand ends in a tie', () => {
+    const game: State = {
+      state: 'play',
+      turn: 0,
+      wins: [1, 2],
+      players: [
+        { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+        { id: 1, hand: [], pile: [], scope: 0 },
+      ],
+      pile: [],
+      table: [coppe(3)],
+      lastCaptured: [],
+    }
+
+    const next = getGameState(play({ card: denari(1), capture: [] }, game))
+
+    expect(next.state).toBe('stop')
+    expect(next.wins).toEqual([1, 2])
   })
 })

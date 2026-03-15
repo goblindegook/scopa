@@ -150,7 +150,7 @@ const RunningTotalBox = styled('span')`
 interface ScoreBoardProps {
   scores: readonly Score[]
   title: string
-  handWins: readonly [number, number]
+  handWins: readonly number[]
   playerAvatars: readonly string[]
 }
 
@@ -255,7 +255,7 @@ const GameOverContent = styled('div')`
 
 interface GameOverProps {
   scores: readonly Score[]
-  handWins: readonly [number, number]
+  handWins: readonly number[]
   playerAvatars: string[]
   handWinner?: number | null
   gameWinner?: number | null
