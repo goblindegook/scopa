@@ -14,6 +14,9 @@ import { GameOver } from './ScoreBoard'
 import { Table, TableCard, TableCardLabel, TableCardSelector } from './Table'
 import { TitleScreen } from './TitleScreen'
 import { useAlerts } from './useAlerts'
+import { type DragState, useDragState } from './useDragState'
+import { useLocalStorage } from './useLocalStorage'
+import { useRefMap } from './useRefMap'
 
 const MAIN_PLAYER = 0
 
@@ -89,6 +92,17 @@ const Main = styled('main')`
   height: 100%;
 `
 
+interface Position {
+  x: number
+  y: number
+}
+
+interface SavedGameState {
+  game: State
+  playerAvatars: [string, string]
+  handWins: [number, number]
+}
+
 interface GameProps {
   onStart: () => Result<State, Error>
   onPlay: (move: Move, game: State) => Result<State, Error>
@@ -121,163 +135,12 @@ type AnimationController =
     }
   | { phase: 'capture'; captures: readonly CaptureAnimationState[] }
 
-function useRefMap<K>() {
-  const refs = React.useRef(new Map<K, HTMLElement>())
-  const callbacks = React.useRef(new Map<K, (el?: HTMLElement | null) => void>())
-  const getRef = React.useCallback((key: K) => {
-    const existing = callbacks.current.get(key)
-    if (existing) return existing
-    const callback = (el?: HTMLElement | null) => {
-      if (el) refs.current.set(key, el)
-      else refs.current.delete(key)
-    }
-    callbacks.current.set(key, callback)
-    return callback
-  }, [])
-  return [refs, getRef] as const
-}
-
-interface Position {
-  x: number
-  y: number
-}
-
-interface PointerDragState {
-  readonly type: 'pointer'
-  readonly card: Card
-  readonly pointerId: number
-  readonly origin: Position
-  readonly offset: Position
-  readonly position: Position
-  readonly active: boolean
-}
-
-interface ReturnDragState {
-  readonly type: 'returning'
-  readonly card: Card
-  readonly from: Position
-  readonly to: Position
-}
-
-type DragState = PointerDragState | ReturnDragState | null
-
-type OnDropCallback = (card: Card, position: { x: number; y: number }, pointer: { x: number; y: number }) => boolean
-
-function useDragState(enabled: boolean, onDrop: OnDropCallback) {
-  const [dragState, setDragStateState] = React.useState<DragState>(null)
-  const dragStateRef = React.useRef<DragState>(dragState)
-  const suppressClickRef = React.useRef(false)
-
-  React.useEffect(() => {
-    if (!enabled) {
-      dragStateRef.current = null
-      setDragStateState(null)
-      return
-    }
-
-    if (dragState?.type !== 'pointer') return
-
-    const finishDrag = (wasActive: boolean, nextState: DragState) => {
-      suppressClickRef.current = wasActive
-      dragStateRef.current = nextState
-      setDragStateState(nextState)
-      if (!wasActive) return
-      window.setTimeout(() => {
-        suppressClickRef.current = false
-      }, 0)
-    }
-
-    const onPointerDragMove = (event: PointerEvent) => {
-      const current = dragStateRef.current
-      if (current?.type !== 'pointer' || event.pointerId !== current.pointerId) return
-      const dx = event.clientX - current.origin.x
-      const dy = event.clientY - current.origin.y
-      const active = current.active || Math.hypot(dx, dy) > 6
-      const nextState = { ...current, active, position: { x: event.clientX, y: event.clientY } }
-      dragStateRef.current = nextState
-      setDragStateState(nextState)
-    }
-
-    const onPointerDragEnd = (event: PointerEvent) => {
-      const current = dragStateRef.current
-      if (current?.type !== 'pointer' || event.pointerId !== current.pointerId) return
-
-      if (!current.active) {
-        finishDrag(false, null)
-        return
-      }
-
-      const dropPosition = {
-        x: current.position.x - current.offset.x,
-        y: current.position.y - current.offset.y,
-      }
-
-      if (enabled && onDrop(current.card, dropPosition, { x: event.clientX, y: event.clientY })) {
-        finishDrag(true, null)
-        return
-      }
-
-      const originalPosition = { x: current.origin.x - current.offset.x, y: current.origin.y - current.offset.y }
-
-      finishDrag(true, {
-        type: 'returning',
-        card: current.card,
-        from: dropPosition,
-        to: originalPosition,
-      })
-    }
-
-    window.addEventListener('pointermove', onPointerDragMove)
-    window.addEventListener('pointerup', onPointerDragEnd)
-    window.addEventListener('pointercancel', onPointerDragEnd)
-
-    return () => {
-      window.removeEventListener('pointermove', onPointerDragMove)
-      window.removeEventListener('pointerup', onPointerDragEnd)
-      window.removeEventListener('pointercancel', onPointerDragEnd)
-    }
-  }, [dragState, enabled, onDrop])
-
-  const startDragging = React.useCallback(
-    (card: Card, element: Element, position: Position, pointerId: number) => {
-      if (!enabled) return
-      const rect = element.getBoundingClientRect()
-      const nextState: DragState = {
-        type: 'pointer',
-        card,
-        pointerId,
-        origin: position,
-        offset: { x: position.x - rect.left, y: position.y - rect.top },
-        position: position,
-        active: false,
-      }
-      dragStateRef.current = nextState
-      setDragStateState(nextState)
-    },
-    [enabled],
-  )
-
-  const isClickSuppressed = React.useCallback(() => suppressClickRef.current, [])
-
-  return {
-    isClickSuppressed,
-    dragState,
-    startDragging,
-    clearDragging: () => {
-      dragStateRef.current = null
-      setDragStateState(null)
-    },
-  } as const
-}
-
 export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) => {
   const [loadingProgress, setLoadingProgress] = React.useState(0)
   const [alert, showAlert] = useAlerts(4000)
-  const [playerAvatars, setPlayerAvatars] = React.useState(['🐵', '🤖'])
+  const [playerAvatars, setPlayerAvatars] = React.useState<[string, string]>(['🐵', '🤖'])
   const [capture, setCapture] = React.useState<readonly Card[]>([])
   const [handWins, setHandWins] = React.useState<[number, number]>([0, 0])
-  const [handScores, setHandScores] = React.useState<readonly Score[]>([])
-  const [handWinner, setHandWinner] = React.useState<number | null>(null)
   const [gameWinner, setGameWinner] = React.useState<number | null>(null)
   const [game, setGame] = React.useState<State>({
     state: 'initial',
@@ -287,8 +150,10 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     players: [],
     lastCaptured: [],
   })
+  const [savedGameState, setSavedGameState] = useLocalStorage<SavedGameState | null>('saved-game', null)
   const tableRef = React.useRef<HTMLElement | null>(null)
   const handWinsRef = React.useRef<[number, number]>([0, 0])
+  const handScoresRef = React.useRef<readonly Score[]>([])
   const [cardRefs, getCardRef] = useRefMap<string>()
   const [playerPileRefs, getPlayerPileRef] = useRefMap<number>()
   const [animation, setAnimation] = React.useState<AnimationController>({ phase: 'idle' })
@@ -303,7 +168,13 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   React.useEffect(() => {
     handWinsRef.current = handWins
-  }, [handWins])
+    if (game.state === 'initial') return
+    if (gameWinner !== null) {
+      setSavedGameState(null)
+      return
+    }
+    setSavedGameState({ game, playerAvatars, handWins })
+  }, [game, playerAvatars, handWins, gameWinner, setSavedGameState])
 
   const invalidMove = React.useCallback((error: Error) => showAlert(error.message), [showAlert])
 
@@ -318,10 +189,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   const registerHandResult = React.useCallback(
     (scores: readonly Score[]) => {
-      setHandScores(scores)
+      handScoresRef.current = scores
       const winnerId = getWinner(scores)
-      setHandWinner(winnerId)
-
       if (winnerId !== MAIN_PLAYER && winnerId !== 1) return
       const nextWins: [number, number] =
         winnerId === MAIN_PLAYER
@@ -337,7 +206,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   )
 
   const start = React.useCallback(
-    ({ resetScore }: { resetScore: boolean }) => {
+    (resetScore = false) => {
       let redealt = false
       let startResult = onStart()
 
@@ -358,13 +227,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
           if (redealt) showAlert('Opening table with more than two kings, re-dealing hand.')
 
-          if (nextState.state === 'stop') {
-            const nextScores = onScore(nextState.players)
-            registerHandResult(nextScores)
-          } else {
-            setHandScores([])
-            setHandWinner(null)
-          }
+          if (nextState.state === 'stop') registerHandResult(onScore(nextState.players))
           setTableDealOrder(toOrder(nextState.table))
           setAnimation({ phase: 'idle' })
           previousTableRef.current = []
@@ -377,9 +240,18 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     [invalidMove, onScore, onStart, registerHandResult, showAlert],
   )
 
-  const startNewGame = React.useCallback(() => start({ resetScore: true }), [start])
+  const startNewGame = React.useCallback(() => {
+    setSavedGameState(null)
+    start(true)
+  }, [start, setSavedGameState])
 
-  const startNewHand = React.useCallback(() => start({ resetScore: false }), [start])
+  const resume = React.useCallback(() => {
+    if (!savedGameState) return
+    handWinsRef.current = savedGameState.handWins
+    setHandWins(savedGameState.handWins)
+    setPlayerAvatars(savedGameState.playerAvatars)
+    setGame(savedGameState.game)
+  }, [savedGameState])
 
   const resetToTitle = React.useCallback(() => {
     handWinsRef.current = [0, 0]
@@ -412,13 +284,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
           if (nextState.lastCaptured.length === game.table.length) showAlert('Scopa!')
 
-          if (nextState.state === 'stop') {
-            const nextScores = onScore(nextState.players)
-            registerHandResult(nextScores)
-          } else {
-            setHandScores([])
-            setHandWinner(null)
-          }
+          if (nextState.state === 'stop') registerHandResult(onScore(nextState.players))
         },
         invalidMove,
         onPlay(move, game),
@@ -537,6 +403,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
       {game.state === 'initial' && (
         <TitleScreen
           loadingProgress={loadingProgress}
+          savedAvatar={savedGameState?.playerAvatars[0]}
+          onResume={resume}
           onStart={(avatar) => {
             setPlayerAvatars([avatar, '🤖'])
             startNewGame()
@@ -680,7 +548,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                 .filter((a): a is CaptureAnimationState & { readonly animate: Target } => a.animate != null)
                 .map((a, index, filtered) => (
                   <AnimatedCard
-                    key={`captured-${getCardId(a.card)}-${index}`}
+                    key={`captured-${getCardId(a.card)}`}
                     card={a.card}
                     initial={a.initial}
                     animate={a.animate}
@@ -727,11 +595,11 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
       {game.state === 'stop' && (
         <GameOver
           playerAvatars={playerAvatars}
-          scores={handScores}
+          scores={handScoresRef.current}
           handWins={handWins}
-          handWinner={handWinner}
+          handWinner={getWinner(handScoresRef.current)}
           gameWinner={gameWinner}
-          onNextHand={startNewHand}
+          onNextHand={() => start()}
           onReset={resetToTitle}
         />
       )}

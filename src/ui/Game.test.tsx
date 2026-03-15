@@ -18,6 +18,7 @@ afterEach(() => {
   cleanup()
   vi.clearAllMocks()
   vi.useRealTimers()
+  localStorage.clear()
 })
 
 function testGame(overrides: Partial<State> = {}): State {

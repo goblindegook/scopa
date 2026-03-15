@@ -2,7 +2,7 @@ import styled from '@emotion/styled'
 import React from 'react'
 import { Button } from './Button'
 
-export const AVATARS = ['🐵', '🐶', '🦊', '🐱', '🦁', '🐯', '🐮', '🐷', '🐭', '🐹', '🐻', '🐨', '🐼', '🐸', '🐙']
+export const AVATARS = ['🐵', '🐶', '🦊', '🐱', '🦁', '🐷', '🐭', '🐼', '🐸', '🐙']
 
 const TitleScreenContainer = styled('main')`
   display: flex;
@@ -109,12 +109,21 @@ const AvatarSection = styled('div')`
   width: 100%;
 `
 
+const ButtonRow = styled('div')`
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  justify-content: center;
+`
+
 interface TitleScreenProps {
   loadingProgress: number
   onStart: (avatar: string) => void
+  savedAvatar?: string
+  onResume?: () => void
 }
 
-export const TitleScreen = ({ loadingProgress, onStart }: TitleScreenProps) => {
+export const TitleScreen = ({ loadingProgress, onStart, savedAvatar, onResume }: TitleScreenProps) => {
   const [selectedAvatar, setSelectedAvatar] = React.useState(AVATARS[0])
 
   return (
@@ -143,7 +152,10 @@ export const TitleScreen = ({ loadingProgress, onStart }: TitleScreenProps) => {
                 ))}
               </AvatarGrid>
             </AvatarSection>
-            <Button onClick={() => onStart(selectedAvatar)}>New Game</Button>
+            <ButtonRow>
+              {savedAvatar && onResume && <Button onClick={onResume}>{savedAvatar} Resume</Button>}
+              <Button onClick={() => onStart(selectedAvatar)}>New Game</Button>
+            </ButtonRow>
           </>
         )}
       </TitleScreenContent>
