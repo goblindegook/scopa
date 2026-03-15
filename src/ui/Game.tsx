@@ -40,7 +40,7 @@ const Header = styled('header')`
 
 const Alert = styled('aside')`
   position: absolute;
-  top: 50%;
+  top: 66%;
   left: 50%;
   transform: translate(-50%, -50%);
   color: white;
