@@ -197,13 +197,9 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, handWins,
                   const isWinner = winnerId === playerId
                   const value = details[detailIndex]?.value ?? 0
                   return (
-                    <ScoreCell
-                      key={`${detail.label}-${playerId}`}
-                      winner={isWinner}
-                      {...(isWinner && !isScope && { 'aria-label': t('bonusPoint', { value }) })}
-                    >
+                    <ScoreCell key={`${detail.label}-${playerId}`} winner={isWinner}>
                       {!isScope ? (
-                        <CellContent>
+                        <CellContent {...(isWinner && { 'aria-label': t('bonusPoint', { value }) })}>
                           <ValueText>{value}</ValueText>
                           {isWinner && <PointIndicator>+1</PointIndicator>}
                         </CellContent>
