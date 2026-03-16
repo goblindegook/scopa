@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "scopa-dev",
+      "runtimeExecutable": "mise",
+      "runtimeArgs": ["exec", "--", "npm", "run", "dev"],
+      "port": 5174
+    }
+  ]
+}

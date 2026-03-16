@@ -1,18 +1,29 @@
 import { findCaptures } from './capture.ts'
-import { type Card, isDenari, isSettebello, type Pile } from './cards'
+import { type Card, isDenari, isSettebello, type Pile, type Suit } from './cards'
 import { primePoints } from './scores.ts'
 import type { Move, State } from './state'
 
-function evaluateCapture(card: Card, capture: Pile, tableSize: number, hasCapturedMostDenari: boolean): number {
+function bestPrimes(pile: Pile, initial: Map<Suit, number> = new Map()): Map<Suit, number> {
+  return pile.reduce((best, card) => {
+    const pts = primePoints(card)
+    if (pts > (best.get(card[1]) ?? 0)) best.set(card[1], pts)
+    return best
+  }, new Map<Suit, number>(initial))
+}
+
+function evaluatePrimes(cards: Pile, currentBest: Map<Suit, number>): number {
+  const next = bestPrimes(cards, currentBest)
+  return Array.from(next).reduce((delta, [suit, pts]) => delta + pts - (currentBest.get(suit) ?? 0), 0)
+}
+
+function evaluateCapture(card: Card, capture: Pile, tableSize: number, currentBest: Map<Suit, number>): number {
+  const scopaWeight = capture.length === tableSize ? 1000 : 0
   const scoredCards = [...capture, card]
-  const averagePrimeWeight =
-    scoredCards.reduce((total, scoredCard) => total + primePoints(scoredCard), 0) / scoredCards.length
+  const settebelloWeight = scoredCards.some(isSettebello) ? 20 : 0
+  const denariWeight = scoredCards.filter(isDenari).filter((c) => !isSettebello(c)).length * 10
+  const primeWeight = evaluatePrimes(scoredCards, currentBest)
 
-  const denariWeight = hasCapturedMostDenari
-    ? scoredCards.filter(isSettebello).length * 10
-    : scoredCards.filter(isDenari).length * 10
-
-  return averagePrimeWeight + denariWeight + (capture.length === tableSize ? 1000 : 0)
+  return scopaWeight + settebelloWeight + denariWeight + primeWeight + capture.length
 }
 
 function enablesOpponentScopa(card: Card, table: Pile): boolean {
@@ -29,9 +40,9 @@ function evaluateDiscard(card: Card, table: Pile): number {
 export async function move(game: State): Promise<Move> {
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
-  const hand = game.players[game.turn].hand
+  const { hand, pile } = game.players[game.turn]
   const table = game.table
-  const hasCapturedMostDenari = game.players[game.turn].pile.filter(isDenari).length > 5
+  const currentBestPrimes = bestPrimes(pile)
 
   let bestMove: Move | null = null
   let bestScore = -Infinity
@@ -45,7 +56,7 @@ export async function move(game: State): Promise<Move> {
 
     const availableCaptures = findCaptures(card[0], table)
     for (const capture of availableCaptures) {
-      const score = evaluateCapture(card, capture, table.length, hasCapturedMostDenari)
+      const score = evaluateCapture(card, capture, table.length, currentBestPrimes)
       if (score > bestScore) {
         bestScore = score
         bestMove = { card, capture }

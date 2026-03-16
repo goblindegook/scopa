@@ -1,6 +1,6 @@
-import {describe, expect, test} from 'vitest'
-import {bastoni, coppe, denari, spade} from './cards'
-import {score} from './scores'
+import { describe, expect, test } from 'vitest'
+import { bastoni, coppe, denari, spade } from './cards'
+import { score } from './scores'
 
 describe('prime', () => {
   test.each([

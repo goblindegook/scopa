@@ -4,7 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-Node.js is managed via [mise](https://mise.jdx.dev/). Prefix commands with `mise exec --` if your shell hasn't been activated:
+Node.js is managed via [mise](https://mise.jdx.dev/). Prefix commands with `mise exec --` if your shell hasn't been
+activated:
 
 ```bash
 mise exec -- npm run dev          # Start dev server (Vite)
@@ -29,19 +30,25 @@ The codebase is split into two clear layers:
 
 Pure game logic with no UI dependencies. All public functions return `Result<State, Error>` from `@pacote/result`.
 
-- **`cards.ts`** — Card type (`[Value, Suit]` tuple), Suit enum (DENARI, COPPE, BASTONI, SPADE), values 1–10, and utility functions (`deck()`, `isSame()`, `hasCard()`, etc.)
+- **`cards.ts`** — Card type (`[Value, Suit]` tuple), Suit enum (DENARI, COPPE, BASTONI, SPADE), values 1–10, and
+  utility functions (`deck()`, `isSame()`, `hasCard()`, etc.)
 - **`state.ts`** — Shared types: `State`, `Player`, `Move`
-- **`capture.ts`** — `findCaptures(total, table)`: finds all valid card combinations that sum to a given value, preferring minimum-length captures
-- **`scopa.ts`** — `deal(cards, options)` and `play(move, game)`: core game state machine, returns `Result<State, Error>`
+- **`capture.ts`** — `findCaptures(total, table)`: finds all valid card combinations that sum to a given value,
+  preferring minimum-length captures
+- **`scopa.ts`** — `deal(cards, options)` and `play(move, game)`: core game state machine, returns
+  `Result<State, Error>`
 - **`scores.ts`** — `score(players)`: computes end-of-game scores (scope, most cards, most denari, settebello, primiera)
-- **`opponent.ts`** — `move(game)`: async AI opponent that evaluates captures by prime points, denari preference, and scopa opportunity
+- **`opponent.ts`** — `move(game)`: async AI opponent that evaluates captures by prime points, denari preference, and
+  scopa opportunity
 
 ### UI (`src/ui/`)
 
 React components using Emotion styled-components and Framer Motion for card animations.
 
-- **`Game.tsx`** — Root game component. Manages game state, animation phase machine (`idle → play → capture`), and coordinates between player interactions and opponent turns
-- **`Card.tsx`** — Card rendering (lazy-loads JPG assets from `src/ui/assets/{suit}/{value}.jpg`), `AnimatedCard` (fixed-position overlay for move animations), `DealtCard` (deal-in animation wrapper), and `Duration` constants
+- **`Game.tsx`** — Root game component. Manages game state, animation phase machine (`idle → play → capture`), and
+  coordinates between player interactions and opponent turns
+- **`Card.tsx`** — Card rendering (lazy-loads JPG assets from `src/ui/assets/{suit}/{value}.jpg`), `AnimatedCard` (
+  fixed-position overlay for move animations), `DealtCard` (deal-in animation wrapper), and `Duration` constants
 - **`Player.tsx` / `Opponent.tsx`** — Player hand and captured pile display (face-up vs. face-down)
 - **`Table.tsx`** — Table area with selectable cards for capture selection
 - **`ScoreBoard.tsx`** — End-of-game score display and `GameOver` screen
@@ -61,11 +68,15 @@ This project uses Test-Driven Development. The red-green-refactor cycle is manda
 
 Never write implementation code without a failing test first. Never skip the refactor step.
 
+Do not add comments that explain what the test is obviously doing. Focus instead on a good test description.
+
 ## Key Patterns
 
 - **Card representation**: `Card = [Value, Suit]` tuple — always accessed by index (`card[0]` = value, `card[1]` = suit)
-- **Result type**: Engine functions return `Ok(state)` or `Err(error)` — use `fold`, `isOk`, `isErr` from `@pacote/result`
+- **Result type**: Engine functions return `Ok(state)` or `Err(error)` — use `fold`, `isOk`, `isErr` from
+  `@pacote/result`
 - **Game states**: `'initial'` → `'play'` → `'stop'`
-- **Animation phases**: `AnimationController` in `Game.tsx` tracks `idle | play | capture` phase with position data for flying card animations
+- **Animation phases**: `AnimationController` in `Game.tsx` tracks `idle | play | capture` phase with position data for
+  flying card animations
 - **Styling**: Emotion `styled` with single quotes, no semicolons, 120-char line width (Biome config)
 - **Testing**: Vitest + Testing Library for UI, `fast-check` for property-based tests in engine (see `scopa.test.ts`)
