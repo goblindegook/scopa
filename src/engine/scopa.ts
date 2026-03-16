@@ -67,21 +67,34 @@ function next({ card, capture }: Move, game: State): State {
 
   const handAfterMove = withoutCards([card], players[turn].hand)
 
-  const [nextHand, nextPile] = handAfterMove.length ? [handAfterMove, pile] : splitAt(3, pile)
-
   const nextTurn = turn < players.length - 1 ? turn + 1 : 0
-  const isLastMove = players[nextTurn].hand.length === 0
+  const allHandsEmpty =
+    handAfterMove.length === 0 && players.every((player, idx) => idx === turn || player.hand.length === 0)
+  const isLastMove = allHandsEmpty && pile.length === 0
 
-  const nextPlayers = players.map((player, idx) =>
+  const playersAfterMove = players.map((player, idx) =>
     idx !== turn
       ? player
       : {
           ...player,
-          hand: nextHand,
+          hand: handAfterMove,
           pile: [...player.pile, ...capture, ...(capture.length ? [card] : [])],
           scope: nextTable.length || isLastMove ? player.scope : player.scope + 1,
         },
   )
+
+  const [dealCards, remainingPile] = splitAt(players.length * 3, pile)
+  const [nextPlayers, nextPile] =
+    allHandsEmpty && pile.length > 0
+      ? [
+          playersAfterMove.map((player, idx) => ({
+            ...player,
+            hand: dealCards.slice(idx * 3, (idx + 1) * 3),
+          })),
+          remainingPile,
+        ]
+      : [playersAfterMove, pile]
+
   const nextState = nextPlayers[nextTurn].hand.length ? 'play' : 'stop'
 
   const finalPlayers =

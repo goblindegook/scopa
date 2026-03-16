@@ -406,10 +406,8 @@ describe('play', () => {
     )
   })
 
-  test(`three cards are drawn from the pile when a player's hand is empty`, () => {
+  test(`a player's hand stays empty while other players still have cards`, () => {
     const card = denari(3)
-    const topOfPile = [coppe(4), bastoni(4), spade(4)]
-    const restOfPile = [coppe(8)]
     const game: State = {
       state: 'play',
       turn: 0,
@@ -418,20 +416,45 @@ describe('play', () => {
         { id: 0, hand: [card], pile: [], scope: 0 },
         { id: 1, hand: [denari(5)], pile: [], scope: 0 },
       ],
-      pile: [...topOfPile, ...restOfPile],
+      pile: [coppe(4), bastoni(4), spade(4), coppe(8)],
       table: [coppe(1)],
       lastCaptured: [],
     }
 
-    const next = play({ card, capture: [] }, game)
+    const next = getGameState(play({ card, capture: [] }, game))
 
-    expect(getGameState(next).players[0].hand).toEqual(topOfPile)
-    expect(next).toMatchObject(
-      Ok({
-        pile: restOfPile,
-        state: 'play',
-      }),
+    expect(next.players[0].hand).toHaveLength(0)
+    expect(next.pile).toHaveLength(4)
+  })
+
+  test('cards are dealt to all players simultaneously when all hands are empty', () => {
+    const player0Card = denari(3)
+    const player1Card = denari(5)
+    const topOfPile = [coppe(4), bastoni(4), spade(4), denari(4), bastoni(5), spade(5)]
+    const restOfPile = [coppe(8)]
+    const afterPlayer0 = getGameState(
+      play(
+        { card: player0Card, capture: [] },
+        {
+          state: 'play',
+          turn: 0,
+          wins: [0, 0],
+          players: [
+            { id: 0, hand: [player0Card], pile: [], scope: 0 },
+            { id: 1, hand: [player1Card], pile: [], scope: 0 },
+          ],
+          pile: [...topOfPile, ...restOfPile],
+          table: [coppe(1)],
+          lastCaptured: [],
+        },
+      ),
     )
+
+    const afterPlayer1 = getGameState(play({ card: player1Card, capture: [] }, afterPlayer0))
+
+    expect(afterPlayer1.players[0].hand).toEqual([coppe(4), bastoni(4), spade(4)])
+    expect(afterPlayer1.players[1].hand).toEqual([denari(4), bastoni(5), spade(5)])
+    expect(afterPlayer1.pile).toEqual(restOfPile)
   })
 
   test(`the game ends when the next player's hand is empty and they can't draw any more cards`, () => {
