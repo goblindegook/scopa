@@ -7,7 +7,7 @@ import type { Score } from '../engine/scores'
 import type { Move, State } from '../engine/state'
 import { Button } from './Button'
 import { AnimatedCard, DealtCard, Card as DisplayCard, Duration } from './Card'
-import { Opponent, OpponentCard } from './Opponent'
+import { Opponent, OPPONENT_SCALE, OpponentCard } from './Opponent'
 import { Player, PlayerCard } from './Player'
 import { preloadCardAssets } from './preload'
 import { GameOver } from './ScoreBoard'
@@ -238,15 +238,17 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           const playCardFrom = playCardFromRef.current
           playCardFromRef.current = null
 
+          const isOpponentTurn = game.turn !== MAIN_PLAYER
+          const baseInitial =
+            getCardId(playCardFrom?.card) === getCardId(move.card)
+              ? { ...playCardFrom?.position }
+              : (getCardPosition(move.card) ?? { x: 0, y: 0 })
           setAnimation({
             phase: 'play',
             activePlayerId: game.turn,
             playCard: move.card,
-            playInitial:
-              getCardId(playCardFrom?.card) === getCardId(move.card)
-                ? { ...playCardFrom?.position }
-                : (getCardPosition(move.card) ?? { x: 0, y: 0 }),
-            playFaceDown: game.turn !== MAIN_PLAYER,
+            playInitial: isOpponentTurn ? { ...baseInitial, scale: OPPONENT_SCALE } : baseInitial,
+            playFaceDown: isOpponentTurn,
           })
 
           previousTableRef.current = game.table
@@ -295,8 +297,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           ? prev
           : {
               ...prev,
-              playInitial: getCardPosition(prev.playCard) ?? prev.playInitial,
-              playAnimate: { x: animateRect.left, y: animateRect.top },
+              playInitial: { ...prev.playInitial, ...(getCardPosition(prev.playCard) ?? {}) },
+              playAnimate: { x: animateRect.left, y: animateRect.top, scale: 1 },
             },
       )
     },

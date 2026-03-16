@@ -69,6 +69,9 @@ function next({ card, capture }: Move, game: State): State {
 
   const [nextHand, nextPile] = handAfterMove.length ? [handAfterMove, pile] : splitAt(3, pile)
 
+  const nextTurn = turn < players.length - 1 ? turn + 1 : 0
+  const isLastMove = players[nextTurn].hand.length === 0
+
   const nextPlayers = players.map((player, idx) =>
     idx !== turn
       ? player
@@ -76,11 +79,9 @@ function next({ card, capture }: Move, game: State): State {
           ...player,
           hand: nextHand,
           pile: [...player.pile, ...capture, ...(capture.length ? [card] : [])],
-          scope: nextTable.length ? player.scope : player.scope + 1,
+          scope: nextTable.length || isLastMove ? player.scope : player.scope + 1,
         },
   )
-
-  const nextTurn = turn < players.length - 1 ? turn + 1 : 0
   const nextState = nextPlayers[nextTurn].hand.length ? 'play' : 'stop'
 
   const finalPlayers =

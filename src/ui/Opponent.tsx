@@ -4,13 +4,16 @@ import type { Card as CardType } from '../engine/cards'
 import { Card } from './Card'
 import { Stack } from './Stack'
 
+export const OPPONENT_SCALE = 2 / 3
+
 const CardWrapper = styled.div<{ opacity?: number }>`
   display: inline-block;
   padding: 0.5rem;
   opacity: ${({ opacity = 1 }) => opacity};
+  transform: scale(${OPPONENT_SCALE});
 
   @media (max-height: 600px) {
-    transform: scale(0.6);
+    transform: scale(${OPPONENT_SCALE * 0.6});
   }
 `
 
@@ -39,8 +42,10 @@ const OpponentHand = styled('aside')`
 `
 
 const OpponentPile = styled(Stack)`
+  transform: scale(${OPPONENT_SCALE});
+
   @media (max-height: 600px) {
-    transform: scale(0.6);
+    transform: scale(${OPPONENT_SCALE * 0.6});
   }
 `
 

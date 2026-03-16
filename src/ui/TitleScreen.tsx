@@ -16,7 +16,7 @@ const TitleScreenContent = styled('div')`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3rem;
+  gap: 2rem;
   background-color: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -27,8 +27,8 @@ const TitleScreenContent = styled('div')`
   width: 100%;
 
   @media (max-height: 600px) {
+    gap: 1rem;
     padding: 2rem;
-    gap: 2rem;
   }
 `
 

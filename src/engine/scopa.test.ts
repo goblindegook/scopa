@@ -335,6 +335,28 @@ describe('play', () => {
     expect(isOk(play({ card, capture }, game))).toBe(true)
   })
 
+  test('a scopa is not awarded when clearing the table with the last card of the game', () => {
+    const card = denari(3)
+    const table = [coppe(1), bastoni(1), spade(1)]
+    const game: State = {
+      state: 'play',
+      turn: 0,
+      wins: [0, 0],
+      players: [
+        { id: 0, hand: [card], pile: [], scope: 0 },
+        { id: 1, hand: [], pile: [], scope: 0 },
+      ],
+      pile: [],
+      table,
+      lastCaptured: [],
+    }
+
+    const next = play({ card, capture: [] }, game)
+
+    expect(getGameState(next).players[0].scope).toBe(0)
+    expect(next).toMatchObject(Ok({ state: 'stop' }))
+  })
+
   test('a player scores a scopa when they capture all the cards on the table', () => {
     const card = denari(3)
     const table = [coppe(1), bastoni(1), spade(1)]

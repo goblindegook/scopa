@@ -33,6 +33,7 @@
     "@vitejs/plugin-react-swc": "^4.3.0",
     "@vitest/coverage-v8": "^4.1.0",
     "@vitest/ui": "^4.1.0",
+    "baseline-browser-mapping": "^2.10.8",
     "fast-check": "^4.6.0",
     "jsdom": "^29.0.0",
     "typescript": "^5.9.3",
