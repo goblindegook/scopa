@@ -48,7 +48,7 @@ test('renders player names and scores', () => {
 
   const table = screen.getByRole('table', { name: 'Game scoreboard' })
 
-  const scopeRowCells = getCellsByRowHeader(table, 'Scope')
+  const scopeRowCells = getCellsByRowHeader(table, 'Sweeps')
   expect(scopeRowCells[0]).toHaveTextContent('2')
   expect(scopeRowCells[1]).toHaveTextContent('1')
 
@@ -58,7 +58,7 @@ test('renders player names and scores', () => {
   expect(capturedRowCells[1]).toHaveTextContent(/20.*\+1/)
   expect(capturedRowCells[1]).toHaveAttribute('aria-label', '20, bonus point awarded')
 
-  const denariRowCells = getCellsByRowHeader(table, 'Denari')
+  const denariRowCells = getCellsByRowHeader(table, 'Coins')
   expect(denariRowCells[0]).toHaveTextContent('5')
   expect(denariRowCells[1]).toHaveTextContent(/6.*\+1/)
   expect(denariRowCells[1]).toHaveAttribute('aria-label', '6, bonus point awarded')
@@ -68,7 +68,7 @@ test('renders player names and scores', () => {
   expect(setteBelloRowCells[0]).toHaveAttribute('aria-label', '1, bonus point awarded')
   expect(setteBelloRowCells[1]).toHaveTextContent('0')
 
-  const primieraRowCells = getCellsByRowHeader(table, 'Primiera')
+  const primieraRowCells = getCellsByRowHeader(table, 'Prime')
   expect(primieraRowCells[0]).toHaveTextContent('45')
   expect(primieraRowCells[1]).toHaveTextContent(/50.*\+1/)
   expect(primieraRowCells[1]).toHaveAttribute('aria-label', '50, bonus point awarded')

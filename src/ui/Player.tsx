@@ -1,5 +1,6 @@
 import styled from '@emotion/styled'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Card as CardType } from '../engine/cards'
 import { Stack } from './Stack'
 
@@ -60,13 +61,16 @@ export const PlayerCard = styled('button')`
 
 type PlayerProps = React.PropsWithChildren<{
   pile: readonly CardType[]
-  index: number
+  avatar: string
 }>
 
-export const Player = React.forwardRef<HTMLElement, PlayerProps>(({ children, index, pile }, ref) => (
-  <PlayerArea>
-    <PlayerHand>{children}</PlayerHand>
-    <Stack ref={ref} pile={pile} title={`Player ${index + 1} pile: ${pile.length} cards`} />
-  </PlayerArea>
-))
+export const Player = React.forwardRef<HTMLElement, PlayerProps>(({ children, avatar, pile }, ref) => {
+  const { t } = useTranslation()
+  return (
+    <PlayerArea>
+      <PlayerHand>{children}</PlayerHand>
+      <Stack ref={ref} pile={pile} title={t('playerPile', { avatar, count: pile.length })} />
+    </PlayerArea>
+  )
+})
 Player.displayName = 'Player'

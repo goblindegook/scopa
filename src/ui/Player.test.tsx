@@ -1,7 +1,8 @@
 import { cleanup, render, screen } from '@testing-library/react'
-import { assert, constantFrom, integer, property, tuple, uniqueArray } from 'fast-check'
+import { assert, constantFrom, property, tuple, uniqueArray } from 'fast-check'
 import { afterEach, expect, test } from 'vitest'
 import { Suit, type Value } from '../engine/cards'
+import i18n from './i18n'
 import { Player } from './Player'
 
 afterEach(() => {
@@ -17,10 +18,10 @@ const cardSet = (maxLength: number) => uniqueArray(arbitraryCard, { maxLength, s
 
 test('renders pile', () => {
   assert(
-    property(cardSet(10), integer({ min: 1, max: 6 }), (pile, index) => {
+    property(cardSet(10), (pile) => {
       cleanup()
-      render(<Player index={index} pile={pile} />)
-      const pileElement = screen.getByTitle(`Player ${index + 1} pile: ${pile.length} cards`)
+      render(<Player avatar="🐵" pile={pile} />)
+      const pileElement = screen.getByTitle(i18n.t('playerPile', { avatar: '🐵', count: pile.length }))
       expect(pileElement.children).toHaveLength(pile.length)
     }),
   )

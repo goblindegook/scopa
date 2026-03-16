@@ -1,6 +1,7 @@
 import styled from '@emotion/styled'
 import { motion, type Target } from 'framer-motion'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { type Card as CardType, Suit } from '../engine/cards'
 
 export const Duration = {
@@ -11,28 +12,11 @@ export const Duration = {
   TURN: 0.5,
 } as const
 
-export const VALUES: Record<number, string> = {
-  1: 'Asso',
-  2: 'Due',
-  3: 'Tre',
-  4: 'Quattro',
-  5: 'Cinque',
-  6: 'Sei',
-  7: 'Sette',
-  8: 'Fante',
-  9: 'Cavallo',
-  10: 'Re',
-}
-
 export const SUITS: Record<string, string> = {
   [Suit.BASTONI]: 'bastoni',
   [Suit.COPPE]: 'coppe',
   [Suit.DENARI]: 'denari',
   [Suit.SPADE]: 'spade',
-}
-
-function name([value, suit]: CardType) {
-  return `${VALUES[value]} di ${SUITS[suit]}`
 }
 
 const Face = styled('img')`
@@ -102,6 +86,7 @@ export interface CardProps {
 }
 
 export const Card = ({ className, faceDown, card }: CardProps) => {
+  const { t } = useTranslation()
   const [src, setSrc] = React.useState<string | undefined>()
   const isMountedRef = React.useRef(true)
 
@@ -118,14 +103,20 @@ export const Card = ({ className, faceDown, card }: CardProps) => {
     }
   }, [card])
 
+  const cardName = React.useMemo(
+    () =>
+      card ? t('cardName', { value: t(`cardValues.${card[0]}`), suit: t(`cardSuits.${SUITS[card[1]]}`) }) : undefined,
+    [card, t],
+  )
+
   return faceDown || !card ? (
     <Back className={className} style={!card ? { opacity: 0 } : undefined} />
   ) : (
     <Face
       className={className}
       src={src}
-      title={name(card)}
-      alt={name(card)}
+      title={cardName}
+      alt={cardName}
       draggable={false}
       onDragStart={(event) => event.preventDefault()}
     />

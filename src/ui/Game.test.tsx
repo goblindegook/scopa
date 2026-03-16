@@ -1,9 +1,15 @@
 import { Err, Ok } from '@pacote/result'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, expect, test, vi, vitest } from 'vitest'
-import { bastoni, coppe, denari, spade } from '../engine/cards'
+import { bastoni, coppe, denari, Suit, spade, type Value } from '../engine/cards'
 import type { Move, State } from '../engine/state'
+import { SUITS } from './Card'
 import { Game } from './Game'
+import i18n from './i18n'
+
+function cn(value: Value, suit: Suit): string {
+  return i18n.t('cardName', { value: i18n.t(`cardValues.${value}`), suit: i18n.t(`cardSuits.${SUITS[suit]}`) })
+}
 
 vi.mock('./preload', () => ({
   preloadCardAssets: vi.fn(async (onProgress?: (progress: number) => void) => {
@@ -118,7 +124,7 @@ test('alerts auto-dismiss after 5 seconds', async () => {
   )
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
+  fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
   expect(screen.getByRole('alert')).toHaveTextContent('test error message')
 })
 
@@ -172,12 +178,12 @@ test('card visibility', async () => {
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
-  expect(screen.getByAltText('Asso di denari')).toBeTruthy()
-  expect(screen.getByAltText('Cinque di denari')).toBeTruthy()
-  expect(screen.queryByTitle('Sei di denari')).toBeFalsy()
-  expect(screen.queryByTitle('Tre di denari')).toBeFalsy()
-  expect(screen.queryByTitle('Due di denari')).toBeFalsy()
-  expect(screen.queryByTitle('Quattro di denari')).toBeFalsy()
+  expect(screen.getByAltText(cn(1, Suit.DENARI))).toBeTruthy()
+  expect(screen.getByAltText(cn(5, Suit.DENARI))).toBeTruthy()
+  expect(screen.queryByTitle(cn(6, Suit.DENARI))).toBeFalsy()
+  expect(screen.queryByTitle(cn(3, Suit.DENARI))).toBeFalsy()
+  expect(screen.queryByTitle(cn(2, Suit.DENARI))).toBeFalsy()
+  expect(screen.queryByTitle(cn(4, Suit.DENARI))).toBeFalsy()
 })
 
 test('player piles', async () => {
@@ -206,8 +212,8 @@ test('player piles', async () => {
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
-  expect(screen.getByTitle('Player 1 pile: 2 cards')).toBeTruthy()
-  expect(screen.getByTitle('Player 2 pile: 3 cards')).toBeTruthy()
+  expect(screen.getByTitle('🐵 pile: 2 cards')).toBeTruthy()
+  expect(screen.getByTitle('🤖 pile: 3 cards')).toBeTruthy()
 })
 
 test('allow playing a card', async () => {
@@ -232,10 +238,10 @@ test('allow playing a card', async () => {
   render(<Game onStart={() => Ok(initialState)} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
-  fireEvent.click(screen.getByAltText('Asso di denari'))
+  fireEvent.click(screen.getByAltText(cn(1, Suit.DENARI)))
 
   expect(onPlay).toHaveBeenCalledWith({ card: denari(1), capture: [] }, initialState)
-  expect(screen.getByAltText('Due di denari')).toBeTruthy()
+  expect(screen.getByAltText(cn(2, Suit.DENARI))).toBeTruthy()
 })
 
 test('allow playing a card by dragging it to the table', async () => {
@@ -261,7 +267,7 @@ test('allow playing a card by dragging it to the table', async () => {
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
-  const card = screen.getByRole('button', { name: 'Asso di denari' })
+  const card = screen.getByRole('button', { name: cn(1, Suit.DENARI) })
   const table = screen.getByTestId('table')
   vitest.spyOn(table, 'getBoundingClientRect').mockReturnValue({
     left: 0,
@@ -293,7 +299,7 @@ test('allow playing a card by dragging it to the table', async () => {
   await waitFor(() => {
     expect(onPlay).toHaveBeenCalledWith({ card: denari(1), capture: [] }, initialState)
   })
-  expect(screen.getByAltText('Due di denari')).toBeTruthy()
+  expect(screen.getByAltText(cn(2, Suit.DENARI))).toBeTruthy()
 })
 
 test(`block interaction when not a player's turn`, async () => {
@@ -318,9 +324,9 @@ test(`block interaction when not a player's turn`, async () => {
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
-  expect(screen.getByAltText('Sette di denari').previousSibling).toBeDisabled()
+  expect(screen.getByAltText(cn(7, Suit.DENARI)).previousSibling).toBeDisabled()
 
-  const card = screen.getByAltText('Asso di denari')
+  const card = screen.getByAltText(cn(1, Suit.DENARI))
 
   fireEvent.click(card)
 
@@ -354,8 +360,8 @@ test('select cards to capture', async () => {
   render(<Game onStart={() => Ok(initialState)} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
-  fireEvent.click(screen.getByRole('checkbox', { name: 'Asso di coppe' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
+  fireEvent.click(screen.getByRole('checkbox', { name: cn(1, Suit.COPPE) }))
+  fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
 
   expect(onPlay).toHaveBeenCalledWith({ card: denari(1), capture: [coppe(1)] }, initialState)
 })
@@ -383,7 +389,7 @@ test('invalid move handling', async () => {
   )
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
+  fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
 
   expect(screen.getByText(message)).toBeTruthy()
 })
@@ -423,7 +429,7 @@ test('computer opponent plays a card', async () => {
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
-  await screen.findByRole('button', { name: 'Asso di denari' })
+  await screen.findByRole('button', { name: cn(1, Suit.DENARI) })
 })
 
 test('end game and show scores', async () => {
@@ -513,7 +519,7 @@ test('tracks hands won and carries them to next hand', async () => {
   render(<Game onStart={onStart} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={onScore} />)
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
+  fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
   fireEvent.click(await screen.findByRole('button', { name: 'Next Hand' }))
 
   expect(screen.getByText('🐵 1')).toBeTruthy()
@@ -587,7 +593,7 @@ test('starting a new game resets running round wins', async () => {
   render(<Game onStart={onStart} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={onScore} />)
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Asso di denari' }))
+  fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
   fireEvent.click(await screen.findByRole('button', { name: 'Next Hand' }))
   expect(screen.getByText('🐵 1')).toBeTruthy()
 
@@ -679,7 +685,7 @@ test('renders "Scopa!" when a player captures all cards on the table', async () 
   )
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
-  fireEvent.click(screen.getByRole('button', { name: 'Cinque di denari' }))
+  fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
 
   expect(screen.getByText('Scopa!')).toBeTruthy()
 })
@@ -721,7 +727,7 @@ test('does not render "Scopa!" when a player does not capture all cards on the t
   )
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
-  fireEvent.click(screen.getByRole('button', { name: 'Due di bastoni' }))
+  fireEvent.click(screen.getByRole('button', { name: cn(2, Suit.BASTONI) }))
 
   expect(screen.queryByText('Scopa!')).not.toBeTruthy()
 })

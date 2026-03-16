@@ -6,6 +6,6 @@
 
 # Scopa
 
-![Netlify](https://img.shields.io/netlify/8ee5c460-592a-4377-876c-734dbe1a6562)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/8ee5c460-592a-4377-876c-734dbe1a6562/deploy-status)](https://app.netlify.com/projects/scopa/deploys)
 
 The Italian game of Scopa. [Play it here.](https://scopa.netlify.app/)

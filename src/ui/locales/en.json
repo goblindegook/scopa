@@ -1,0 +1,46 @@
+{
+  "chooseAvatar": "Choose your avatar",
+  "selectAvatar": "Select avatar {emoji}",
+  "resume": "Resume",
+  "newGame": "New Game",
+  "scopa": "Scopa!",
+  "nextHand": "Next Hand",
+  "backToTitle": "Back to Title Screen",
+  "draw": "It's a draw",
+  "winsHand": "{avatar} wins the hand",
+  "winsGame": "{avatar} wins the game",
+  "handsWon": "Hands won",
+  "gameScoreboard": "Game scoreboard",
+  "gameScoreboardCaption": "Game scoreboard showing scores for each player",
+  "scoreCategory": "Score category",
+  "bonusPoint": "{value}, bonus point awarded",
+  "language": "Language",
+  "cardName": "{value} of {suit}",
+  "cardValues": {
+    "1": "Ace",
+    "2": "Two",
+    "3": "Three",
+    "4": "Four",
+    "5": "Five",
+    "6": "Six",
+    "7": "Seven",
+    "8": "Knave",
+    "9": "Knight",
+    "10": "King"
+  },
+  "cardSuits": {
+    "bastoni": "Clubs",
+    "coppe": "Cups",
+    "denari": "Coins",
+    "spade": "Swords"
+  },
+  "playerPile": "{avatar} pile: {count, plural, one {# card} other {# cards}}",
+  "scores": {
+    "Scope": "Sweeps",
+    "Captured": "Captured",
+    "Denari": "Coins",
+    "Sette Bello": "Sette Bello",
+    "Primiera": "Prime",
+    "Total": "Total"
+  }
+}

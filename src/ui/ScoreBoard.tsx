@@ -1,5 +1,6 @@
 import styled from '@emotion/styled'
 import type React from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Score } from '../engine/scores'
 import { Button } from './Button'
 
@@ -110,7 +111,7 @@ const ScoreBoardStack = styled('section')`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  
+
   @media (max-height: 600px) {
     gap: 0.5rem;
   };
@@ -157,24 +158,26 @@ interface ScoreBoardProps {
 }
 
 export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, handWins, playerAvatars }) => {
+  const { t } = useTranslation()
+
   if (scores.length === 0) return null
 
   return (
     <ScoreBoardStack>
       <WinnerTitle>{title}</WinnerTitle>
-      <RunningTotal aria-label="Hands won">
+      <RunningTotal aria-label={t('handsWon')}>
         {playerAvatars.map((playerAvatar, index) => (
           <RunningTotalBox key={`running-total-${playerAvatar}`}>
             {playerAvatar} {handWins[index]}
           </RunningTotalBox>
         ))}
       </RunningTotal>
-      <Board aria-label="Game scoreboard">
-        <caption className="sr-only">Game scoreboard showing scores for each player</caption>
+      <Board aria-label={t('gameScoreboard')}>
+        <caption className="sr-only">{t('gameScoreboardCaption')}</caption>
         <thead>
           <tr>
             <th scope="col" className="sr-only">
-              Score category
+              {t('scoreCategory')}
             </th>
             {scores.map(({ playerId }) => (
               <PlayerHeader key={`player-header-${playerId}`} scope="col">
@@ -189,7 +192,7 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, handWins,
             const isScope = detail.label === 'Scope'
             return (
               <tr key={detail.label}>
-                <RowHeader scope="row">{detail.label}</RowHeader>
+                <RowHeader scope="row">{t(`scores.${detail.label}`)}</RowHeader>
                 {scores.map(({ playerId, details }) => {
                   const isWinner = winners.has(playerId)
                   const value = details[index]?.value ?? 0
@@ -197,7 +200,7 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, handWins,
                     <ScoreCell
                       key={`${playerId}-${detail.label}`}
                       winner={isWinner}
-                      {...(isWinner && !isScope && { 'aria-label': `${value}, bonus point awarded` })}
+                      {...(isWinner && !isScope && { 'aria-label': t('bonusPoint', { value }) })}
                     >
                       {!isScope ? (
                         <CellContent>
@@ -214,7 +217,7 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, handWins,
             )
           })}
           <TotalRow>
-            <RowHeader scope="row">Total</RowHeader>
+            <RowHeader scope="row">{t('scores.Total')}</RowHeader>
             {scores.map(({ playerId, total }) => (
               <Cell key={`player-total-${playerId}`}>{total}</Cell>
             ))}
@@ -273,27 +276,27 @@ export const GameOver: React.FC<GameOverProps> = ({
   playerAvatars,
   onNextHand,
   onReset,
-}) => (
-  <GameOverContainer>
-    <GameOverContent>
-      <ScoreBoard
-        scores={scores}
-        title={
-          handWinner == null
-            ? "It's a draw"
-            : gameWinner == null
-              ? `${playerAvatars[handWinner]} wins the hand`
-              : `${playerAvatars[gameWinner]} wins the game`
-        }
-        handWins={handWins}
-        playerAvatars={playerAvatars}
-      />
-      <Button onClick={gameWinner == null ? onNextHand : onReset}>
-        {gameWinner == null ? 'Next Hand' : 'Back to Title Screen'}
-      </Button>
-    </GameOverContent>
-  </GameOverContainer>
-)
+}) => {
+  const { t } = useTranslation()
+
+  const title =
+    handWinner == null
+      ? t('draw')
+      : gameWinner == null
+        ? t('winsHand', { avatar: playerAvatars[handWinner] })
+        : t('winsGame', { avatar: playerAvatars[gameWinner] })
+
+  return (
+    <GameOverContainer>
+      <GameOverContent>
+        <ScoreBoard scores={scores} title={title} handWins={handWins} playerAvatars={playerAvatars} />
+        <Button onClick={gameWinner == null ? onNextHand : onReset}>
+          {gameWinner == null ? t('nextHand') : t('backToTitle')}
+        </Button>
+      </GameOverContent>
+    </GameOverContainer>
+  )
+}
 
 const getWinners = (scores: readonly Score[], index: number): Set<number> => {
   const values = scores.map(({ details: playerDetails }) => playerDetails[index]?.value ?? 0)

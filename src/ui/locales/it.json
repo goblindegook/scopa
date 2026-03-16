@@ -1,0 +1,46 @@
+{
+  "chooseAvatar": "Scegli il tuo avatar",
+  "selectAvatar": "Seleziona avatar {emoji}",
+  "resume": "Riprendi",
+  "newGame": "Nuova Partita",
+  "scopa": "Scopa!",
+  "nextHand": "Prossima Mano",
+  "backToTitle": "Torna al Titolo",
+  "draw": "Pareggio",
+  "winsHand": "{avatar} vince la mano",
+  "winsGame": "{avatar} vince la partita",
+  "handsWon": "Mani vinte",
+  "gameScoreboard": "Punteggio della partita",
+  "gameScoreboardCaption": "Punteggio della partita per ogni giocatore",
+  "scoreCategory": "Categoria",
+  "bonusPoint": "{value}, punto bonus",
+  "language": "Lingua",
+  "cardName": "{value} di {suit}",
+  "cardValues": {
+    "1": "Asso",
+    "2": "Due",
+    "3": "Tre",
+    "4": "Quattro",
+    "5": "Cinque",
+    "6": "Sei",
+    "7": "Sette",
+    "8": "Fante",
+    "9": "Cavallo",
+    "10": "Re"
+  },
+  "cardSuits": {
+    "bastoni": "bastoni",
+    "coppe": "coppe",
+    "denari": "denari",
+    "spade": "spade"
+  },
+  "playerPile": "Mazzo di {avatar}: {count, plural, one {# carta} other {# carte}}",
+  "scores": {
+    "Scope": "Scope",
+    "Captured": "Catturate",
+    "Denari": "Denari",
+    "Sette Bello": "Sette Bello",
+    "Primiera": "Primiera",
+    "Total": "Totale"
+  }
+}

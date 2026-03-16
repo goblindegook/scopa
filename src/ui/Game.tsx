@@ -2,6 +2,7 @@ import styled from '@emotion/styled'
 import { fold, isErr, type Result } from '@pacote/result'
 import { AnimatePresence, motion, type Target } from 'framer-motion'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { type Card, hasCard, isSame } from '../engine/cards'
 import type { Score } from '../engine/scores'
 import type { Move, State } from '../engine/state'
@@ -135,6 +136,7 @@ type AnimationController =
   | { phase: 'capture'; captures: readonly CaptureAnimationState[] }
 
 export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) => {
+  const { t } = useTranslation()
   const [loadingProgress, setLoadingProgress] = React.useState(0)
   const [alert, showAlert] = useAlerts(3000)
   const [playerAvatars, setPlayerAvatars] = React.useState<[string, string]>(['🐵', '🤖'])
@@ -262,7 +264,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           setGame(nextState)
           setCapture([])
 
-          if (game.table.length > 0 && nextState.lastCaptured.length === game.table.length) showAlert('Scopa!')
+          if (game.table.length > 0 && nextState.lastCaptured.length === game.table.length) showAlert(t('scopa'))
 
           if (nextState.state === 'stop') handScoresRef.current = onScore(nextState.players)
         },
@@ -270,7 +272,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
         onPlay(move, game),
       )
     },
-    [onPlay, game, invalidMove, getCardPosition, onScore, showAlert],
+    [onPlay, game, invalidMove, getCardPosition, onScore, showAlert, t],
   )
 
   const { dragState, isClickSuppressed, startDragging, clearDragging } = useDragState(
@@ -396,7 +398,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           {game.state === 'play' && (
             <Header>
               <Button onClick={resetToTitle}>Scopa</Button>
-              <Turn aria-label="Hands won">
+              <Turn aria-label={t('handsWon')}>
                 {[0, 1].map((playerId) => (
                   <TurnScore
                     key={`player-score-${playerId}`}
@@ -416,6 +418,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                   key={`opponent-${player.id}`}
                   ref={getPlayerPileRef(player.id)}
                   index={player.id}
+                  avatar={playerAvatars[player.id]}
                   pile={getFilteredPile(player.id)}
                 >
                   <HandCards
@@ -534,7 +537,11 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                   />
                 ))}
           </AnimatePresence>
-          <Player ref={getPlayerPileRef(MAIN_PLAYER)} index={MAIN_PLAYER} pile={getFilteredPile(MAIN_PLAYER)}>
+          <Player
+            ref={getPlayerPileRef(MAIN_PLAYER)}
+            avatar={playerAvatars[MAIN_PLAYER]}
+            pile={getFilteredPile(MAIN_PLAYER)}
+          >
             <HandCards
               hand={game.players[MAIN_PLAYER].hand}
               previousHand={previousPlayersHandsRef.current[MAIN_PLAYER] ?? []}

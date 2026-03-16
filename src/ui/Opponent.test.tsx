@@ -2,6 +2,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { assert, constantFrom, property, tuple, uniqueArray } from 'fast-check'
 import { afterEach, expect, test } from 'vitest'
 import { Suit, type Value } from '../engine/cards'
+import i18n from './i18n'
 import { Opponent } from './Opponent'
 
 afterEach(() => {
@@ -19,8 +20,8 @@ test('renders opponent pile', () => {
   assert(
     property(cardSet(10), (pile) => {
       cleanup()
-      render(<Opponent index={1} pile={pile} />)
-      const pileElement = screen.getByTitle(`Player 2 pile: ${pile.length} cards`)
+      render(<Opponent index={1} avatar="🤖" pile={pile} />)
+      const pileElement = screen.getByTitle(i18n.t('playerPile', { avatar: '🤖', count: pile.length }))
       expect(pileElement.children).toHaveLength(pile.length)
     }),
   )

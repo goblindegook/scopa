@@ -1,5 +1,6 @@
 import styled from '@emotion/styled'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Card as CardType } from '../engine/cards'
 import { Card } from './Card'
 import { Stack } from './Stack'
@@ -52,12 +53,16 @@ const OpponentPile = styled(Stack)`
 type OpponentProps = React.PropsWithChildren<{
   pile: readonly CardType[]
   index: number
+  avatar: string
 }>
 
-export const Opponent = React.forwardRef<HTMLElement, OpponentProps>(({ children, index, pile }, ref) => (
-  <OpponentArea>
-    <OpponentHand data-testid={`p${index}-hand`}>{children}</OpponentHand>
-    <OpponentPile ref={ref} pile={pile} title={`Player ${index + 1} pile: ${pile.length} cards`} />
-  </OpponentArea>
-))
+export const Opponent = React.forwardRef<HTMLElement, OpponentProps>(({ children, index, avatar, pile }, ref) => {
+  const { t } = useTranslation()
+  return (
+    <OpponentArea>
+      <OpponentHand data-testid={`p${index}-hand`}>{children}</OpponentHand>
+      <OpponentPile ref={ref} pile={pile} title={t('playerPile', { avatar, count: pile.length })} />
+    </OpponentArea>
+  )
+})
 Opponent.displayName = 'Opponent'

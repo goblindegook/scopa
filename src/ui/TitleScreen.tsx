@@ -1,8 +1,14 @@
 import styled from '@emotion/styled'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from './Button'
 
 export const AVATARS = ['🐵', '🐶', '🦊', '🐱', '🦁', '🐷', '🐭', '🐼', '🐸', '🐙']
+
+const LANGUAGES = [
+  { code: 'en', flag: '🇬🇧', label: 'EN' },
+  { code: 'it', flag: '🇮🇹', label: 'IT' },
+] as const
 
 const TitleScreenContainer = styled('main')`
   display: flex;
@@ -13,6 +19,7 @@ const TitleScreenContainer = styled('main')`
 `
 
 const TitleScreenContent = styled('div')`
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -116,6 +123,47 @@ const ButtonRow = styled('div')`
   justify-content: center;
 `
 
+const LangRow = styled('div')`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+`
+
+const LangButton = styled('button')`
+  font-size: 1.25rem;
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.05);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  transition: border-color 0.15s, background-color 0.15s, transform 0.1s;
+  line-height: 1;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+`
+
+const LangButtonText = styled('span')`
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+`
+
 interface TitleScreenProps {
   loadingProgress: number
   onStart: (avatar: string) => void
@@ -124,6 +172,7 @@ interface TitleScreenProps {
 }
 
 export const TitleScreen = ({ loadingProgress, onStart, savedAvatar, onResume }: TitleScreenProps) => {
+  const { t, i18n } = useTranslation()
   const [selectedAvatar, setSelectedAvatar] = React.useState(AVATARS[0])
 
   return (
@@ -137,14 +186,14 @@ export const TitleScreen = ({ loadingProgress, onStart, savedAvatar, onResume }:
         ) : (
           <>
             <AvatarSection>
-              <AvatarPickerLabel>Choose your avatar</AvatarPickerLabel>
+              <AvatarPickerLabel>{t('chooseAvatar')}</AvatarPickerLabel>
               <AvatarGrid>
                 {AVATARS.map((emoji) => (
                   <AvatarButton
                     key={emoji}
                     selected={selectedAvatar === emoji}
                     onClick={() => setSelectedAvatar(emoji)}
-                    aria-label={`Select avatar ${emoji}`}
+                    aria-label={t('selectAvatar', { emoji })}
                     aria-pressed={selectedAvatar === emoji}
                   >
                     {emoji}
@@ -152,9 +201,20 @@ export const TitleScreen = ({ loadingProgress, onStart, savedAvatar, onResume }:
                 ))}
               </AvatarGrid>
             </AvatarSection>
+            <LangRow>
+              {LANGUAGES.filter(({ code }) => code !== i18n.language).map(({ code, flag, label }) => (
+                <LangButton key={code} onClick={() => i18n.changeLanguage(code)} aria-label={label}>
+                  {flag} <LangButtonText>{label}</LangButtonText>
+                </LangButton>
+              ))}
+            </LangRow>
             <ButtonRow>
-              {savedAvatar && onResume && <Button onClick={onResume}>{savedAvatar} Resume</Button>}
-              <Button onClick={() => onStart(selectedAvatar)}>New Game</Button>
+              {savedAvatar && onResume && (
+                <Button onClick={onResume}>
+                  {savedAvatar} {t('resume')}
+                </Button>
+              )}
+              <Button onClick={() => onStart(selectedAvatar)}>{t('newGame')}</Button>
             </ButtonRow>
           </>
         )}

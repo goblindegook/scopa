@@ -2,7 +2,8 @@ import { cleanup, render, waitFor } from '@testing-library/react'
 import { assert, asyncProperty, constantFrom, integer, property } from 'fast-check'
 import { afterEach, expect, test } from 'vitest'
 import { bastoni, coppe, denari, Suit, spade, type Value } from '../engine/cards'
-import { Card } from './Card'
+import { Card, SUITS } from './Card'
+import i18n from './i18n'
 
 afterEach(() => {
   cleanup()
@@ -18,7 +19,8 @@ test.each<[string, Suit]>([
     asyncProperty(integer({ min: 1, max: 10 }), async (value) => {
       cleanup()
       const screen = render(<Card card={[value as Value, suit]} />)
-      const cardElement = screen.getByTitle(`di ${match}`, {
+      const expectedSuit = i18n.t(`cardSuits.${match}`)
+      const cardElement = screen.getByTitle(expectedSuit, {
         exact: false,
       }) as HTMLImageElement
       expect(cardElement.tagName).toBe('IMG')
@@ -27,28 +29,22 @@ test.each<[string, Suit]>([
   )
 })
 
-test.each<[string, Value]>([
-  ['Asso', 1],
-  ['Due', 2],
-  ['Tre', 3],
-  ['Quattro', 4],
-  ['Cinque', 5],
-  ['Sei', 6],
-  ['Sette', 7],
-  ['Fante', 8],
-  ['Cavallo', 9],
-  ['Re', 10],
-])('render %s value cards', (match, value) => {
+test.each<Value>([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])('render value %s cards', (value) => {
   assert(
     property(constantFrom(bastoni, coppe, denari, spade), (suit) => {
       cleanup()
       const screen = render(<Card card={suit(value)} />)
-      screen.getByTitle(`${match} di`, { exact: false })
+      const expectedValue = i18n.t(`cardValues.${value}`)
+      screen.getByTitle(expectedValue, { exact: false })
     }),
   )
 })
 
 test('hidden cards have no title', () => {
   const screen = render(<Card faceDown card={denari(1)} />)
-  expect(screen.queryByAltText('Asso di denari')).not.toBeInTheDocument()
+  const expectedName = i18n.t('cardName', {
+    value: i18n.t('cardValues.1'),
+    suit: i18n.t(`cardSuits.${SUITS[Suit.DENARI]}`),
+  })
+  expect(screen.queryByAltText(expectedName)).not.toBeInTheDocument()
 })
