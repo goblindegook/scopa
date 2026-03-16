@@ -12,7 +12,7 @@ function evaluateCapture(card: Card, capture: Pile, tableSize: number, hasCaptur
     ? scoredCards.filter(isSettebello).length * 10
     : scoredCards.filter(isDenari).length * 10
 
-  return capture.length + averagePrimeWeight + denariWeight + (capture.length === tableSize ? 1000 : 0)
+  return averagePrimeWeight + denariWeight + (capture.length === tableSize ? 1000 : 0)
 }
 
 function enablesOpponentScopa(card: Card, table: Pile): boolean {

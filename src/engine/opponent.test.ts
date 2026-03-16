@@ -124,6 +124,15 @@ describe('capture moves', () => {
     expect(card).toEqual(bastoni(1))
   })
 
+  test('prefer single-card capture with higher prime over multi-card capture with lower average prime', async () => {
+    const game = setupGame([bastoni(5), bastoni(2), bastoni(4)], [coppe(5), coppe(6)])
+
+    const { card, capture } = await runMove(game)
+
+    expect(card).toEqual(coppe(5))
+    expect(capture).toEqual([bastoni(5)])
+  })
+
   test('deprioritise capturing coins suit cards when already captured more than half', async () => {
     const manyDenari = [denari(1), denari(2), denari(4), denari(5), denari(6), denari(8)]
     const game = setupGame([denari(3), bastoni(7)], [coppe(3), spade(7)], manyDenari)
