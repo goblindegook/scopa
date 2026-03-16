@@ -17,9 +17,23 @@ const PlayerArea = styled('section')`
 const PlayerHand = styled('div')`
   min-height: 150px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  gap: 1rem;
+  padding-bottom: 1rem;
+`
+
+export const FanCard = styled('div')<{ $fanIndex: number; $fanTotal: number }>`
+  margin: 0 -26px;
+  transform-origin: bottom center;
+  transform: rotate(${({ $fanIndex, $fanTotal }) => ($fanIndex - ($fanTotal - 1) / 2) * 10}deg)
+    translateY(${({ $fanIndex, $fanTotal }) => {
+      if ($fanTotal <= 1) return 0
+      const mid = ($fanTotal - 1) / 2
+      const norm = ($fanIndex - mid) / mid
+      return (norm ** 2 - 1) * 10
+    }}px);
+  transition: transform 0.2s ease-in;
+  display: inline-block;
 `
 
 export const PlayerCard = styled('button')`

@@ -8,7 +8,7 @@ import type { Move, State } from '../engine/state'
 import { Button } from './Button'
 import { AnimatedCard, DealtCard, Card as DisplayCard, Duration } from './Card'
 import { OPPONENT_SCALE, Opponent, OpponentCard } from './Opponent'
-import { Player, PlayerCard } from './Player'
+import { FanCard, Player, PlayerCard } from './Player'
 import { preloadCardAssets } from './preload'
 import { GameOver } from './ScoreBoard'
 import { Table, TableCard, TableCardLabel, TableCardSelector } from './Table'
@@ -136,7 +136,7 @@ type AnimationController =
 
 export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) => {
   const [loadingProgress, setLoadingProgress] = React.useState(0)
-  const [alert, showAlert] = useAlerts(4000)
+  const [alert, showAlert] = useAlerts(3000)
   const [playerAvatars, setPlayerAvatars] = React.useState<[string, string]>(['🐵', '🤖'])
   const [capture, setCapture] = React.useState<readonly Card[]>([])
   const [game, setGame] = React.useState<State>({
@@ -243,11 +243,17 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
             getCardId(playCardFrom?.card) === getCardId(move.card)
               ? { ...playCardFrom?.position }
               : (getCardPosition(move.card) ?? { x: 0, y: 0 })
+          const hand = game.players[game.turn]?.hand ?? []
+          const cardIndex = hand.findIndex((c) => isSame(c, move.card))
           setAnimation({
             phase: 'play',
             activePlayerId: game.turn,
             playCard: move.card,
-            playInitial: isOpponentTurn ? { ...baseInitial, scale: OPPONENT_SCALE } : baseInitial,
+            playInitial: {
+              ...baseInitial,
+              rotate: (cardIndex - (hand.length - 1) / 2) * 10,
+              ...(isOpponentTurn && { scale: OPPONENT_SCALE }),
+            },
             playFaceDown: isOpponentTurn,
           })
 
@@ -298,7 +304,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           : {
               ...prev,
               playInitial: { ...prev.playInitial, ...(getCardPosition(prev.playCard) ?? {}) },
-              playAnimate: { x: animateRect.left, y: animateRect.top, scale: 1 },
+              playAnimate: { x: animateRect.left, y: animateRect.top, scale: 1, rotate: 0 },
             },
       )
     },
@@ -389,7 +395,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
         <Main>
           {game.state === 'play' && (
             <Header>
-              <Button onClick={startNewGame}>New Game</Button>
+              <Button onClick={resetToTitle}>Scopa</Button>
               <Turn aria-label="Hands won">
                 {[0, 1].map((playerId) => (
                   <TurnScore
@@ -615,14 +621,12 @@ const HandCards = ({ hand, previousHand, keyPrefix = '', renderCard }: HandCards
   const newCards = hand.filter((card) => !hasCard(previousHand, card))
   return (
     <>
-      {hand.map((card) => (
-        <DealtCard
-          key={`${keyPrefix}${getCardId(card)}`}
-          isNew={!hasCard(previousHand, card)}
-          index={newCards.findIndex((c) => isSame(c, card))}
-        >
-          {renderCard(card)}
-        </DealtCard>
+      {hand.map((card, i) => (
+        <FanCard key={`${keyPrefix}${getCardId(card)}`} $fanIndex={i} $fanTotal={hand.length}>
+          <DealtCard isNew={!hasCard(previousHand, card)} index={newCards.findIndex((c) => isSame(c, card))}>
+            {renderCard(card)}
+          </DealtCard>
+        </FanCard>
       ))}
     </>
   )

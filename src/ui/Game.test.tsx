@@ -520,7 +520,7 @@ test('tracks hands won and carries them to next hand', async () => {
   expect(screen.getByText('🤖 0')).toBeTruthy()
 })
 
-test('top-left new game resets running round wins', async () => {
+test('starting a new game resets running round wins', async () => {
   const onStart = vitest
     .fn<(wins?: readonly number[]) => ReturnType<typeof Ok<State>>>()
     .mockImplementationOnce(() =>
@@ -591,7 +591,8 @@ test('top-left new game resets running round wins', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'Next Hand' }))
   expect(screen.getByText('🐵 1')).toBeTruthy()
 
-  fireEvent.click(screen.getByRole('button', { name: 'New Game' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
 
   expect(screen.getByText('🐵 0')).toBeTruthy()
   expect(screen.getByText('🤖 0')).toBeTruthy()
