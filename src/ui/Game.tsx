@@ -262,7 +262,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           setGame(nextState)
           setCapture([])
 
-          if (nextState.lastCaptured.length === game.table.length) showAlert('Scopa!')
+          if (game.table.length > 0 && nextState.lastCaptured.length === game.table.length) showAlert('Scopa!')
 
           if (nextState.state === 'stop') handScoresRef.current = onScore(nextState.players)
         },
