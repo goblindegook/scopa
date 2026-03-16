@@ -53,24 +53,22 @@ test('renders player names and scores', () => {
   expect(scopeRowCells[1]).toHaveTextContent('1')
 
   const capturedRowCells = getCellsByRowHeader(table, 'Captured')
-  expect(capturedRowCells[0]).toHaveTextContent(/20.*\+1/)
-  expect(capturedRowCells[0]).toHaveAttribute('aria-label', '20, bonus point awarded')
-  expect(capturedRowCells[1]).toHaveTextContent(/20.*\+1/)
-  expect(capturedRowCells[1]).toHaveAttribute('aria-label', '20, bonus point awarded')
+  expect(capturedRowCells[0]).toHaveTextContent('20')
+  expect(capturedRowCells[1]).toHaveTextContent('20')
 
   const denariRowCells = getCellsByRowHeader(table, 'Coins')
   expect(denariRowCells[0]).toHaveTextContent('5')
-  expect(denariRowCells[1]).toHaveTextContent(/6.*\+1/)
+  expect(denariRowCells[1]).toHaveTextContent('6+1')
   expect(denariRowCells[1]).toHaveAttribute('aria-label', '6, bonus point awarded')
 
   const setteBelloRowCells = getCellsByRowHeader(table, 'Sette Bello')
-  expect(setteBelloRowCells[0]).toHaveTextContent(/1.*\+1/)
+  expect(setteBelloRowCells[0]).toHaveTextContent('1+1')
   expect(setteBelloRowCells[0]).toHaveAttribute('aria-label', '1, bonus point awarded')
   expect(setteBelloRowCells[1]).toHaveTextContent('0')
 
   const primieraRowCells = getCellsByRowHeader(table, 'Prime')
   expect(primieraRowCells[0]).toHaveTextContent('45')
-  expect(primieraRowCells[1]).toHaveTextContent(/50.*\+1/)
+  expect(primieraRowCells[1]).toHaveTextContent('50+1')
   expect(primieraRowCells[1]).toHaveAttribute('aria-label', '50, bonus point awarded')
 
   const totalRowCells = getCellsByRowHeader(table, 'Total')

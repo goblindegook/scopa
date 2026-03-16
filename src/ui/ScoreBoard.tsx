@@ -187,18 +187,18 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, handWins,
           </tr>
         </thead>
         <tbody>
-          {scores[0].details.map((detail, index) => {
-            const winners = getWinners(scores, index)
+          {scores[0].details.map((detail, detailIndex) => {
+            const winnerId = findWinner(scores, detailIndex)
             const isScope = detail.label === 'Scope'
             return (
               <tr key={detail.label}>
                 <RowHeader scope="row">{t(`scores.${detail.label}`)}</RowHeader>
                 {scores.map(({ playerId, details }) => {
-                  const isWinner = winners.has(playerId)
-                  const value = details[index]?.value ?? 0
+                  const isWinner = winnerId === playerId
+                  const value = details[detailIndex]?.value ?? 0
                   return (
                     <ScoreCell
-                      key={`${playerId}-${detail.label}`}
+                      key={`${detail.label}-${playerId}`}
                       winner={isWinner}
                       {...(isWinner && !isScope && { 'aria-label': t('bonusPoint', { value }) })}
                     >
@@ -298,15 +298,11 @@ export const GameOver: React.FC<GameOverProps> = ({
   )
 }
 
-const getWinners = (scores: readonly Score[], index: number): Set<number> => {
-  const values = scores.map(({ details: playerDetails }) => playerDetails[index]?.value ?? 0)
+const findWinner = (scores: readonly Score[], index: number): number => {
+  const values = scores.map(({ details }) => details[index]?.value ?? 0)
   const maxValue = Math.max(...values)
-  if (maxValue === 0) return new Set()
-  return new Set(
-    scores
-      .map(({ playerId, details: playerDetails }) =>
-        (playerDetails[index]?.value ?? 0) === maxValue ? playerId : null,
-      )
-      .filter((id): id is number => id != null),
-  )
+  const winners = scores
+    .map(({ playerId, details }) => (details[index]?.value === maxValue ? playerId : null))
+    .filter((id) => id != null)
+  return winners.length === 1 ? winners[0] : -1
 }

@@ -20,7 +20,7 @@ function evaluateCapture(card: Card, capture: Pile, tableSize: number, currentBe
   const scopaWeight = capture.length === tableSize ? 1000 : 0
   const scoredCards = [...capture, card]
   const settebelloWeight = scoredCards.some(isSettebello) ? 20 : 0
-  const denariWeight = scoredCards.filter(isDenari).filter((c) => !isSettebello(c)).length * 10
+  const denariWeight = scoredCards.filter(isDenari).length * 10
   const primeWeight = evaluatePrimes(scoredCards, currentBest)
 
   return scopaWeight + settebelloWeight + denariWeight + primeWeight + capture.length
@@ -34,7 +34,7 @@ function enablesOpponentScopa(card: Card, table: Pile): boolean {
 }
 
 function evaluateDiscard(card: Card, table: Pile): number {
-  const scopaPreventionWeight = enablesOpponentScopa(card, table) ? -500 : 0
+  const scopaPreventionWeight = enablesOpponentScopa(card, table) ? -1000 : 0
   const primeWeight = -primePoints(card)
   const denariWeight = isDenari(card) ? -10 : 0
 
