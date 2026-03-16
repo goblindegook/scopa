@@ -457,6 +457,35 @@ describe('play', () => {
     expect(afterPlayer1.pile).toEqual(restOfPile)
   })
 
+  test('cards are dealt equally when the pile has fewer than 3 cards per player', () => {
+    const player0Card = denari(3)
+    const player1Card = denari(5)
+    const pile = [coppe(4), bastoni(4), spade(4), denari(4)]
+    const afterPlayer0 = getGameState(
+      play(
+        { card: player0Card, capture: [] },
+        {
+          state: 'play',
+          turn: 0,
+          wins: [0, 0],
+          players: [
+            { id: 0, hand: [player0Card], pile: [], scope: 0 },
+            { id: 1, hand: [player1Card], pile: [], scope: 0 },
+          ],
+          pile,
+          table: [coppe(1)],
+          lastCaptured: [],
+        },
+      ),
+    )
+
+    const afterPlayer1 = getGameState(play({ card: player1Card, capture: [] }, afterPlayer0))
+
+    expect(afterPlayer1.players[0].hand).toHaveLength(2)
+    expect(afterPlayer1.players[1].hand).toHaveLength(2)
+    expect(afterPlayer1.pile).toHaveLength(0)
+  })
+
   test(`the game ends when the next player's hand is empty and they can't draw any more cards`, () => {
     const card = denari(3)
     const game: State = {

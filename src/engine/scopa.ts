@@ -83,13 +83,14 @@ function next({ card, capture }: Move, game: State): State {
         },
   )
 
-  const [dealCards, remainingPile] = splitAt(players.length * 3, pile)
+  const cardsPerPlayer = Math.min(3, Math.floor(pile.length / players.length))
+  const [dealCards, remainingPile] = splitAt(players.length * cardsPerPlayer, pile)
   const [nextPlayers, nextPile] =
     allHandsEmpty && pile.length > 0
       ? [
           playersAfterMove.map((player, idx) => ({
             ...player,
-            hand: dealCards.slice(idx * 3, (idx + 1) * 3),
+            hand: dealCards.slice(idx * cardsPerPlayer, (idx + 1) * cardsPerPlayer),
           })),
           remainingPile,
         ]

@@ -34,7 +34,11 @@ function enablesOpponentScopa(card: Card, table: Pile): boolean {
 }
 
 function evaluateDiscard(card: Card, table: Pile): number {
-  return -primePoints(card) - (isDenari(card) ? 10 : 0) - (enablesOpponentScopa(card, table) ? 500 : 0)
+  const scopaPreventionWeight = enablesOpponentScopa(card, table) ? -500 : 0
+  const primeWeight = -primePoints(card)
+  const denariWeight = isDenari(card) ? -10 : 0
+
+  return scopaPreventionWeight + primeWeight + denariWeight
 }
 
 export async function move(game: State): Promise<Move> {
