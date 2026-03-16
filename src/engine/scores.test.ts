@@ -1,6 +1,6 @@
-import { describe, expect, test } from 'vitest'
-import { bastoni, coppe, denari, spade } from './cards'
-import { score } from './scores'
+import {describe, expect, test} from 'vitest'
+import {bastoni, coppe, denari, spade} from './cards'
+import {score} from './scores'
 
 describe('prime', () => {
   test.each([
@@ -139,7 +139,7 @@ describe('single player score', () => {
           { label: 'Sette Bello', value: 0, cards: [] },
           { label: 'Primiera', value: 30, cards: [coppe(5), spade(5)] },
         ],
-        total: 1,
+        total: 0,
       },
       {
         playerId: 1,
@@ -158,7 +158,7 @@ describe('single player score', () => {
             cards: [coppe(10), bastoni(10), spade(10)],
           },
         ],
-        total: 2,
+        total: 1,
       },
     ])
   })
@@ -179,7 +179,7 @@ describe('single player score', () => {
           { label: 'Sette Bello', value: 0, cards: [] },
           { label: 'Primiera', value: 16, cards: [denari(1)] },
         ],
-        total: 3,
+        total: 1,
       },
       {
         playerId: 1,
@@ -190,7 +190,7 @@ describe('single player score', () => {
           { label: 'Sette Bello', value: 0, cards: [] },
           { label: 'Primiera', value: 16, cards: [coppe(1)] },
         ],
-        total: 2,
+        total: 0,
       },
     ])
   })
@@ -211,7 +211,7 @@ describe('single player score', () => {
           { label: 'Sette Bello', value: 0, cards: [] },
           { label: 'Primiera', value: 21, cards: [spade(7)] },
         ],
-        total: 2,
+        total: 1,
       },
       {
         playerId: 1,
@@ -222,20 +222,43 @@ describe('single player score', () => {
           { label: 'Sette Bello', value: 0, cards: [] },
           { label: 'Primiera', value: 18, cards: [coppe(6)] },
         ],
-        total: 1,
+        total: 0,
       },
     ])
   })
 })
 
-describe('team score', () => {
-  test.todo(`a team's base score is the number of scope each of its players achieved`)
+describe('ties', () => {
+  test('no bonus is awarded when players are tied on most captured cards', () => {
+    const players = [
+      { id: 0, hand: [], pile: [coppe(7), bastoni(7)], scope: 0 },
+      { id: 1, hand: [], pile: [coppe(6), bastoni(6)], scope: 0 },
+    ]
 
-  test.todo('the team that captured the sette bello gets +1 point')
+    const scores = score(players)
+    expect(scores[0].total).toBe(1)
+    expect(scores[1].total).toBe(0)
+  })
 
-  test.todo('the team that captured most cards gets +1 point')
+  test('no bonus is awarded when players are tied on most denari', () => {
+    const players = [
+      { id: 0, hand: [], pile: [denari(6), coppe(7)], scope: 0 },
+      { id: 1, hand: [], pile: [denari(5), spade(7)], scope: 0 },
+    ]
 
-  test.todo('the team that captured most cards in the suit of coins gets +1 point')
+    const scores = score(players)
+    expect(scores[0].total).toBe(1)
+    expect(scores[1].total).toBe(0)
+  })
 
-  test.todo('the team that captured the primiera gets +1 point')
+  test('no bonus is awarded when players are tied on primiera', () => {
+    const players = [
+      { id: 0, hand: [], pile: [spade(7)], scope: 0 },
+      { id: 1, hand: [], pile: [coppe(7)], scope: 0 },
+    ]
+
+    const scores = score(players)
+    expect(scores[0].total).toBe(0)
+    expect(scores[1].total).toBe(0)
+  })
 })

@@ -54,10 +54,11 @@ const prime = (cards: Pile): ScoreDetail => {
 function findWinners(totals: number[]): number[] {
   const maximum = Math.max(...totals)
   if (maximum === 0) return []
-  return totals.reduce<number[]>(
+  const winners = totals.reduce<number[]>(
     (winners, total, currentIndex) => (total === maximum ? winners.concat(currentIndex) : winners),
     [],
   )
+  return winners.length === 1 ? winners : []
 }
 
 export function score(players: readonly Player[]): readonly Score[] {
