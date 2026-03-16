@@ -10,11 +10,6 @@ const CardWrapper = styled.div<{ opacity?: number }>`
   display: inline-block;
   padding: 0.5rem;
   opacity: ${({ opacity = 1 }) => opacity};
-  transform: scale(${OPPONENT_SCALE});
-
-  @media (max-height: 600px) {
-    transform: scale(${OPPONENT_SCALE * 0.6});
-  }
 `
 
 export const OpponentCard = React.forwardRef<HTMLDivElement, React.ComponentProps<typeof Card> & { opacity?: number }>(
@@ -39,6 +34,11 @@ const OpponentHand = styled('aside')`
   align-items: center;
   justify-content: center;
   min-height: 100%;
+  transform: scale(${OPPONENT_SCALE});
+
+  @media (max-height: 600px) {
+    transform: scale(${OPPONENT_SCALE * 0.6});
+  }
 `
 
 const OpponentPile = styled(Stack)`

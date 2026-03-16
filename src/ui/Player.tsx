@@ -12,7 +12,6 @@ const PlayerArea = styled('section')`
   align-items: center;
   padding-left: 20vw;
   flex: 0 0 35vh;
-  overflow: hidden;
 `
 
 const PlayerHand = styled('div')`
