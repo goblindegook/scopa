@@ -16,9 +16,9 @@ i18n
     },
     fallbackLng: 'en',
     supportedLngs: ['en', 'it'],
-    nonExplicitSupportedLngs: true,
+    nonExplicitSupportedLngs: false,
     detection: {
-      order: ['localStorage'],
+      order: ['localStorage', 'navigator'],
       lookupLocalStorage: 'scopa:language',
       caches: ['localStorage'],
     },

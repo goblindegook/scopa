@@ -201,13 +201,6 @@ export const TitleScreen = ({ loadingProgress, onStart, savedAvatar, onResume }:
                 ))}
               </AvatarGrid>
             </AvatarSection>
-            <LangRow>
-              {LANGUAGES.filter(({ code }) => code !== i18n.language).map(({ code, flag, label }) => (
-                <LangButton key={code} onClick={() => i18n.changeLanguage(code)} aria-label={label}>
-                  {flag} <LangButtonText>{label}</LangButtonText>
-                </LangButton>
-              ))}
-            </LangRow>
             <ButtonRow>
               {savedAvatar && onResume && (
                 <Button onClick={onResume}>
@@ -216,6 +209,13 @@ export const TitleScreen = ({ loadingProgress, onStart, savedAvatar, onResume }:
               )}
               <Button onClick={() => onStart(selectedAvatar)}>{t('newGame')}</Button>
             </ButtonRow>
+            <LangRow>
+              {LANGUAGES.filter(({ code }) => code !== i18n.language).map(({ code, flag, label }) => (
+                <LangButton key={code} onClick={() => i18n.changeLanguage(code)} aria-label={label}>
+                  {flag} <LangButtonText>{label}</LangButtonText>
+                </LangButton>
+              ))}
+            </LangRow>
           </>
         )}
       </TitleScreenContent>
