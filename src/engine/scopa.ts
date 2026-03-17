@@ -69,7 +69,7 @@ function next({ card, take }: Move, game: State): State {
 
   const handAfterMove = withoutCards([card], players[turn].hand)
 
-  const nextTurn = turn < players.length - 1 ? turn + 1 : 0
+  const nextTurn = turn > 0 ? turn - 1 : players.length - 1
   const allHandsEmpty =
     handAfterMove.length === 0 && players.every((player, idx) => idx === turn || player.hand.length === 0)
   const isLastMove = allHandsEmpty && pile.length === 0

@@ -153,6 +153,62 @@ describe('play', () => {
     )
   })
 
+  describe('turn order in 3-player game is descending', () => {
+    test('turn advances from player 2 to player 1', () => {
+      const game: State = {
+        state: 'play',
+        turn: 2,
+        wins: [0, 0, 0],
+        players: [
+          { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+          { id: 1, hand: [denari(3)], pile: [], scope: 0 },
+          { id: 2, hand: [denari(5), denari(6)], pile: [], scope: 0 },
+        ],
+        pile: [],
+        table: [denari(4)],
+        lastTaken: [],
+      }
+
+      expect(play({ card: denari(5), take: [] }, game)).toMatchObject(Ok({ turn: 1 }))
+    })
+
+    test('turn advances from player 1 to player 0', () => {
+      const game: State = {
+        state: 'play',
+        turn: 1,
+        wins: [0, 0, 0],
+        players: [
+          { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+          { id: 1, hand: [denari(3), denari(6)], pile: [], scope: 0 },
+          { id: 2, hand: [denari(5)], pile: [], scope: 0 },
+        ],
+        pile: [],
+        table: [denari(4)],
+        lastTaken: [],
+      }
+
+      expect(play({ card: denari(3), take: [] }, game)).toMatchObject(Ok({ turn: 0 }))
+    })
+
+    test('turn wraps from player 0 to the last player', () => {
+      const game: State = {
+        state: 'play',
+        turn: 0,
+        wins: [0, 0, 0],
+        players: [
+          { id: 0, hand: [denari(1), denari(2)], pile: [], scope: 0 },
+          { id: 1, hand: [denari(3)], pile: [], scope: 0 },
+          { id: 2, hand: [denari(5)], pile: [], scope: 0 },
+        ],
+        pile: [],
+        table: [denari(4)],
+        lastTaken: [],
+      }
+
+      expect(play({ card: denari(1), take: [] }, game)).toMatchObject(Ok({ turn: 2 }))
+    })
+  })
+
   test(`a player cannot play a card they don't have`, () => {
     const card = denari(1)
     const game: State = {

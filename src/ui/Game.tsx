@@ -93,6 +93,13 @@ const Main = styled('main')`
   height: 100%;
 `
 
+const OpponentsRow = styled('div')`
+  display: flex;
+  flex-direction: row;
+  flex-shrink: 0;
+  height: 20vh;
+`
+
 interface Position {
   x: number
   y: number
@@ -100,11 +107,11 @@ interface Position {
 
 interface SavedGameState {
   game: State
-  playerAvatars: [string, string]
+  playerAvatars: string[]
 }
 
 interface GameProps {
-  onStart: (wins?: readonly number[]) => Result<State, Error>
+  onStart: (wins?: readonly number[], players?: 2 | 3) => Result<State, Error>
   onPlay: (move: Move, game: State) => Result<State, Error>
   onOpponentTurn: (game: State) => Promise<Move>
   onScore: (game: State['players']) => readonly Score[]
@@ -139,7 +146,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   const { t } = useTranslation()
   const [loadingProgress, setLoadingProgress] = React.useState(0)
   const [alert, showAlert] = useAlerts(3000)
-  const [playerAvatars, setPlayerAvatars] = React.useState<[string, string]>(['🐵', '🤖'])
+  const [playerAvatars, setPlayerAvatars] = React.useState<string[]>(['🐵', '🤖'])
+  const [playerCount, setPlayerCount] = React.useState<2 | 3>(2)
   const [take, setTake] = React.useState<readonly Card[]>([])
   const [game, setGame] = React.useState<State>({
     state: 'initial',
@@ -165,7 +173,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     preloadCardAssets((progress) => setLoadingProgress(progress))
   }, [])
 
-  const gameWinner = game.wins[0] >= 11 ? 0 : game.wins[1] >= 11 ? 1 : null
+  const gameWinnerIndex = game.wins.findIndex((w) => w >= 11)
+  const gameWinner = gameWinnerIndex === -1 ? null : gameWinnerIndex
 
   React.useEffect(() => {
     if (game.state === 'initial') return
@@ -188,13 +197,13 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   }
 
   const start = React.useCallback(
-    (resetScore = false) => {
-      const wins = resetScore ? [0, 0] : game.wins
-      let redealt = false
-      let startResult = onStart(wins)
+    (resetScore = false, count: 2 | 3 = playerCount) => {
+      const wins = resetScore ? Array<number>(count).fill(0) : game.wins
+      let hasRedealt = false
+      let startResult = onStart(wins, count)
 
       while (isErr(startResult)) {
-        redealt = true
+        hasRedealt = true
         startResult = onStart(wins)
       }
 
@@ -203,7 +212,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           setGame(nextState)
           setTake([])
 
-          if (redealt) showAlert('Opening table with more than two kings, re-dealing hand.')
+          if (hasRedealt) showAlert('Opening table with more than two kings, re-dealing hand.')
 
           if (nextState.state === 'stop') handScoresRef.current = onScore(nextState.players)
           setTableDealOrder(toOrder(nextState.table))
@@ -215,17 +224,13 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
         startResult,
       )
     },
-    [invalidMove, onScore, onStart, showAlert, game.wins],
+    [invalidMove, onScore, onStart, showAlert, game.wins, playerCount],
   )
-
-  const startNewGame = React.useCallback(() => {
-    setSavedGameState(null)
-    start(true)
-  }, [start, setSavedGameState])
 
   const resume = React.useCallback(() => {
     if (!savedGameState) return
     setPlayerAvatars(savedGameState.playerAvatars)
+    setPlayerCount(savedGameState.playerAvatars.length as 2 | 3)
     setGame(savedGameState.game)
   }, [savedGameState])
 
@@ -383,11 +388,15 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
       {game.state === 'initial' && (
         <TitleScreen
           loadingProgress={loadingProgress}
-          savedAvatar={savedGameState?.playerAvatars[0]}
+          savedGame={
+            savedGameState ? { avatars: savedGameState.playerAvatars, wins: savedGameState.game.wins } : undefined
+          }
           onResume={resume}
-          onStart={(avatar) => {
-            setPlayerAvatars([avatar, '🤖'])
-            startNewGame()
+          onStart={(avatar, count) => {
+            setPlayerAvatars(count === 3 ? [avatar, '🤖', '👾'] : [avatar, '🤖'])
+            setPlayerCount(count)
+            setSavedGameState(null)
+            start(true, count)
           }}
         />
       )}
@@ -397,8 +406,9 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
             <Header>
               <Button onClick={resetToTitle}>Scopa</Button>
               <Turn aria-label={t('handsWon')}>
-                {[0, 1].map((playerId) => (
+                {game.players.map((_, playerId) => (
                   <TurnScore
+                    // biome-ignore lint/suspicious/noArrayIndexKey: player ID is the index
                     key={`player-score-${playerId}`}
                     active={game.turn === playerId}
                     data-active={game.turn === playerId}
@@ -409,20 +419,21 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
               </Turn>
             </Header>
           )}
-          {game.players.map(
-            (player) =>
-              player.id !== MAIN_PLAYER && (
+          <OpponentsRow>
+            {game.players
+              .filter(({ id }) => id !== MAIN_PLAYER)
+              .map(({ id, hand }) => (
                 <Opponent
-                  key={`opponent-${player.id}`}
-                  ref={getPlayerPileRef(player.id)}
-                  index={player.id}
-                  avatar={playerAvatars[player.id]}
-                  pile={getFilteredPile(player.id)}
+                  key={`opponent-${id}`}
+                  ref={getPlayerPileRef(id)}
+                  index={id}
+                  avatar={playerAvatars[id]}
+                  pile={getFilteredPile(id)}
                 >
                   <HandCards
-                    hand={player.hand}
-                    previousHand={previousPlayersHandsRef.current[player.id] ?? []}
-                    keyPrefix={`${player.id}-`}
+                    hand={hand}
+                    previousHand={previousPlayersHandsRef.current[id] ?? []}
+                    keyPrefix={`${id}-`}
                     renderCard={(card) => (
                       <OpponentCard
                         ref={getCardRef(getCardId(card))}
@@ -433,8 +444,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                     )}
                   />
                 </Opponent>
-              ),
-          )}
+              ))}
+          </OpponentsRow>
           <Table data-testid="table" ref={tableRef}>
             <AnimatePresence mode="popLayout">
               {/* Table cards */}

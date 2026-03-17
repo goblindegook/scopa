@@ -116,11 +116,30 @@ const AvatarSection = styled('div')`
   width: 100%;
 `
 
-const ButtonRow = styled('div')`
+const ButtonStack = styled('div')`
   display: flex;
+  flex-direction: column;
   gap: 0.75rem;
   width: 100%;
-  justify-content: center;
+  align-items: stretch;
+`
+
+const ResumeButtonContent = styled('span')`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+`
+
+const ResumeScores = styled('span')`
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+`
+
+const ResumeLabel = styled('span')`
+  font-size: 0.75rem;
+  opacity: 0.8;
+  letter-spacing: 0.1em;
 `
 
 const LangRow = styled('div')`
@@ -164,14 +183,19 @@ const LangButtonText = styled('span')`
   letter-spacing: 0.05em;
 `
 
+interface SavedGame {
+  avatars: string[]
+  wins: readonly number[]
+}
+
 interface TitleScreenProps {
   loadingProgress: number
-  onStart: (avatar: string) => void
-  savedAvatar?: string
+  onStart: (avatar: string, playerCount: 2 | 3) => void
+  savedGame?: SavedGame
   onResume?: () => void
 }
 
-export const TitleScreen = ({ loadingProgress, onStart, savedAvatar, onResume }: TitleScreenProps) => {
+export const TitleScreen = ({ loadingProgress, onStart, savedGame, onResume }: TitleScreenProps) => {
   const { t, i18n } = useTranslation()
   const [selectedAvatar, setSelectedAvatar] = React.useState(AVATARS[0])
 
@@ -201,14 +225,20 @@ export const TitleScreen = ({ loadingProgress, onStart, savedAvatar, onResume }:
                 ))}
               </AvatarGrid>
             </AvatarSection>
-            <ButtonRow>
-              {savedAvatar && onResume && (
+            <ButtonStack>
+              {savedGame && onResume && (
                 <Button onClick={onResume}>
-                  {savedAvatar} {t('resume')}
+                  <ResumeButtonContent>
+                    <ResumeScores>
+                      {savedGame.avatars.map((avatar, i) => `${avatar} ${savedGame.wins[i]}`).join(' · ')}
+                    </ResumeScores>
+                    <ResumeLabel>{t('resume')}</ResumeLabel>
+                  </ResumeButtonContent>
                 </Button>
               )}
-              <Button onClick={() => onStart(selectedAvatar)}>{t('newGame')}</Button>
-            </ButtonRow>
+              <Button onClick={() => onStart(selectedAvatar, 2)}>{t('newTwoPlayerGame')}</Button>
+              <Button onClick={() => onStart(selectedAvatar, 3)}>{t('newThreePlayerGame')}</Button>
+            </ButtonStack>
             <LangRow>
               {LANGUAGES.filter(({ code }) => code !== i18n.language).map(({ code, flag, label }) => (
                 <LangButton key={code} onClick={() => i18n.changeLanguage(code)} aria-label={label}>

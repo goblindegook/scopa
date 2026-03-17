@@ -24,10 +24,10 @@ OpponentCard.displayName = 'OpponentCard'
 
 const OpponentArea = styled('section')`
   display: grid;
-  grid-template-columns: 1fr 20vw;
-  padding-left: 20vw;
-  flex: 0 0 20vh;
+  flex: 1;
+  grid-template-columns: 1fr 10vw;
   height: 20vh;
+  padding: 0 5vw 0 0;
 `
 
 const OpponentHand = styled('aside')`
