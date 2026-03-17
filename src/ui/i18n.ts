@@ -18,7 +18,7 @@ i18n
     supportedLngs: ['en', 'it'],
     nonExplicitSupportedLngs: true,
     detection: {
-      order: ['localStorage', 'navigator'],
+      order: ['localStorage'],
       lookupLocalStorage: 'scopa:language',
       caches: ['localStorage'],
     },

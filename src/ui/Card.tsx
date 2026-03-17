@@ -130,6 +130,7 @@ const StyledCard = styled(Card)`
 `
 
 const AnimatedCardOverlay = styled(motion.div)`
+  transform-style: preserve-3d;
   position: fixed;
   top: 0;
   left: 0;
@@ -139,6 +140,7 @@ const AnimatedCardOverlay = styled(motion.div)`
 `
 
 const CardContainer = styled('div')`
+  transform-style: preserve-3d;
   position: relative;
   height: 14vw;
   max-height: 40vh;
