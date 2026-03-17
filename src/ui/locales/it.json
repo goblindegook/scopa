@@ -37,7 +37,7 @@
   "playerPile": "Mazzo di {avatar}: {count, plural, one {# carta} other {# carte}}",
   "scores": {
     "Scope": "Scope",
-    "Captured": "Catturate",
+    "Taken": "Prese",
     "Denari": "Denari",
     "Sette Bello": "Sette Bello",
     "Primiera": "Primiera",

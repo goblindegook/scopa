@@ -33,7 +33,7 @@ Pure game logic with no UI dependencies. All public functions return `Result<Sta
 - **`cards.ts`** — Card type (`[Value, Suit]` tuple), Suit enum (DENARI, COPPE, BASTONI, SPADE), values 1–10, and
   utility functions (`deck()`, `isSame()`, `hasCard()`, etc.)
 - **`state.ts`** — Shared types: `State`, `Player`, `Move`
-- **`capture.ts`** — `findCaptures(total, table)`: finds all valid card combinations that sum to a given value,
+- **`move.ts`** — `findCardsToTake(total, table)`: finds all valid card combinations that sum to a given value,
   preferring minimum-length captures
 - **`scopa.ts`** — `deal(cards, options)` and `play(move, game)`: core game state machine, returns
   `Result<State, Error>`
@@ -45,12 +45,12 @@ Pure game logic with no UI dependencies. All public functions return `Result<Sta
 
 React components using Emotion styled-components and Framer Motion for card animations.
 
-- **`Game.tsx`** — Root game component. Manages game state, animation phase machine (`idle → play → capture`), and
+- **`Game.tsx`** — Root game component. Manages game state, animation phase machine (`idle → play → taking`), and
   coordinates between player interactions and opponent turns
 - **`Card.tsx`** — Card rendering (lazy-loads JPG assets from `src/ui/assets/{suit}/{value}.jpg`), `AnimatedCard` (
   fixed-position overlay for move animations), `DealtCard` (deal-in animation wrapper), and `Duration` constants
-- **`Player.tsx` / `Opponent.tsx`** — Player hand and captured pile display (face-up vs. face-down)
-- **`Table.tsx`** — Table area with selectable cards for capture selection
+- **`Player.tsx` / `Opponent.tsx`** — Player hand and taken pile display (face-up vs. face-down)
+- **`Table.tsx`** — Table area with selectable cards for taking selection
 - **`ScoreBoard.tsx`** — End-of-game score display and `GameOver` screen
 - **`TitleScreen.tsx`** — Start screen shown at `state === 'initial'`
 
@@ -76,7 +76,7 @@ Do not add comments that explain what the test is obviously doing. Focus instead
 - **Result type**: Engine functions return `Ok(state)` or `Err(error)` — use `fold`, `isOk`, `isErr` from
   `@pacote/result`
 - **Game states**: `'initial'` → `'play'` → `'stop'`
-- **Animation phases**: `AnimationController` in `Game.tsx` tracks `idle | play | capture` phase with position data for
+- **Animation phases**: `AnimationController` in `Game.tsx` tracks `idle | play | taking` phase with position data for
   flying card animations
 - **Styling**: Emotion `styled` with single quotes, no semicolons, 120-char line width (Biome config)
 - **Testing**: Vitest + Testing Library for UI, `fast-check` for property-based tests in engine (see `scopa.test.ts`)

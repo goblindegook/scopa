@@ -18,7 +18,7 @@ test('renders player names and scores', () => {
       playerId: 0,
       details: [
         { label: 'Scope', value: 2, cards: [] },
-        { label: 'Captured', value: 20, cards: [] },
+        { label: 'Taken', value: 20, cards: [] },
         { label: 'Denari', value: 5, cards: [] },
         { label: 'Sette Bello', value: 1, cards: [] },
         { label: 'Primiera', value: 45, cards: [] },
@@ -29,7 +29,7 @@ test('renders player names and scores', () => {
       playerId: 1,
       details: [
         { label: 'Scope', value: 1, cards: [] },
-        { label: 'Captured', value: 20, cards: [] },
+        { label: 'Taken', value: 20, cards: [] },
         { label: 'Denari', value: 6, cards: [] },
         { label: 'Sette Bello', value: 0, cards: [] },
         { label: 'Primiera', value: 50, cards: [] },
@@ -52,9 +52,9 @@ test('renders player names and scores', () => {
   expect(scopeRowCells[0]).toHaveTextContent('2')
   expect(scopeRowCells[1]).toHaveTextContent('1')
 
-  const capturedRowCells = getCellsByRowHeader(table, 'Captured')
-  expect(capturedRowCells[0]).toHaveTextContent('20')
-  expect(capturedRowCells[1]).toHaveTextContent('20')
+  const takenRowCells = getCellsByRowHeader(table, 'Taken')
+  expect(takenRowCells[0]).toHaveTextContent('20')
+  expect(takenRowCells[1]).toHaveTextContent('20')
 
   const denariRowCells = getCellsByRowHeader(table, 'Coins')
   expect(denariRowCells[0]).toHaveTextContent('5')

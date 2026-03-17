@@ -38,7 +38,7 @@ function testGame(overrides: Partial<State> = {}): State {
     ],
     pile: [],
     table: [],
-    lastCaptured: [],
+    lastTaken: [],
     ...overrides,
   }
 }
@@ -58,7 +58,7 @@ test('deal new game on start', async () => {
     <Game
       onStart={onStart}
       onPlay={vitest.fn()}
-      onOpponentTurn={async () => ({ card: denari(1), capture: [] })}
+      onOpponentTurn={async () => ({ card: denari(1), take: [] })}
       onScore={() => []}
     />,
   )
@@ -78,7 +78,7 @@ test('selected avatar appears in header after starting game', async () => {
     <Game
       onStart={onStart}
       onPlay={vitest.fn()}
-      onOpponentTurn={async () => ({ card: denari(1), capture: [] })}
+      onOpponentTurn={async () => ({ card: denari(1), take: [] })}
       onScore={() => []}
     />,
   )
@@ -240,7 +240,7 @@ test('allow playing a card', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'New Game' }))
   fireEvent.click(screen.getByAltText(cn(1, Suit.DENARI)))
 
-  expect(onPlay).toHaveBeenCalledWith({ card: denari(1), capture: [] }, initialState)
+  expect(onPlay).toHaveBeenCalledWith({ card: denari(1), take: [] }, initialState)
   expect(screen.getByAltText(cn(2, Suit.DENARI))).toBeTruthy()
 })
 
@@ -297,7 +297,7 @@ test('allow playing a card by dragging it to the table', async () => {
   fireEvent.pointerUp(window, { pointerId: 1, clientX: 100, clientY: 100 })
 
   await waitFor(() => {
-    expect(onPlay).toHaveBeenCalledWith({ card: denari(1), capture: [] }, initialState)
+    expect(onPlay).toHaveBeenCalledWith({ card: denari(1), take: [] }, initialState)
   })
   expect(screen.getByAltText(cn(2, Suit.DENARI))).toBeTruthy()
 })
@@ -316,7 +316,7 @@ test(`block interaction when not a player's turn`, async () => {
   render(
     <Game
       onStart={() => Ok(initialState)}
-      onOpponentTurn={() => new Promise((resolve) => setTimeout(() => resolve({ card: denari(1), capture: [] }), 10))}
+      onOpponentTurn={() => new Promise((resolve) => setTimeout(() => resolve({ card: denari(1), take: [] }), 10))}
       onPlay={onPlay}
       onScore={() => []}
     />,
@@ -335,7 +335,7 @@ test(`block interaction when not a player's turn`, async () => {
   expect(card).toBeEnabled()
 })
 
-test('select cards to capture', async () => {
+test('select cards to take', async () => {
   const initialState = testGame({
     players: [
       { id: 0, hand: [denari(1)], pile: [], scope: 0 },
@@ -363,7 +363,7 @@ test('select cards to capture', async () => {
   fireEvent.click(screen.getByRole('checkbox', { name: cn(1, Suit.COPPE) }))
   fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
 
-  expect(onPlay).toHaveBeenCalledWith({ card: denari(1), capture: [coppe(1)] }, initialState)
+  expect(onPlay).toHaveBeenCalledWith({ card: denari(1), take: [coppe(1)] }, initialState)
 })
 
 test('invalid move handling', async () => {
@@ -422,7 +422,7 @@ test('computer opponent plays a card', async () => {
 
   const onOpponentPlay = async (): Promise<Move> => ({
     card: denari(1),
-    capture: [],
+    take: [],
   })
 
   render(<Game onStart={onStart} onPlay={onPlay} onOpponentTurn={onOpponentPlay} onScore={vitest.fn()} />)
@@ -503,7 +503,7 @@ test('tracks hands won and carries them to next hand', async () => {
           { id: 1, hand: [], pile: [], scope: 0 },
         ],
         table: [],
-        lastCaptured: [coppe(1)],
+        lastTaken: [coppe(1)],
       }),
     ),
   )
@@ -577,7 +577,7 @@ test('starting a new game resets running round wins', async () => {
           { id: 1, hand: [], pile: [], scope: 0 },
         ],
         table: [],
-        lastCaptured: [coppe(1)],
+        lastTaken: [coppe(1)],
       }),
     ),
   )
@@ -648,7 +648,7 @@ test('when a player reaches 11 hands, show game winner and switch to New Game', 
   expect(screen.getByText('🤖 0')).toBeTruthy()
 })
 
-test('renders "Scopa!" when a player captures all cards on the table', async () => {
+test('renders "Scopa!" when a player takes all cards on the table', async () => {
   render(
     <Game
       onStart={() =>
@@ -662,7 +662,7 @@ test('renders "Scopa!" when a player captures all cards on the table', async () 
           ],
           pile: [],
           table: [denari(2), denari(3)],
-          lastCaptured: [],
+          lastTaken: [],
         })
       }
       onPlay={() =>
@@ -676,10 +676,10 @@ test('renders "Scopa!" when a player captures all cards on the table', async () 
           ],
           pile: [],
           table: [],
-          lastCaptured: [denari(2), denari(3)],
+          lastTaken: [denari(2), denari(3)],
         })
       }
-      onOpponentTurn={async () => ({ card: denari(1), capture: [] })}
+      onOpponentTurn={async () => ({ card: denari(1), take: [] })}
       onScore={vitest.fn()}
     />,
   )
@@ -690,7 +690,7 @@ test('renders "Scopa!" when a player captures all cards on the table', async () 
   expect(screen.getByText('Scopa!')).toBeTruthy()
 })
 
-test('does not render "Scopa!" when a player does not capture all cards on the table', async () => {
+test('does not render "Scopa!" when a player does not take all cards on the table', async () => {
   render(
     <Game
       onStart={() =>
@@ -704,7 +704,7 @@ test('does not render "Scopa!" when a player does not capture all cards on the t
           ],
           pile: [],
           table: [denari(2), denari(3)],
-          lastCaptured: [],
+          lastTaken: [],
         })
       }
       onPlay={() =>
@@ -718,10 +718,10 @@ test('does not render "Scopa!" when a player does not capture all cards on the t
           ],
           pile: [],
           table: [denari(3)],
-          lastCaptured: [denari(2)],
+          lastTaken: [denari(2)],
         })
       }
-      onOpponentTurn={async () => ({ card: denari(1), capture: [] })}
+      onOpponentTurn={async () => ({ card: denari(1), take: [] })}
       onScore={vitest.fn()}
     />,
   )

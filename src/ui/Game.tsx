@@ -110,7 +110,7 @@ interface GameProps {
   onScore: (game: State['players']) => readonly Score[]
 }
 
-interface CaptureAnimationState {
+interface TakingAnimationState {
   readonly card: Card
   readonly initial?: Target
   readonly animate?: Target
@@ -133,21 +133,21 @@ type AnimationController =
       playInitial: Target
       playAnimate?: Target
     }
-  | { phase: 'capture'; captures: readonly CaptureAnimationState[] }
+  | { phase: 'taking'; takes: readonly TakingAnimationState[] }
 
 export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) => {
   const { t } = useTranslation()
   const [loadingProgress, setLoadingProgress] = React.useState(0)
   const [alert, showAlert] = useAlerts(3000)
   const [playerAvatars, setPlayerAvatars] = React.useState<[string, string]>(['🐵', '🤖'])
-  const [capture, setCapture] = React.useState<readonly Card[]>([])
+  const [take, setTake] = React.useState<readonly Card[]>([])
   const [game, setGame] = React.useState<State>({
     state: 'initial',
     turn: 0,
     table: [],
     pile: [],
     players: [],
-    lastCaptured: [],
+    lastTaken: [],
     wins: [0, 0],
   })
   const [savedGameState, setSavedGameState] = useLocalStorage<SavedGameState | null>('saved-game', null)
@@ -201,7 +201,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
       return fold(
         (nextState: State) => {
           setGame(nextState)
-          setCapture([])
+          setTake([])
 
           if (redealt) showAlert('Opening table with more than two kings, re-dealing hand.')
 
@@ -230,7 +230,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   }, [savedGameState])
 
   const resetToTitle = React.useCallback(() => {
-    setGame({ state: 'initial', turn: 0, table: [], pile: [], players: [], lastCaptured: [], wins: [0, 0] })
+    setGame({ state: 'initial', turn: 0, table: [], pile: [], players: [], lastTaken: [], wins: [0, 0] })
   }, [])
 
   const play = React.useCallback(
@@ -262,9 +262,9 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           previousTableRef.current = game.table
           previousPlayersHandsRef.current = game.players.map((p) => p.hand)
           setGame(nextState)
-          setCapture([])
+          setTake([])
 
-          if (game.table.length > 0 && nextState.lastCaptured.length === game.table.length) showAlert(t('scopa'))
+          if (game.table.length > 0 && nextState.lastTaken.length === game.table.length) showAlert(t('scopa'))
 
           if (nextState.state === 'stop') handScoresRef.current = onScore(nextState.players)
         },
@@ -288,11 +288,11 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           pointer.y <= rect.bottom
         if (isOnTable) {
           playCardFromRef.current = { card, position }
-          play({ card, capture })
+          play({ card, take })
         }
         return isOnTable
       },
-      [capture, play],
+      [take, play],
     ),
   )
 
@@ -316,26 +316,24 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   React.useLayoutEffect(() => {
     if (animation.phase === 'play' && !animation.playAnimate) {
       animatePlayTo(
-        tableRef.current?.querySelector(
-          `label[for="table-${getCardId(game.lastCaptured?.[0] ?? animation.playCard)}"]`,
-        ),
+        tableRef.current?.querySelector(`label[for="table-${getCardId(game.lastTaken?.[0] ?? animation.playCard)}"]`),
       )
     }
-  }, [animation, animatePlayTo, game.lastCaptured])
+  }, [animation, animatePlayTo, game.lastTaken])
 
   React.useEffect(() => {
     if (game.state !== 'play') return
 
-    const isScopa = previousTableRef.current.length > 0 && previousTableRef.current.length === game.lastCaptured.length
-    const captureAnimationsDelay = game.lastCaptured.length ? Duration.CAPTURE : 0
+    const isScopa = previousTableRef.current.length > 0 && previousTableRef.current.length === game.lastTaken.length
+    const takingAnimationsDelay = game.lastTaken.length ? Duration.TAKING : 0
     const cardsToDeal = isScopa ? game.table.filter((c) => !hasCard(previousTableRef.current, c)) : []
-    const cardDealingAnimationsDelay = captureAnimationsDelay + Duration.DEAL * cardsToDeal.length + Duration.CAPTURE
+    const cardDealingAnimationsDelay = takingAnimationsDelay + Duration.DEAL * cardsToDeal.length + Duration.TAKING
 
-    const captureTimeoutId = setTimeout(() => {
+    const takingTimeoutId = setTimeout(() => {
       if (cardsToDeal.length) {
         setTableDealOrder(toOrder(cardsToDeal))
       }
-    }, 1000 * captureAnimationsDelay)
+    }, 1000 * takingAnimationsDelay)
 
     const dealTimeoutId = setTimeout(() => {
       previousTableRef.current = game.table
@@ -344,10 +342,10 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     }, 1000 * cardDealingAnimationsDelay)
 
     return () => {
-      clearTimeout(captureTimeoutId)
+      clearTimeout(takingTimeoutId)
       clearTimeout(dealTimeoutId)
     }
-  }, [game.lastCaptured, game.players, game.state, game.table])
+  }, [game.lastTaken, game.players, game.state, game.table])
 
   React.useEffect(() => {
     if (game.state === 'play' && game.turn !== MAIN_PLAYER && !tableDealOrder.size) {
@@ -357,26 +355,26 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     }
   }, [game, invalidMove, onOpponentTurn, play, tableDealOrder])
 
-  const toggleCapture = React.useCallback((card: Card) => {
-    setCapture((current) => (hasCard(current, card) ? current.filter((c) => !isSame(c, card)) : [...current, card]))
+  const toggleTakeTarget = React.useCallback((card: Card) => {
+    setTake((current) => (hasCard(current, card) ? current.filter((c) => !isSame(c, card)) : [...current, card]))
   }, [])
 
   const animatingCardIds = React.useMemo<string[]>(() => {
     if (animation.phase === 'play') return [getCardId(animation.playCard)]
-    if (animation.phase === 'capture') return animation.captures.map((a) => getCardId(a.card))
+    if (animation.phase === 'taking') return animation.takes.map((a) => getCardId(a.card))
     return []
   }, [animation])
 
   const getFilteredPile = React.useCallback(
     (playerId: number) =>
       game.players[playerId]?.pile.filter(
-        (card) => !hasCard(game.lastCaptured, card) && !animatingCardIds.includes(getCardId(card)),
+        (card) => !hasCard(game.lastTaken, card) && !animatingCardIds.includes(getCardId(card)),
       ) ?? [],
-    [game.players, game.lastCaptured, animatingCardIds],
+    [game.players, game.lastTaken, animatingCardIds],
   )
 
   const tableCards =
-    animation.phase === 'play' && game.lastCaptured.length && previousTableRef.current.length && !tableDealOrder.size
+    animation.phase === 'play' && game.lastTaken.length && previousTableRef.current.length && !tableDealOrder.size
       ? previousTableRef.current
       : game.table
 
@@ -437,12 +435,12 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                 </Opponent>
               ),
           )}
-          <Table data-testid="table" layout ref={tableRef}>
+          <Table data-testid="table" ref={tableRef}>
             <AnimatePresence mode="popLayout">
               {/* Table cards */}
               {tableCards.map((card) => {
                 const cardId = getCardId(card)
-                const isCaptured = hasCard(game.lastCaptured, card)
+                const isTaken = hasCard(game.lastTaken, card)
                 const isAnimating = animatingCardIds.includes(cardId)
                 const order = tableDealOrder.get(cardId)
                 const motion = getTableCardMotion({ isAnimating, order })
@@ -451,7 +449,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                   <TableCardLabel
                     key={`table-${cardId}`}
                     htmlFor={`table-${cardId}`}
-                    layout={!isAnimating}
+                    layout
                     onLayoutAnimationComplete={() =>
                       animatePlayTo(
                         animation.phase === 'play' ? cardRefs.current.get(getCardId(animation.playCard)) : undefined,
@@ -464,10 +462,10 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                     style={{ pointerEvents: isAnimating ? 'none' : 'auto' }}
                   >
                     <TableCardSelector
-                      disabled={game.turn !== MAIN_PLAYER || isCaptured || isAnimating}
+                      disabled={game.turn !== MAIN_PLAYER || isTaken || isAnimating}
                       type="checkbox"
-                      checked={hasCard(capture, card)}
-                      onChange={() => toggleCapture(card)}
+                      checked={hasCard(take, card)}
+                      onChange={() => toggleTakeTarget(card)}
                       id={`table-${cardId}`}
                     />
                     <TableCard card={card} />
@@ -488,7 +486,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                 onComplete={() => {
                   if (animation.phase !== 'play') return
                   const { activePlayerId, playCard: playedCard, playAnimate, playInitial } = animation
-                  const pileRef = game.lastCaptured.length ? playerPileRefs.current.get(activePlayerId) : undefined
+                  const pileRef = game.lastTaken.length ? playerPileRefs.current.get(activePlayerId) : undefined
 
                   if (!pileRef) {
                     setAnimation({ phase: 'idle' })
@@ -502,8 +500,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                   const targetRect = Array.from(pileRef.children).at(-1)?.getBoundingClientRect() ?? pileAreaRect
 
                   setAnimation({
-                    phase: 'capture',
-                    captures: [...game.lastCaptured, playedCard].map((card, index) => ({
+                    phase: 'taking',
+                    takes: [...game.lastTaken, playedCard].map((card, index) => ({
                       card,
                       initial:
                         getPosition(tableRef.current?.querySelector(`label[for="table-${getCardId(card)}"]`)) ??
@@ -519,13 +517,13 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                 }}
               />
             )}
-            {/* Capture animations */}
-            {animation.phase === 'capture' &&
-              animation.captures
-                .filter((a): a is CaptureAnimationState & { readonly animate: Target } => a.animate != null)
+            {/* Taking animations */}
+            {animation.phase === 'taking' &&
+              animation.takes
+                .filter((a): a is TakingAnimationState & { readonly animate: Target } => a.animate != null)
                 .map((a, index, filtered) => (
                   <AnimatedCard
-                    key={`captured-${getCardId(a.card)}`}
+                    key={`taken-${getCardId(a.card)}`}
                     card={a.card}
                     initial={a.initial}
                     animate={a.animate}
@@ -555,7 +553,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                     startDragging(card, event.currentTarget, { x: event.clientX, y: event.clientY }, event.pointerId)
                   }}
                   onClick={() => {
-                    if (!isClickSuppressed()) play({ card, capture })
+                    if (!isClickSuppressed()) play({ card, take })
                   }}
                   style={
                     isSame(dragState?.card, card) && (dragState?.type === 'returning' || dragState?.active)

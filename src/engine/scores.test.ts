@@ -66,7 +66,7 @@ describe('single player score', () => {
         playerId: 0,
         details: [
           { label: 'Scope', value: 1, cards: [] },
-          { label: 'Captured', value: 0, cards: [] },
+          { label: 'Taken', value: 0, cards: [] },
           { label: 'Denari', value: 0, cards: [] },
           { label: 'Sette Bello', value: 0, cards: [] },
           { label: 'Primiera', value: 0, cards: [] },
@@ -77,7 +77,7 @@ describe('single player score', () => {
         playerId: 1,
         details: [
           { label: 'Scope', value: 2, cards: [] },
-          { label: 'Captured', value: 0, cards: [] },
+          { label: 'Taken', value: 0, cards: [] },
           { label: 'Denari', value: 0, cards: [] },
           { label: 'Sette Bello', value: 0, cards: [] },
           { label: 'Primiera', value: 0, cards: [] },
@@ -87,7 +87,7 @@ describe('single player score', () => {
     ])
   })
 
-  test('the player who captured the sette bello gets +1 point', () => {
+  test('the player who taken the sette bello gets +1 point', () => {
     const players = [
       { id: 0, hand: [], pile: [denari(7)], scope: 0 },
       { id: 1, hand: [], pile: [], scope: 0 },
@@ -98,7 +98,7 @@ describe('single player score', () => {
         playerId: 0,
         details: [
           { label: 'Scope', value: 0, cards: [] },
-          { label: 'Captured', value: 1, cards: [denari(7)] },
+          { label: 'Taken', value: 1, cards: [denari(7)] },
           { label: 'Denari', value: 1, cards: [denari(7)] },
           { label: 'Sette Bello', value: 1, cards: [denari(7)] },
           { label: 'Primiera', value: 21, cards: [denari(7)] },
@@ -109,7 +109,7 @@ describe('single player score', () => {
         playerId: 1,
         details: [
           { label: 'Scope', value: 0, cards: [] },
-          { label: 'Captured', value: 0, cards: [] },
+          { label: 'Taken', value: 0, cards: [] },
           { label: 'Denari', value: 0, cards: [] },
           { label: 'Sette Bello', value: 0, cards: [] },
           { label: 'Primiera', value: 0, cards: [] },
@@ -119,7 +119,7 @@ describe('single player score', () => {
     ])
   })
 
-  test('the player who captured the most cards gets +1 point', () => {
+  test('the player who taken the most cards gets +1 point', () => {
     const players = [
       { id: 0, hand: [], pile: [coppe(5), spade(5)], scope: 0 },
       { id: 1, hand: [], pile: [coppe(10), bastoni(10), spade(10)], scope: 0 },
@@ -131,7 +131,7 @@ describe('single player score', () => {
         details: [
           { label: 'Scope', value: 0, cards: [] },
           {
-            label: 'Captured',
+            label: 'Taken',
             value: [coppe(5), spade(5)].length,
             cards: [coppe(5), spade(5)],
           },
@@ -146,7 +146,7 @@ describe('single player score', () => {
         details: [
           { label: 'Scope', value: 0, cards: [] },
           {
-            label: 'Captured',
+            label: 'Taken',
             value: [coppe(10), bastoni(10), spade(10)].length,
             cards: [coppe(10), bastoni(10), spade(10)],
           },
@@ -163,7 +163,7 @@ describe('single player score', () => {
     ])
   })
 
-  test('the player who captured the most cards in the suit of coins gets +1 point', () => {
+  test('the player who taken the most cards in the suit of coins gets +1 point', () => {
     const players = [
       { id: 0, hand: [], pile: [denari(1), denari(2)], scope: 0 },
       { id: 1, hand: [], pile: [coppe(1), coppe(2)], scope: 0 },
@@ -174,7 +174,7 @@ describe('single player score', () => {
         playerId: 0,
         details: [
           { label: 'Scope', value: 0, cards: [] },
-          { label: 'Captured', value: 2, cards: [denari(1), denari(2)] },
+          { label: 'Taken', value: 2, cards: [denari(1), denari(2)] },
           { label: 'Denari', value: 2, cards: [denari(1), denari(2)] },
           { label: 'Sette Bello', value: 0, cards: [] },
           { label: 'Primiera', value: 16, cards: [denari(1)] },
@@ -185,7 +185,7 @@ describe('single player score', () => {
         playerId: 1,
         details: [
           { label: 'Scope', value: 0, cards: [] },
-          { label: 'Captured', value: 2, cards: [coppe(1), coppe(2)] },
+          { label: 'Taken', value: 2, cards: [coppe(1), coppe(2)] },
           { label: 'Denari', value: 0, cards: [] },
           { label: 'Sette Bello', value: 0, cards: [] },
           { label: 'Primiera', value: 16, cards: [coppe(1)] },
@@ -195,7 +195,7 @@ describe('single player score', () => {
     ])
   })
 
-  test('the player who captured the highest prime (primiera) gets +1 point', () => {
+  test('the player who taken the highest prime (primiera) gets +1 point', () => {
     const players = [
       { id: 0, hand: [], pile: [spade(6), spade(7)], scope: 0 },
       { id: 1, hand: [], pile: [coppe(5), coppe(6)], scope: 0 },
@@ -206,7 +206,7 @@ describe('single player score', () => {
         playerId: 0,
         details: [
           { label: 'Scope', value: 0, cards: [] },
-          { label: 'Captured', value: 2, cards: [spade(6), spade(7)] },
+          { label: 'Taken', value: 2, cards: [spade(6), spade(7)] },
           { label: 'Denari', value: 0, cards: [] },
           { label: 'Sette Bello', value: 0, cards: [] },
           { label: 'Primiera', value: 21, cards: [spade(7)] },
@@ -217,7 +217,7 @@ describe('single player score', () => {
         playerId: 1,
         details: [
           { label: 'Scope', value: 0, cards: [] },
-          { label: 'Captured', value: 2, cards: [coppe(5), coppe(6)] },
+          { label: 'Taken', value: 2, cards: [coppe(5), coppe(6)] },
           { label: 'Denari', value: 0, cards: [] },
           { label: 'Sette Bello', value: 0, cards: [] },
           { label: 'Primiera', value: 18, cards: [coppe(6)] },
@@ -229,7 +229,7 @@ describe('single player score', () => {
 })
 
 describe('ties', () => {
-  test('no bonus is awarded when players are tied on most captured cards', () => {
+  test('no bonus is awarded when players are tied on most taken cards', () => {
     const players = [
       { id: 0, hand: [], pile: [coppe(7), bastoni(7)], scope: 0 },
       { id: 1, hand: [], pile: [coppe(6), bastoni(6)], scope: 0 },

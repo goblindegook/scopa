@@ -37,7 +37,7 @@
   "playerPile": "{avatar} pile: {count, plural, one {# card} other {# cards}}",
   "scores": {
     "Scope": "Sweeps",
-    "Captured": "Captured",
+    "Taken": "Taken",
     "Denari": "Coins",
     "Sette Bello": "Sette Bello",
     "Primiera": "Prime",

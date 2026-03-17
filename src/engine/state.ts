@@ -13,12 +13,12 @@ export interface State {
   readonly pile: Pile
   readonly players: readonly Player[]
   readonly table: Pile
-  readonly lastCaptured: Pile
-  readonly lastCapturer?: number
+  readonly lastTaken: Pile
+  readonly lastTaker?: number
   readonly wins: readonly number[]
 }
 
 export interface Move {
   readonly card: Card
-  readonly capture: Pile
+  readonly take: Pile
 }

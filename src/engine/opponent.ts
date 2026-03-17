@@ -1,5 +1,5 @@
-import { findCaptures } from './capture.ts'
 import { type Card, isDenari, isSettebello, type Pile, type Suit } from './cards'
+import { findCardsToTake } from './move.ts'
 import { primePoints } from './scores.ts'
 import type { Move, State } from './state'
 
@@ -16,20 +16,19 @@ function evaluatePrimes(cards: Pile, currentBest: Map<Suit, number>): number {
   return Array.from(next).reduce((delta, [suit, pts]) => delta + pts - (currentBest.get(suit) ?? 0), 0)
 }
 
-function evaluateCapture(card: Card, capture: Pile, tableSize: number, currentBest: Map<Suit, number>): number {
-  const scopaWeight = capture.length === tableSize ? 1000 : 0
-  const scoredCards = [...capture, card]
-  const settebelloWeight = scoredCards.some(isSettebello) ? 20 : 0
-  const denariWeight = scoredCards.filter(isDenari).length * 10
-  const primeWeight = evaluatePrimes(scoredCards, currentBest)
+function evaluateTake(cards: Pile, tableSize: number, currentBest: Map<Suit, number>): number {
+  const scopaWeight = cards.length === tableSize + 1 ? 1000 : 0
+  const settebelloWeight = cards.some(isSettebello) ? 20 : 0
+  const denariWeight = cards.filter(isDenari).length * 10
+  const primeWeight = evaluatePrimes(cards, currentBest)
 
-  return scopaWeight + settebelloWeight + denariWeight + primeWeight + capture.length
+  return scopaWeight + settebelloWeight + denariWeight + primeWeight + cards.length
 }
 
 function enablesOpponentScopa(card: Card, table: Pile): boolean {
   const newTable = [...table, card]
   return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].some((value) =>
-    findCaptures(value, newTable).some((capture) => capture.length === newTable.length),
+    findCardsToTake(value, newTable).some((cards) => cards.length === newTable.length),
   )
 }
 
@@ -55,18 +54,18 @@ export async function move(game: State): Promise<Move> {
     const score = evaluateDiscard(card, table)
     if (score > bestScore) {
       bestScore = score
-      bestMove = { card, capture: [] }
+      bestMove = { card, take: [] }
     }
 
-    const availableCaptures = findCaptures(card[0], table)
-    for (const capture of availableCaptures) {
-      const score = evaluateCapture(card, capture, table.length, currentBestPrimes)
+    const availableTakes = findCardsToTake(card[0], table)
+    for (const takenCards of availableTakes) {
+      const score = evaluateTake([card, ...takenCards], table.length, currentBestPrimes)
       if (score > bestScore) {
         bestScore = score
-        bestMove = { card, capture }
+        bestMove = { card, take: takenCards }
       }
     }
   }
 
-  return bestMove ?? { card: hand[0], capture: [] }
+  return bestMove ?? { card: hand[0], take: [] }
 }

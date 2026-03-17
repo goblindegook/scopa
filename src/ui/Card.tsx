@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { type Card as CardType, Suit } from '../engine/cards'
 
 export const Duration = {
-  CAPTURE: 0.6,
+  TAKING: 0.6,
   DEAL: 0.2,
   FLIP: 0.6,
   PLAY: 0.6,
@@ -136,11 +136,9 @@ const AnimatedCardOverlay = styled(motion.div)`
   z-index: 1000;
   pointer-events: none;
   will-change: transform;
-  transform-style: preserve-3d;
 `
 
 const CardContainer = styled('div')`
-  transform-style: preserve-3d;
   position: relative;
   height: 14vw;
   max-height: 40vh;

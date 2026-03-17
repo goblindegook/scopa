@@ -78,7 +78,7 @@ export function score(players: readonly Player[]): readonly Score[] {
       playerId: player,
       details: [
         { label: 'Scope', value: scope, cards: [] },
-        { label: 'Captured', value: pile.length, cards: pile },
+        { label: 'Taken', value: pile.length, cards: pile },
         {
           label: 'Denari',
           value: denariTotal[player],
