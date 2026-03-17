@@ -22,12 +22,19 @@ export const OpponentCard = React.forwardRef<HTMLDivElement, React.ComponentProp
 )
 OpponentCard.displayName = 'OpponentCard'
 
+export const Opponents = styled('div')`
+  display: flex;
+  flex-direction: row;
+  flex-shrink: 0;
+  height: 20vh;
+`
+
 const OpponentArea = styled('section')`
   display: grid;
   flex: 1;
   grid-template-columns: 1fr 10vw;
   height: 20vh;
-  padding: 0 5vw 0 0;
+  padding: 0 0 0 10vw;
 `
 
 const OpponentHand = styled('aside')`

@@ -8,7 +8,7 @@ import type { Score } from '../engine/scores'
 import type { Move, State } from '../engine/state'
 import { Button } from './Button'
 import { AnimatedCard, DealtCard, Card as DisplayCard, Duration } from './Card'
-import { OPPONENT_SCALE, Opponent, OpponentCard } from './Opponent'
+import { OPPONENT_SCALE, Opponent, OpponentCard, Opponents } from './Opponent'
 import { FanCard, Player, PlayerCard } from './Player'
 import { preloadCardAssets } from './preload'
 import { GameOver } from './ScoreBoard'
@@ -91,13 +91,6 @@ const Main = styled('main')`
   flex: 1;
   overflow: hidden;
   height: 100%;
-`
-
-const OpponentsRow = styled('div')`
-  display: flex;
-  flex-direction: row;
-  flex-shrink: 0;
-  height: 20vh;
 `
 
 interface Position {
@@ -419,7 +412,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
               </Turn>
             </Header>
           )}
-          <OpponentsRow>
+          <Opponents>
             {game.players
               .filter(({ id }) => id !== MAIN_PLAYER)
               .map(({ id, hand }) => (
@@ -445,7 +438,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                   />
                 </Opponent>
               ))}
-          </OpponentsRow>
+          </Opponents>
           <Table data-testid="table" ref={tableRef}>
             <AnimatePresence mode="popLayout">
               {/* Table cards */}
