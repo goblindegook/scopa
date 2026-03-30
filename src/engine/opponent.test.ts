@@ -20,8 +20,8 @@ function setupGame(table: Pile, hand: Pile, pile: Pile = []): State {
   }
 }
 
-async function runMove(game: State) {
-  const promisedMove = move(game)
+async function runMove(game: State, canCountCards = false) {
+  const promisedMove = move(game, canCountCards)
   await vi.runAllTimersAsync()
   return promisedMove
 }
@@ -209,5 +209,29 @@ describe('discard moves', () => {
 
     expect(card).toEqual(spade(7))
     expect(take).toHaveLength(0)
+  })
+})
+
+describe('card counting', () => {
+  test('prefers larger capture when trailing on card count', async () => {
+    const game: State = {
+      state: 'play',
+      turn: 0,
+      wins: [0, 0],
+      table: [bastoni(6), coppe(5), coppe(2), coppe(3)],
+      players: [
+        { id: 0, hand: [spade(6), coppe(10)], pile: [bastoni(7)], scope: 0 },
+        { id: 1, hand: [], pile: [denari(1), denari(2), denari(3), denari(4)], scope: 0 },
+      ],
+      pile: [],
+      lastTaken: [],
+    }
+
+    const withCounting = await runMove(game, true)
+
+    const withoutCounting = await runMove(game)
+    expect(withCounting.take.length).toBeGreaterThan(withoutCounting.take.length)
+    expect(withCounting.take).toEqual(expect.arrayContaining([coppe(5), coppe(2), coppe(3)]))
+    expect(withCounting.card).toEqual(coppe(10))
   })
 })

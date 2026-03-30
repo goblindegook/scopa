@@ -106,7 +106,7 @@ interface SavedGameState {
 interface GameProps {
   onStart: (wins?: readonly number[], players?: 2 | 3) => Result<State, Error>
   onPlay: (move: Move, game: State) => Result<State, Error>
-  onOpponentTurn: (game: State) => Promise<Move>
+  onOpponentTurn: (game: State, canCountCards?: boolean) => Promise<Move>
   onScore: (game: State['players']) => readonly Score[]
 }
 
@@ -348,7 +348,10 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   React.useEffect(() => {
     if (game.state === 'play' && game.turn !== MAIN_PLAYER && !tableDealOrder.size) {
       const animationDelay = Duration.TURN + Duration.PLAY
-      const timeoutId = setTimeout(() => onOpponentTurn(game).then(play).catch(invalidMove), 1000 * animationDelay)
+      const timeoutId = setTimeout(
+        () => onOpponentTurn(game, true).then(play).catch(invalidMove),
+        1000 * animationDelay,
+      )
       return () => clearTimeout(timeoutId)
     }
   }, [game, invalidMove, onOpponentTurn, play, tableDealOrder])
