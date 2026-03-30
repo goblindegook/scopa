@@ -575,7 +575,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           <DragOverlay dragState={dragState} onSpringBackComplete={clearDragging} />
         </Main>
       )}
-      {game.state === 'stop' && (
+      {game.state === 'stop' && animation.phase === 'idle' && (
         <GameOver
           playerAvatars={playerAvatars}
           scores={handScoresRef.current}
