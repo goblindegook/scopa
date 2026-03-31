@@ -38,9 +38,13 @@ function bestPrimes(pile: Pile, initial: Map<Suit, number> = new Map()): Map<Sui
   }, new Map<Suit, number>(initial))
 }
 
-function evaluatePrimes(cards: Pile, currentBest: Map<Suit, number>): number {
+function evaluatePrimes(cards: Pile, currentBest: Map<Suit, number>, ctx?: CardCountContext): number {
   const next = bestPrimes(cards, currentBest)
-  return Array.from(next).reduce((delta, [suit, pts]) => delta + pts - (currentBest.get(suit) ?? 0), 0)
+  return Array.from(next).reduce((delta, [suit, pts]) => {
+    const gain = pts - (currentBest.get(suit) ?? 0)
+    const trailingInSuit = ctx?.opponents.some((o) => (o.bestPrimes.get(suit) ?? 0) > (currentBest.get(suit) ?? 0))
+    return delta + (trailingInSuit ? gain * 2 : gain)
+  }, 0)
 }
 
 function evaluateTake(
@@ -60,11 +64,11 @@ function evaluateTake(
   const cardsWeight = ctx != null ? (cards.length - 1) * cardUnitWeight : cards.length
 
   const baseDenariUnit = ownDenariCount > 5 ? 5 : 10
-  const trailingDenari = ctx?.opponents.some((o) => o.denariCount > ctx.mine.denariCount)
+  const trailingDenari = ctx?.opponents.some((o) => o.denariCount > ctx.mine.denariCount) ?? false
   const denariUnit = baseDenariUnit + (trailingDenari ? 5 : 0)
   const denariWeight = denariCards.length * denariUnit
 
-  const primeWeight = evaluatePrimes(cards, currentBest)
+  const primeWeight = evaluatePrimes(cards, currentBest, ctx)
 
   return scopaWeight + settebelloWeight + denariWeight + primeWeight + cardsWeight
 }

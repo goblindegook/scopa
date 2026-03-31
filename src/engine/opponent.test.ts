@@ -213,6 +213,58 @@ describe('discard moves', () => {
 })
 
 describe('card counting', () => {
+  test('doubles prime weight for suits where any opponent leads', async () => {
+    const game: State = {
+      state: 'play',
+      turn: 0,
+      wins: [0, 0],
+      table: [bastoni(6), coppe(6)],
+      players: [
+        { id: 0, hand: [spade(6)], pile: [], scope: 0 },
+        { id: 1, hand: [], pile: [coppe(7)], scope: 0 },
+      ],
+      pile: [],
+      lastTaken: [],
+    }
+
+    const withoutCounting = await runMove(game)
+    const withCounting = await runMove(game, true)
+
+    // Without counting: coppe(6) and bastoni(6) both give 18 prime pts — tie broken by table order (bastoni first)
+    expect(withoutCounting.take).toEqual([bastoni(6)])
+    // With counting: opponent leads in coppe (21 > 0), so coppe gain is doubled → 36 vs 18
+    expect(withCounting.take).toEqual([coppe(6)])
+  })
+
+  test('increases denari weight when trailing an opponent on denari', async () => {
+    const game: State = {
+      state: 'play',
+      turn: 0,
+      wins: [0, 0],
+      table: [bastoni(2), denari(9)],
+      players: [
+        { id: 0, hand: [coppe(2), coppe(9)], pile: [denari(7)], scope: 0 },
+        { id: 1, hand: [], pile: [denari(1), denari(2), denari(3), denari(4), denari(5)], scope: 0 },
+      ],
+      pile: [],
+      lastTaken: [],
+    }
+
+    const withoutCounting = await runMove(game)
+    const withCounting = await runMove(game, true)
+
+    // Without counting:
+    //   coppe(2) takes bastoni(2): prime COPPE=12+BASTONI=12=24, cards=2, denari=0 → 26
+    //   coppe(9) takes denari(9): prime COPPE=10+DENARI=0 (own pile already has 21)=10, cards=2, denari=10 → 22
+    //   bastoni(2) wins (26 > 22)
+    expect(withoutCounting.take).toEqual([bastoni(2)])
+    // With counting (denariUnit=15, no prime doubling since own DENARI best 21 > opponent best 16):
+    //   coppe(2) takes bastoni(2): prime=24, cards=2, denari=0 → 26
+    //   coppe(9) takes denari(9): prime=10, cards=2, denari=15 → 27
+    //   denari(9) wins (27 > 26)
+    expect(withCounting.take).toEqual([denari(9)])
+  })
+
   test('prefers larger capture when trailing on card count', async () => {
     const game: State = {
       state: 'play',
