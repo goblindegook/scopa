@@ -24,10 +24,11 @@ const Board = styled('table')`
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 0.5rem;
-  min-width: 25vw;
+  min-width: 0;
+  max-width: 100%;
   padding: 1rem;
   width: 100%;
-    background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
   border-spacing: 0;
@@ -53,11 +54,16 @@ const PlayerHeader = styled('th')`
 `
 
 const RowHeader = styled('th')`
+  width: clamp(8.5rem, 24%, 11rem);
+  min-width: 8.5rem;
+  white-space: nowrap;
   padding: 1rem;
   text-align: left;
   font-weight: 600;
 
   @media (max-height: 600px) {
+    width: 7rem;
+    min-width: 7rem;
     padding: 0.5rem;
   }
 `
@@ -108,6 +114,7 @@ const TotalRow = styled('tr')`
 
 const ScoreBoardStack = styled('section')`
   width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -238,6 +245,7 @@ const GameOverContent = styled('div')`
   display: flex;
   flex-direction: column;
   align-items: center;
+  min-width: 0;
   gap: 2rem;
   background-color: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(10px);
