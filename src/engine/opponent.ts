@@ -12,6 +12,7 @@ interface OpponentProfile {
 interface CardCountContext {
   mine: OpponentProfile
   opponents: OpponentProfile[]
+  nextOpponent: OpponentProfile
 }
 
 function buildProfile(pile: Pile): OpponentProfile {
@@ -25,7 +26,9 @@ function buildProfile(pile: Pile): OpponentProfile {
 function buildContext(game: State): CardCountContext {
   const mine = buildProfile(game.players[game.turn].pile)
   const opponents = game.players.filter((_, i) => i !== game.turn).map((p) => buildProfile(p.pile))
-  return { mine, opponents }
+  const nextTurn = (game.turn - 1 + game.players.length) % game.players.length
+  const nextOpponent = buildProfile(game.players[nextTurn].pile)
+  return { mine, opponents, nextOpponent }
 }
 
 function bestPrimes(pile: Pile, initial: Map<Suit, number> = new Map()): Map<Suit, number> {
@@ -40,7 +43,7 @@ function evaluatePrimes(cards: Pile, currentBest: Map<Suit, number>, ctx?: CardC
   const next = bestPrimes(cards, currentBest)
   return Array.from(next).reduce((delta, [suit, pts]) => {
     const gain = pts - (currentBest.get(suit) ?? 0)
-    const trailingInSuit = ctx?.opponents.some((o) => (o.bestPrimes.get(suit) ?? 0) > (currentBest.get(suit) ?? 0))
+    const trailingInSuit = (ctx?.nextOpponent.bestPrimes.get(suit) ?? 0) > (currentBest.get(suit) ?? 0)
     return delta + (trailingInSuit ? gain * 2 : gain)
   }, 0)
 }
@@ -63,7 +66,7 @@ function evaluateTake(
   const cardsWeight = ctx != null ? (cards.length - 1) * cardUnitWeight : cards.length
 
   const takenDenari = ownDenariCount > 5 ? 5 : 10
-  const trailingDenari = ctx?.opponents.some((o) => o.denariCount > ctx.mine.denariCount) ? 5 : 0
+  const trailingDenari = ctx != null && ctx.nextOpponent.denariCount > ctx.mine.denariCount ? 5 : 0
   const denariCards = cards.filter(isDenari)
   const denariWeight = denariCards.length * (takenDenari + trailingDenari)
 

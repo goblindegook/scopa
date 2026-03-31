@@ -221,6 +221,70 @@ describe('discard moves', () => {
   })
 })
 
+describe('next-player pressure', () => {
+  test('weighs denari pressure from the next player, not any other opponent', async () => {
+    const myPile = [denari(7)]
+    const base: State = {
+      state: 'play',
+      turn: 0,
+      wins: [0, 0, 0],
+      table: [bastoni(2), denari(9)],
+      players: [
+        { id: 0, hand: [coppe(2), coppe(9)], pile: myPile, scope: 0 },
+        { id: 1, hand: [], pile: [], scope: 0 },
+        { id: 2, hand: [], pile: [], scope: 0 },
+      ],
+      pile: [coppe(1)],
+      lastTaken: [],
+    }
+    const manyDenari = [denari(1), denari(2), denari(3), denari(4), denari(5)]
+
+    // player 2 (next) leads on denari → urgently take denari(9)
+    const whenNextLeads = await runMove(
+      { ...base, players: [base.players[0], base.players[1], { ...base.players[2], pile: manyDenari }] },
+      true,
+    )
+    // player 1 (not next) leads on denari → no urgency, take bastoni(2) for better primes
+    const whenOtherLeads = await runMove(
+      { ...base, players: [base.players[0], { ...base.players[1], pile: manyDenari }, base.players[2]] },
+      true,
+    )
+
+    expect(whenNextLeads.take).toEqual([denari(9)])
+    expect(whenOtherLeads.take).toEqual([bastoni(2)])
+  })
+
+  test('doubles prime gain for suits where the next player leads, not any other opponent', async () => {
+    const base: State = {
+      state: 'play',
+      turn: 0,
+      wins: [0, 0, 0],
+      table: [bastoni(6), coppe(6)],
+      players: [
+        { id: 0, hand: [spade(6)], pile: [], scope: 0 },
+        { id: 1, hand: [], pile: [], scope: 0 },
+        { id: 2, hand: [], pile: [], scope: 0 },
+      ],
+      pile: [coppe(1)],
+      lastTaken: [],
+    }
+
+    // player 2 (next) leads in COPPE → doubled coppe gain → take coppe(6)
+    const whenNextLeads = await runMove(
+      { ...base, players: [base.players[0], base.players[1], { ...base.players[2], pile: [coppe(7)] }] },
+      true,
+    )
+    // player 1 (not next) leads in COPPE → no doubling → tie broken by table order → bastoni(6)
+    const whenOtherLeads = await runMove(
+      { ...base, players: [base.players[0], { ...base.players[1], pile: [coppe(7)] }, base.players[2]] },
+      true,
+    )
+
+    expect(whenNextLeads.take).toEqual([coppe(6)])
+    expect(whenOtherLeads.take).toEqual([bastoni(6)])
+  })
+})
+
 describe('last table', () => {
   test('captures when draw pile is exhausted, even when it would otherwise discard', async () => {
     const state: State = {

@@ -24,8 +24,7 @@ const Board = styled('table')`
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 0.5rem;
-  min-width: 0;
-  max-width: 100%;
+  min-width: 25vw;
   padding: 1rem;
   width: 100%;
   background-color: rgba(255, 255, 255, 0.05);
@@ -38,6 +37,13 @@ const Board = styled('table')`
     font-size: 0.875rem;
     padding: 0.5rem;
   }
+`
+
+const BoardViewport = styled('div')`
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
 `
 
 const PlayerHeader = styled('th')`
@@ -54,16 +60,11 @@ const PlayerHeader = styled('th')`
 `
 
 const RowHeader = styled('th')`
-  width: clamp(8.5rem, 24%, 11rem);
-  min-width: 8.5rem;
-  white-space: nowrap;
   padding: 1rem;
   text-align: left;
   font-weight: 600;
 
   @media (max-height: 600px) {
-    width: 7rem;
-    min-width: 7rem;
     padding: 0.5rem;
   }
 `
@@ -179,54 +180,56 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, handWins,
           </RunningTotalBox>
         ))}
       </RunningTotal>
-      <Board aria-label={t('gameScoreboard')}>
-        <caption className="sr-only">{t('gameScoreboardCaption')}</caption>
-        <thead>
-          <tr>
-            <th scope="col" className="sr-only">
-              {t('scoreCategory')}
-            </th>
-            {scores.map(({ playerId }) => (
-              <PlayerHeader key={`player-header-${playerId}`} scope="col">
-                {playerAvatars[playerId]}
-              </PlayerHeader>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {scores[0].details.map((detail, detailIndex) => {
-            const winnerId = findWinner(scores, detailIndex)
-            const isScope = detail.label === 'Scope'
-            return (
-              <tr key={detail.label}>
-                <RowHeader scope="row">{t(`scores.${detail.label}`)}</RowHeader>
-                {scores.map(({ playerId, details }) => {
-                  const isWinner = winnerId === playerId
-                  const value = details[detailIndex]?.value ?? 0
-                  return (
-                    <ScoreCell key={`${detail.label}-${playerId}`} winner={isWinner}>
-                      {!isScope ? (
-                        <CellContent {...(isWinner && { 'aria-label': t('bonusPoint', { value }) })}>
-                          <ValueText>{value}</ValueText>
-                          {isWinner && <PointIndicator>+1</PointIndicator>}
-                        </CellContent>
-                      ) : (
-                        value
-                      )}
-                    </ScoreCell>
-                  )
-                })}
-              </tr>
-            )
-          })}
-          <TotalRow>
-            <RowHeader scope="row">{t('scores.Total')}</RowHeader>
-            {scores.map(({ playerId, total }) => (
-              <Cell key={`player-total-${playerId}`}>{total}</Cell>
-            ))}
-          </TotalRow>
-        </tbody>
-      </Board>
+      <BoardViewport>
+        <Board aria-label={t('gameScoreboard')}>
+          <caption className="sr-only">{t('gameScoreboardCaption')}</caption>
+          <thead>
+            <tr>
+              <th scope="col" className="sr-only">
+                {t('scoreCategory')}
+              </th>
+              {scores.map(({ playerId }) => (
+                <PlayerHeader key={`player-header-${playerId}`} scope="col">
+                  {playerAvatars[playerId]}
+                </PlayerHeader>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {scores[0].details.map((detail, detailIndex) => {
+              const winnerId = findWinner(scores, detailIndex)
+              const isScope = detail.label === 'Scope'
+              return (
+                <tr key={detail.label}>
+                  <RowHeader scope="row">{t(`scores.${detail.label}`)}</RowHeader>
+                  {scores.map(({ playerId, details }) => {
+                    const isWinner = winnerId === playerId
+                    const value = details[detailIndex]?.value ?? 0
+                    return (
+                      <ScoreCell key={`${detail.label}-${playerId}`} winner={isWinner}>
+                        {!isScope ? (
+                          <CellContent {...(isWinner && { 'aria-label': t('bonusPoint', { value }) })}>
+                            <ValueText>{value}</ValueText>
+                            {isWinner && <PointIndicator>+1</PointIndicator>}
+                          </CellContent>
+                        ) : (
+                          value
+                        )}
+                      </ScoreCell>
+                    )
+                  })}
+                </tr>
+              )
+            })}
+            <TotalRow>
+              <RowHeader scope="row">{t('scores.Total')}</RowHeader>
+              {scores.map(({ playerId, total }) => (
+                <Cell key={`player-total-${playerId}`}>{total}</Cell>
+              ))}
+            </TotalRow>
+          </tbody>
+        </Board>
+      </BoardViewport>
     </ScoreBoardStack>
   )
 }
