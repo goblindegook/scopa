@@ -161,6 +161,15 @@ describe('taking moves', () => {
     expect(card).toEqual(coppe(7))
     expect(take).toEqual([denari(7)])
   })
+
+  test('avoid capture that leaves the table fully sweepable', async () => {
+    const game = setupGame([coppe(3), spade(5), bastoni(4), denari(6)], [bastoni(6), bastoni(9)])
+
+    const { card, take } = await runMove(game)
+
+    expect(card).toEqual(bastoni(6))
+    expect(take).toEqual([denari(6)])
+  })
 })
 
 describe('discard moves', () => {

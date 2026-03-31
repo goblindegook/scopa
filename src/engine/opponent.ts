@@ -1,4 +1,4 @@
-import { type Card, isDenari, isSettebello, type Pile, type Suit } from './cards'
+import { type Card, isDenari, isSame, isSettebello, type Pile, type Suit } from './cards'
 import { findCardsToTake } from './move.ts'
 import { primePoints } from './scores.ts'
 import type { Move, State } from './state'
@@ -47,28 +47,38 @@ function evaluatePrimes(cards: Pile, currentBest: Map<Suit, number>, ctx?: CardC
 
 function evaluateTake(
   cards: Pile,
-  tableSize: number,
+  table: Pile,
   currentBest: Map<Suit, number>,
   ownDenariCount: number,
   ctx?: CardCountContext | null,
 ): number {
-  const scopaWeight = cards.length === tableSize + 1 ? 1000 : 0
+  const scopaWeight = cards.length === table.length + 1 ? 1000 : 0
+
   const settebelloWeight = cards.some(isSettebello) ? 20 : 0
-  const denariCards = cards.filter(isDenari)
 
   const trailingCards = ctx?.opponents.some((o) => o.cardCount > ctx.mine.cardCount) ?? false
   const leadingCards = ctx?.opponents.every((o) => o.cardCount <= ctx.mine.cardCount) ?? false
   const cardUnitWeight = trailingCards ? 2 : leadingCards ? 0.5 : 1
   const cardsWeight = ctx != null ? (cards.length - 1) * cardUnitWeight : cards.length
 
-  const baseDenariUnit = ownDenariCount > 5 ? 5 : 10
-  const trailingDenari = ctx?.opponents.some((o) => o.denariCount > ctx.mine.denariCount) ?? false
-  const denariUnit = baseDenariUnit + (trailingDenari ? 5 : 0)
-  const denariWeight = denariCards.length * denariUnit
+  const takenDenari = ownDenariCount > 5 ? 5 : 10
+  const trailingDenari = ctx?.opponents.some((o) => o.denariCount > ctx.mine.denariCount) ? 5 : 0
+  const denariCards = cards.filter(isDenari)
+  const denariWeight = denariCards.length * (takenDenari + trailingDenari)
 
   const primeWeight = evaluatePrimes(cards, currentBest, ctx)
 
-  return scopaWeight + settebelloWeight + denariWeight + primeWeight + cardsWeight
+  const takenCards = cards.slice(1)
+  const remainingTable = table.filter((c) => !takenCards.some((t) => isSame(t, c)))
+  const scopaGiftWeight =
+    remainingTable.length > 0 &&
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].some((value) =>
+      findCardsToTake(value, remainingTable).some((combo) => combo.length === remainingTable.length),
+    )
+      ? -30
+      : 0
+
+  return scopaWeight + settebelloWeight + denariWeight + primeWeight + cardsWeight + scopaGiftWeight
 }
 
 function enablesOpponentScopa(card: Card, table: Pile): boolean {
@@ -107,7 +117,7 @@ export async function move(game: State, canCountCards = false): Promise<Move> {
 
     const availableTakes = findCardsToTake(card[0], table)
     for (const takenCards of availableTakes) {
-      const score = evaluateTake([card, ...takenCards], table.length, currentBestPrimes, ownDenariCount, ctx)
+      const score = evaluateTake([card, ...takenCards], table, currentBestPrimes, ownDenariCount, ctx)
       if (score > bestScore) {
         bestScore = score
         bestMove = { card, take: takenCards }
