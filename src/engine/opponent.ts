@@ -7,7 +7,6 @@ interface OpponentProfile {
   cardCount: number
   denariCount: number
   bestPrimes: Map<Suit, number>
-  hasSettebello: boolean
 }
 
 interface CardCountContext {
@@ -20,7 +19,6 @@ function buildProfile(pile: Pile): OpponentProfile {
     cardCount: pile.length,
     denariCount: pile.filter(isDenari).length,
     bestPrimes: bestPrimes(pile),
-    hasSettebello: pile.some(isSettebello),
   }
 }
 
@@ -38,7 +36,7 @@ function bestPrimes(pile: Pile, initial: Map<Suit, number> = new Map()): Map<Sui
   }, new Map<Suit, number>(initial))
 }
 
-function evaluatePrimes(cards: Pile, currentBest: Map<Suit, number>, ctx?: CardCountContext): number {
+function evaluatePrimes(cards: Pile, currentBest: Map<Suit, number>, ctx?: CardCountContext | null): number {
   const next = bestPrimes(cards, currentBest)
   return Array.from(next).reduce((delta, [suit, pts]) => {
     const gain = pts - (currentBest.get(suit) ?? 0)
@@ -52,14 +50,14 @@ function evaluateTake(
   tableSize: number,
   currentBest: Map<Suit, number>,
   ownDenariCount: number,
-  ctx?: CardCountContext,
+  ctx?: CardCountContext | null,
 ): number {
   const scopaWeight = cards.length === tableSize + 1 ? 1000 : 0
   const settebelloWeight = cards.some(isSettebello) ? 20 : 0
   const denariCards = cards.filter(isDenari)
 
-  const trailingCards = ctx?.opponents.some((o) => o.cardCount > ctx.mine.cardCount)
-  const leadingCards = ctx?.opponents.every((o) => o.cardCount <= ctx.mine.cardCount)
+  const trailingCards = ctx?.opponents.some((o) => o.cardCount > ctx.mine.cardCount) ?? false
+  const leadingCards = ctx?.opponents.every((o) => o.cardCount <= ctx.mine.cardCount) ?? false
   const cardUnitWeight = trailingCards ? 2 : leadingCards ? 0.5 : 1
   const cardsWeight = ctx != null ? (cards.length - 1) * cardUnitWeight : cards.length
 
@@ -95,7 +93,7 @@ export async function move(game: State, canCountCards = false): Promise<Move> {
   const table = game.table
   const currentBestPrimes = bestPrimes(pile)
   const ownDenariCount = pile.filter(isDenari).length
-  const ctx = canCountCards ? buildContext(game) : undefined
+  const ctx = canCountCards ? buildContext(game) : null
 
   let bestMove: Move | null = null
   let bestScore = -Infinity
