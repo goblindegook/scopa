@@ -51,6 +51,7 @@ function evaluateTake(
   currentBest: Map<Suit, number>,
   ownDenariCount: number,
   ctx?: CardCountContext | null,
+  isLastTable = false,
 ): number {
   const scopaWeight = cards.length === table.length + 1 ? 1000 : 0
 
@@ -78,7 +79,9 @@ function evaluateTake(
       ? -30
       : 0
 
-  return scopaWeight + settebelloWeight + denariWeight + primeWeight + cardsWeight + scopaGiftWeight
+  const lastTableBonus = isLastTable ? takenCards.length * 10 : 0
+
+  return scopaWeight + settebelloWeight + denariWeight + primeWeight + cardsWeight + scopaGiftWeight + lastTableBonus
 }
 
 function enablesOpponentScopa(card: Card, table: Pile): boolean {
@@ -104,6 +107,7 @@ export async function move(game: State, canCountCards = false): Promise<Move> {
   const currentBestPrimes = bestPrimes(pile)
   const ownDenariCount = pile.filter(isDenari).length
   const ctx = canCountCards ? buildContext(game) : null
+  const isLastTable = game.pile.length === 0
 
   let bestMove: Move | null = null
   let bestScore = -Infinity
@@ -117,7 +121,7 @@ export async function move(game: State, canCountCards = false): Promise<Move> {
 
     const availableTakes = findCardsToTake(card[0], table)
     for (const takenCards of availableTakes) {
-      const score = evaluateTake([card, ...takenCards], table, currentBestPrimes, ownDenariCount, ctx)
+      const score = evaluateTake([card, ...takenCards], table, currentBestPrimes, ownDenariCount, ctx, isLastTable)
       if (score > bestScore) {
         bestScore = score
         bestMove = { card, take: takenCards }

@@ -221,6 +221,53 @@ describe('discard moves', () => {
   })
 })
 
+describe('last table', () => {
+  test('captures when draw pile is exhausted, even when it would otherwise discard', async () => {
+    const state: State = {
+      state: 'play',
+      turn: 0,
+      wins: [0, 0],
+      table: [coppe(3), bastoni(3)],
+      players: [
+        { id: 0, hand: [spade(3), bastoni(9)], pile: [coppe(7), bastoni(7), denari(7)], scope: 0 },
+        { id: 1, hand: [], pile: [], scope: 0 },
+      ],
+      pile: [denari(2)],
+      lastTaken: [],
+    }
+
+    const normalPlay = await runMove(state)
+    const atLastTable = await runMove({ ...state, pile: [] })
+
+    expect(normalPlay.take).toHaveLength(0)
+    expect(atLastTable.take).not.toHaveLength(0)
+  })
+
+  test('prefers larger capture at last table', async () => {
+    const playerPile = [coppe(6), spade(6), denari(6), bastoni(6)]
+    const state: State = {
+      state: 'play',
+      turn: 0,
+      wins: [0, 0],
+      table: [denari(1), coppe(2), bastoni(3), spade(2), coppe(9), spade(8)],
+      players: [
+        { id: 0, hand: [coppe(1), bastoni(7)], pile: playerPile, scope: 0 },
+        { id: 1, hand: [], pile: [], scope: 0 },
+      ],
+      pile: [denari(3)],
+      lastTaken: [],
+    }
+
+    const normalPlay = await runMove(state)
+    const atLastTable = await runMove({ ...state, pile: [] })
+
+    expect(normalPlay.card).toEqual(coppe(1))
+    expect(normalPlay.take).toEqual([denari(1)])
+    expect(atLastTable.card).toEqual(bastoni(7))
+    expect(atLastTable.take).toEqual(expect.arrayContaining([coppe(2), spade(2), bastoni(3)]))
+  })
+})
+
 describe('card counting', () => {
   test('doubles prime weight for suits where any opponent leads', async () => {
     const game: State = {
@@ -284,7 +331,7 @@ describe('card counting', () => {
         { id: 0, hand: [spade(6), coppe(10)], pile: [bastoni(7)], scope: 0 },
         { id: 1, hand: [], pile: [denari(1), denari(2), denari(3), denari(4)], scope: 0 },
       ],
-      pile: [],
+      pile: [denari(3)],
       lastTaken: [],
     }
 
