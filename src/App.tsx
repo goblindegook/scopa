@@ -8,6 +8,8 @@ import { Game } from './ui/Game'
 
 const dealShuffledDeck = (wins?: readonly number[], players: 2 | 3 = 2) => deal(shuffle(deck()), { players, wins })
 
-const App = () => <Game onStart={dealShuffledDeck} onPlay={play} onOpponentTurn={move} onScore={score} />
+const App = () => (
+  <Game onStart={dealShuffledDeck} onPlay={play} onOpponentTurn={(game) => move(game, true)} onScore={score} />
+)
 
 export default App

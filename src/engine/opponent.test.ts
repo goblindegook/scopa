@@ -170,6 +170,26 @@ describe('taking moves', () => {
     expect(card).toEqual(bastoni(6))
     expect(take).toEqual([denari(6)])
   })
+
+  test('avoid gifting a scopa even when the alternative takes three denari', async () => {
+    const game: State = {
+      state: 'play',
+      turn: 0,
+      wins: [0, 0],
+      table: [denari(1), denari(2), denari(3), bastoni(7), coppe(2)],
+      players: [
+        { id: 0, hand: [coppe(6), spade(2)], pile: [coppe(7), denari(7), spade(7)], scope: 0 },
+        { id: 1, hand: [], pile: [], scope: 0 },
+      ],
+      pile: [denari(4)],
+      lastTaken: [],
+    }
+
+    const { card, take } = await runMove(game)
+
+    expect(card).toEqual(spade(2))
+    expect(take).toEqual([denari(2)])
+  })
 })
 
 describe('discard moves', () => {
