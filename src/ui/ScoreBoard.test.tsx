@@ -59,17 +59,17 @@ test('renders player names and scores', () => {
   const denariRowCells = getCellsByRowHeader(table, 'Coins')
   expect(denariRowCells[0]).toHaveTextContent('5')
   expect(denariRowCells[1]).toHaveTextContent('6+1')
-  within(denariRowCells[1]).getByLabelText('6, bonus point awarded')
+  expect(denariRowCells[1]).toHaveAccessibleName('6, bonus point awarded')
 
   const setteBelloRowCells = getCellsByRowHeader(table, 'Sette Bello')
   expect(setteBelloRowCells[0]).toHaveTextContent('1+1')
-  within(setteBelloRowCells[0]).getByLabelText('1, bonus point awarded')
+  expect(setteBelloRowCells[0]).toHaveAccessibleName('1, bonus point awarded')
   expect(setteBelloRowCells[1]).toHaveTextContent('0')
 
   const primieraRowCells = getCellsByRowHeader(table, 'Prime')
   expect(primieraRowCells[0]).toHaveTextContent('45')
   expect(primieraRowCells[1]).toHaveTextContent('50+1')
-  within(primieraRowCells[1]).getByLabelText('50, bonus point awarded')
+  expect(primieraRowCells[1]).toHaveAccessibleName('50, bonus point awarded')
 
   const totalRowCells = getCellsByRowHeader(table, 'Total')
   expect(totalRowCells[0]).toHaveTextContent('3')

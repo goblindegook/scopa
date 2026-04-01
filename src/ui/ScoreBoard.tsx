@@ -24,26 +24,15 @@ const Board = styled('table')`
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 0.5rem;
-  min-width: 25vw;
-  padding: 1rem;
   width: 100%;
   background-color: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
   border-spacing: 0;
-  overflow: hidden;
 
   @media (max-height: 600px) {
     font-size: 0.875rem;
-    padding: 0.5rem;
   }
-`
-
-const BoardViewport = styled('div')`
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  overflow-x: auto;
 `
 
 const PlayerHeader = styled('th')`
@@ -56,7 +45,6 @@ const PlayerHeader = styled('th')`
   @media (max-height: 600px) {
     padding: 0.5rem;
   }
-
 `
 
 const RowHeader = styled('th')`
@@ -80,31 +68,14 @@ const Cell = styled('td')`
 `
 
 const ScoreCell = styled(Cell)<{ winner?: boolean }>`
-  position: relative;
   opacity: ${({ winner }) => (winner ? 1 : 0.8)};
   font-weight: ${({ winner }) => (winner ? 'bold' : 'normal')};
-`
-
-const CellContent = styled('div')`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  gap: 0.75rem;
-
-  @media (max-height: 600px) {
-    gap: 0.5rem;
-  }
-`
-
-const ValueText = styled('span')`
-  font-size: 0.875rem;
-  justify-self: end;
 `
 
 const PointIndicator = styled('span')`
   color: #4ade80;
   font-weight: 600;
-  justify-self: start;
+  margin-left: 0.5rem;
 `
 
 const TotalRow = styled('tr')`
@@ -180,56 +151,52 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, handWins,
           </RunningTotalBox>
         ))}
       </RunningTotal>
-      <BoardViewport>
-        <Board aria-label={t('gameScoreboard')}>
-          <caption className="sr-only">{t('gameScoreboardCaption')}</caption>
-          <thead>
-            <tr>
-              <th scope="col" className="sr-only">
-                {t('scoreCategory')}
-              </th>
-              {scores.map(({ playerId }) => (
-                <PlayerHeader key={`player-header-${playerId}`} scope="col">
-                  {playerAvatars[playerId]}
-                </PlayerHeader>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {scores[0].details.map((detail, detailIndex) => {
-              const winnerId = findWinner(scores, detailIndex)
-              const isScope = detail.label === 'Scope'
-              return (
-                <tr key={detail.label}>
-                  <RowHeader scope="row">{t(`scores.${detail.label}`)}</RowHeader>
-                  {scores.map(({ playerId, details }) => {
-                    const isWinner = winnerId === playerId
-                    const value = details[detailIndex]?.value ?? 0
-                    return (
-                      <ScoreCell key={`${detail.label}-${playerId}`} winner={isWinner}>
-                        {!isScope ? (
-                          <CellContent {...(isWinner && { 'aria-label': t('bonusPoint', { value }) })}>
-                            <ValueText>{value}</ValueText>
-                            {isWinner && <PointIndicator>+1</PointIndicator>}
-                          </CellContent>
-                        ) : (
-                          value
-                        )}
-                      </ScoreCell>
-                    )
-                  })}
-                </tr>
-              )
-            })}
-            <TotalRow>
-              <RowHeader scope="row">{t('scores.Total')}</RowHeader>
-              {scores.map(({ playerId, total }) => (
-                <Cell key={`player-total-${playerId}`}>{total}</Cell>
-              ))}
-            </TotalRow>
-          </tbody>
-        </Board>
-      </BoardViewport>
+      <Board aria-label={t('gameScoreboard')}>
+        <caption className="sr-only">{t('gameScoreboardCaption')}</caption>
+        <thead>
+          <tr>
+            <th scope="col" className="sr-only">
+              {t('scoreCategory')}
+            </th>
+            {scores.map(({ playerId }) => (
+              <PlayerHeader key={`player-header-${playerId}`} scope="col">
+                {playerAvatars[playerId]}
+              </PlayerHeader>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {scores[0].details.map((detail, detailIndex) => {
+            const winnerId = findWinner(scores, detailIndex)
+            const isScope = detail.label === 'Scope'
+            return (
+              <tr key={detail.label}>
+                <RowHeader scope="row">{t(`scores.${detail.label}`)}</RowHeader>
+                {scores.map(({ playerId, details }) => {
+                  const isWinner = winnerId === playerId
+                  const value = details[detailIndex]?.value ?? 0
+                  return (
+                    <ScoreCell
+                      key={`${detail.label}-${playerId}`}
+                      winner={isWinner}
+                      {...(isWinner && !isScope && { 'aria-label': t('bonusPoint', { value }) })}
+                    >
+                      {value}
+                      {isWinner && !isScope && <PointIndicator>+1</PointIndicator>}
+                    </ScoreCell>
+                  )
+                })}
+              </tr>
+            )
+          })}
+          <TotalRow>
+            <RowHeader scope="row">{t('scores.Total')}</RowHeader>
+            {scores.map(({ playerId, total }) => (
+              <Cell key={`player-total-${playerId}`}>{total}</Cell>
+            ))}
+          </TotalRow>
+        </tbody>
+      </Board>
     </ScoreBoardStack>
   )
 }
