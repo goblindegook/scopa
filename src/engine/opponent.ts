@@ -1,7 +1,7 @@
-import { type Card, deck, isDenari, isSame, isSettebello, type Pile, type Suit } from './cards'
+import { type Card, isDenari, isSame, isSettebello, type Pile, type Suit } from './cards'
 import { findCardsToTake } from './move.ts'
 import { primePoints } from './scores.ts'
-import type { Move, State } from './state'
+import type { Move, Player, State } from './state'
 
 const LOOKAHEAD_DISCOUNT = 0.4
 
@@ -17,6 +17,65 @@ interface CardCountContext {
   nextOpponent: OpponentProfile
 }
 
+export async function move(
+  game: State,
+  { canCountCards = false, canLookAhead = false }: OpponenOptions,
+): Promise<Move> {
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+
+  const { hand, pile } = game.players[game.turn]
+  const table = game.table
+  const currentBestPrimes = bestPrimes(pile)
+  const ownDenariCount = pile.filter(isDenari).length
+  const ctx = canCountCards ? buildContext(game) : null
+  const isLastTable = game.pile.length === 0
+  const uncountedCards = canLookAhead && canCountCards ? inferUncountedCards(game) : []
+
+  let bestMove: Move | null = null
+  let bestScore = -Infinity
+
+  for (const card of hand) {
+    const remainingHand = hand.filter((c) => !isSame(c, card))
+
+    const discardTable = [...table, card]
+    const discardTables = canLookAhead
+      ? canCountCards
+        ? simulatedOpponentTables(discardTable, uncountedCards)
+        : [discardTable]
+      : []
+    const discardLookahead = canLookAhead
+      ? LOOKAHEAD_DISCOUNT *
+        lookaheadScore(remainingHand, discardTables, currentBestPrimes, ownDenariCount, isLastTable)
+      : 0
+    const discardScore = evaluateDiscard(card, table) + discardLookahead
+    if (discardScore > bestScore) {
+      bestScore = discardScore
+      bestMove = { card, take: [] }
+    }
+
+    const availableTakes = findCardsToTake(card[0], table)
+    for (const takenCards of availableTakes) {
+      const nextTable = table.filter((c) => !takenCards.some((t) => isSame(t, c)))
+      const takeTables = canLookAhead
+        ? canCountCards
+          ? simulatedOpponentTables(nextTable, uncountedCards)
+          : [nextTable]
+        : []
+      const takeLookahead = canLookAhead
+        ? LOOKAHEAD_DISCOUNT * lookaheadScore(remainingHand, takeTables, currentBestPrimes, ownDenariCount, isLastTable)
+        : 0
+      const takeScore =
+        evaluateTake([card, ...takenCards], table, currentBestPrimes, ownDenariCount, ctx, isLastTable) + takeLookahead
+      if (takeScore > bestScore) {
+        bestScore = takeScore
+        bestMove = { card, take: takenCards }
+      }
+    }
+  }
+
+  return bestMove ?? { card: hand[0], take: [] }
+}
+
 function buildProfile(pile: Pile): OpponentProfile {
   return {
     cardCount: pile.length,
@@ -25,19 +84,21 @@ function buildProfile(pile: Pile): OpponentProfile {
   }
 }
 
+function getOpponents(game: State): readonly Player[] {
+  return game.players.filter((_, i) => i !== game.turn)
+}
+
 function buildContext(game: State): CardCountContext {
-  const mine = buildProfile(game.players[game.turn].pile)
-  const opponents = game.players.filter((_, i) => i !== game.turn).map((p) => buildProfile(p.pile))
   const nextTurn = (game.turn - 1 + game.players.length) % game.players.length
-  const nextOpponent = buildProfile(game.players[nextTurn].pile)
-  return { mine, opponents, nextOpponent }
+  return {
+    mine: buildProfile(game.players[game.turn].pile),
+    opponents: getOpponents(game).map((p) => buildProfile(p.pile)),
+    nextOpponent: buildProfile(game.players[nextTurn].pile),
+  }
 }
 
 export function inferUncountedCards(game: State): Pile {
-  const { hand, pile } = game.players[game.turn]
-  const opponentPiles = game.players.filter((_, i) => i !== game.turn).flatMap((p) => p.pile)
-  const known = [...hand, ...pile, ...opponentPiles, ...game.table]
-  return deck().filter((card) => !known.some((k) => isSame(k, card)))
+  return [...game.pile, ...getOpponents(game).flatMap((p) => p.hand)]
 }
 
 export function simulatedOpponentTables(nextTable: Pile, uncountedCards: Pile): readonly Pile[] {
@@ -151,63 +212,4 @@ export function lookaheadScore(
 interface OpponenOptions {
   canCountCards?: boolean
   canLookAhead?: boolean
-}
-
-export async function move(
-  game: State,
-  { canCountCards = false, canLookAhead = false }: OpponenOptions,
-): Promise<Move> {
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  const { hand, pile } = game.players[game.turn]
-  const table = game.table
-  const currentBestPrimes = bestPrimes(pile)
-  const ownDenariCount = pile.filter(isDenari).length
-  const ctx = canCountCards ? buildContext(game) : null
-  const isLastTable = game.pile.length === 0
-  const uncountedCards = canLookAhead && canCountCards ? inferUncountedCards(game) : []
-
-  let bestMove: Move | null = null
-  let bestScore = -Infinity
-
-  for (const card of hand) {
-    const remainingHand = hand.filter((c) => !isSame(c, card))
-
-    const discardTable = [...table, card]
-    const discardTables = canLookAhead
-      ? canCountCards
-        ? simulatedOpponentTables(discardTable, uncountedCards)
-        : [discardTable]
-      : []
-    const discardLookahead = canLookAhead
-      ? LOOKAHEAD_DISCOUNT *
-        lookaheadScore(remainingHand, discardTables, currentBestPrimes, ownDenariCount, isLastTable)
-      : 0
-    const discardScore = evaluateDiscard(card, table) + discardLookahead
-    if (discardScore > bestScore) {
-      bestScore = discardScore
-      bestMove = { card, take: [] }
-    }
-
-    const availableTakes = findCardsToTake(card[0], table)
-    for (const takenCards of availableTakes) {
-      const nextTable = table.filter((c) => !takenCards.some((t) => isSame(t, c)))
-      const takeTables = canLookAhead
-        ? canCountCards
-          ? simulatedOpponentTables(nextTable, uncountedCards)
-          : [nextTable]
-        : []
-      const takeLookahead = canLookAhead
-        ? LOOKAHEAD_DISCOUNT * lookaheadScore(remainingHand, takeTables, currentBestPrimes, ownDenariCount, isLastTable)
-        : 0
-      const takeScore =
-        evaluateTake([card, ...takenCards], table, currentBestPrimes, ownDenariCount, ctx, isLastTable) + takeLookahead
-      if (takeScore > bestScore) {
-        bestScore = takeScore
-        bestMove = { card, take: takenCards }
-      }
-    }
-  }
-
-  return bestMove ?? { card: hand[0], take: [] }
 }

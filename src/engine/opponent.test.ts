@@ -1,7 +1,7 @@
 import { shuffle } from '@pacote/shuffle'
 import fc from 'fast-check'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { bastoni, coppe, denari, type Pile, spade } from './cards'
+import { bastoni, coppe, deck, denari, isSame, type Pile, spade } from './cards'
 import { move } from './opponent'
 import type { State } from './state'
 
@@ -430,7 +430,21 @@ describe('card counting', () => {
 
 describe('canLookAhead', () => {
   test('can switch from immediate take to discard when lookahead sees a better follow-up', async () => {
-    const game = setupGame([denari(7), coppe(2)], [denari(1), denari(2)])
+    const table: Pile = [denari(7), coppe(2)]
+    const hand: Pile = [denari(1), denari(2)]
+    const knownCards = [...table, ...hand]
+    const game: State = {
+      state: 'play',
+      turn: 0,
+      wins: [0, 0],
+      table,
+      players: [
+        { id: 0, hand, pile: [], scope: 0 },
+        { id: 1, hand: [], pile: [], scope: 0 },
+      ],
+      pile: deck().filter((card) => !knownCards.some((k) => isSame(k, card))),
+      lastTaken: [],
+    }
 
     const withoutLookahead = await runMove(game)
     const withLookahead = await runMove(game, false, true)
@@ -442,7 +456,21 @@ describe('canLookAhead', () => {
   })
 
   test('discounts setup when opponent can plausibly disrupt it', async () => {
-    const game = setupGame([denari(3), denari(9)], [denari(1), denari(2)])
+    const table: Pile = [denari(3), denari(9)]
+    const hand: Pile = [denari(1), denari(2)]
+    const knownCards = [...table, ...hand]
+    const game: State = {
+      state: 'play',
+      turn: 0,
+      wins: [0, 0],
+      table,
+      players: [
+        { id: 0, hand, pile: [], scope: 0 },
+        { id: 1, hand: [], pile: [], scope: 0 },
+      ],
+      pile: deck().filter((card) => !knownCards.some((k) => isSame(k, card))),
+      lastTaken: [],
+    }
 
     const naiveLookahead = await runMove(game, false, true)
     const countingLookahead = await runMove(game, true, true)
