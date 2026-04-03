@@ -20,8 +20,8 @@ function setupGame(table: Pile, hand: Pile, pile: Pile = []): State {
   }
 }
 
-async function runMove(game: State, canCountCards = false) {
-  const promisedMove = move(game, canCountCards)
+async function runMove(game: State, canCountCards = false, canLookAhead = false) {
+  const promisedMove = move(game, { canCountCards, canLookAhead })
   await vi.runAllTimersAsync()
   return promisedMove
 }
@@ -425,5 +425,31 @@ describe('card counting', () => {
     expect(withCounting.take.length).toBeGreaterThan(withoutCounting.take.length)
     expect(withCounting.take).toEqual(expect.arrayContaining([coppe(5), coppe(2), coppe(3)]))
     expect(withCounting.card).toEqual(coppe(10))
+  })
+})
+
+describe('canLookAhead', () => {
+  test('can switch from immediate take to discard when lookahead sees a better follow-up', async () => {
+    const game = setupGame([denari(7), coppe(2)], [denari(1), denari(2)])
+
+    const withoutLookahead = await runMove(game)
+    const withLookahead = await runMove(game, false, true)
+
+    expect(withoutLookahead.card).toEqual(denari(2))
+    expect(withoutLookahead.take).toEqual([coppe(2)])
+    expect(withLookahead.card).toEqual(denari(2))
+    expect(withLookahead.take).toHaveLength(0)
+  })
+
+  test('discounts setup when opponent can plausibly disrupt it', async () => {
+    const game = setupGame([denari(3), denari(9)], [denari(1), denari(2)])
+
+    const naiveLookahead = await runMove(game, false, true)
+    const countingLookahead = await runMove(game, true, true)
+
+    expect(naiveLookahead.take).toHaveLength(0)
+    expect(countingLookahead.take).toHaveLength(0)
+    expect(naiveLookahead.card).toEqual(denari(2))
+    expect(countingLookahead.card).toEqual(denari(1))
   })
 })
