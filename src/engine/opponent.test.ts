@@ -91,6 +91,26 @@ describe('taking moves', () => {
     expect(take).toEqual([denari(7), denari(2)])
   })
 
+  test('with counting and lookahead, take settebello immediately when available', async () => {
+    const game: State = {
+      state: 'play',
+      turn: 0,
+      score: [0, 0],
+      table: [denari(2), denari(3), denari(4), denari(7)],
+      players: [
+        { id: 0, hand: [denari(1), coppe(7)], pile: [], scope: 0 },
+        { id: 1, hand: [coppe(1), coppe(2)], pile: [], scope: 0 },
+      ],
+      pile: [bastoni(1)],
+      lastTaken: [],
+    }
+
+    const { card, take } = await runMove(game, true, true)
+
+    expect(card).toEqual(coppe(7))
+    expect(take).toEqual([denari(7)])
+  })
+
   test('prefer taking coins suit among equal single-card options', async () => {
     const game = setupGame([denari(1), spade(1)], [coppe(1)])
 
@@ -237,6 +257,15 @@ describe('discard moves', () => {
     const { card, take } = await runMove(game)
 
     expect(card).toEqual(spade(7))
+    expect(take).toHaveLength(0)
+  })
+
+  test('with counting and lookahead, keep settebello in hand when another discard exists', async () => {
+    const game = setupGame([denari(2), denari(3)], [denari(7), denari(1)])
+
+    const { card, take } = await runMove(game, true, true)
+
+    expect(card).toEqual(denari(1))
     expect(take).toHaveLength(0)
   })
 })
