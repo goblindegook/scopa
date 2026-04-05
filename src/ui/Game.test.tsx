@@ -31,7 +31,7 @@ function testGame(overrides: Partial<State> = {}): State {
   return {
     state: 'play',
     turn: 0,
-    wins: [0, 0],
+    score: [0, 0],
     players: [
       { id: 0, hand: [], pile: [], scope: 0 },
       { id: 1, hand: [], pile: [], scope: 0 },
@@ -67,7 +67,7 @@ test('deal new game on start', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
   expect(onStart).toHaveBeenCalled()
-  expect(screen.getByLabelText('Hands won')).toBeTruthy()
+  expect(screen.getByLabelText('Game score')).toBeTruthy()
   expect(screen.getByText('🐵 0')).toHaveAttribute('data-active', 'true')
   expect(screen.getByText('🤖 0')).toHaveAttribute('data-active', 'false')
 })
@@ -435,7 +435,7 @@ test('computer opponent plays a card', async () => {
 test('end game and show scores', async () => {
   const state = testGame({
     state: 'stop',
-    wins: [0, 1],
+    score: [0, 1],
     players: [
       { id: 0, hand: [], pile: [], scope: 1 },
       { id: 1, hand: [], pile: [], scope: 2 },
@@ -458,15 +458,15 @@ test('end game and show scores', async () => {
   expect(screen.getByRole('columnheader', { name: '🤖' })).toBeTruthy()
   expect(screen.getByText('4')).toBeTruthy()
   expect(screen.getByText('🤖 wins the hand')).toBeTruthy()
-  expect(screen.getByLabelText('Hands won')).toBeTruthy()
+  expect(screen.getByLabelText('Game score')).toBeTruthy()
   expect(screen.getByText('🐵 0')).toBeTruthy()
   expect(screen.getByText('🤖 1')).toBeTruthy()
   expect(screen.getByRole('button', { name: 'Next Hand' })).toBeTruthy()
 })
 
-test('tracks hands won and carries them to next hand', async () => {
+test('tracks game score and carries it to next hand', async () => {
   const onStart = vitest
-    .fn<(wins?: readonly number[]) => ReturnType<typeof Ok<State>>>()
+    .fn<(score?: readonly number[]) => ReturnType<typeof Ok<State>>>()
     .mockImplementationOnce(() =>
       Ok(
         testGame({
@@ -479,11 +479,11 @@ test('tracks hands won and carries them to next hand', async () => {
         }),
       ),
     )
-    .mockImplementationOnce((_wins) =>
+    .mockImplementationOnce((_score) =>
       Ok(
         testGame({
           turn: 0,
-          wins: [1, 0],
+          score: [1, 0],
           players: [
             { id: 0, hand: [bastoni(2)], pile: [], scope: 0 },
             { id: 1, hand: [denari(3)], pile: [], scope: 0 },
@@ -497,7 +497,7 @@ test('tracks hands won and carries them to next hand', async () => {
       testGame({
         state: 'stop',
         turn: 1,
-        wins: [1, 0],
+        score: [1, 0],
         players: [
           { id: 0, hand: [], pile: [coppe(1), denari(1)], scope: 0 },
           { id: 1, hand: [], pile: [], scope: 0 },
@@ -526,9 +526,9 @@ test('tracks hands won and carries them to next hand', async () => {
   expect(screen.getByText('🤖 0')).toBeTruthy()
 })
 
-test('starting a new game resets running round wins', async () => {
+test('starting a new game resets running game score', async () => {
   const onStart = vitest
-    .fn<(wins?: readonly number[]) => ReturnType<typeof Ok<State>>>()
+    .fn<(score?: readonly number[]) => ReturnType<typeof Ok<State>>>()
     .mockImplementationOnce(() =>
       Ok(
         testGame({
@@ -541,11 +541,11 @@ test('starting a new game resets running round wins', async () => {
         }),
       ),
     )
-    .mockImplementationOnce((_wins) =>
+    .mockImplementationOnce((_score) =>
       Ok(
         testGame({
           turn: 0,
-          wins: [1, 0],
+          score: [1, 0],
           players: [
             { id: 0, hand: [bastoni(2)], pile: [], scope: 0 },
             { id: 1, hand: [denari(3)], pile: [], scope: 0 },
@@ -557,7 +557,7 @@ test('starting a new game resets running round wins', async () => {
       Ok(
         testGame({
           turn: 0,
-          wins: [0, 0],
+          score: [0, 0],
           players: [
             { id: 0, hand: [spade(2)], pile: [], scope: 0 },
             { id: 1, hand: [coppe(3)], pile: [], scope: 0 },
@@ -571,7 +571,7 @@ test('starting a new game resets running round wins', async () => {
       testGame({
         state: 'stop',
         turn: 1,
-        wins: [1, 0],
+        score: [1, 0],
         players: [
           { id: 0, hand: [], pile: [coppe(1), denari(1)], scope: 0 },
           { id: 1, hand: [], pile: [], scope: 0 },
@@ -604,14 +604,14 @@ test('starting a new game resets running round wins', async () => {
   expect(screen.getByText('🤖 0')).toBeTruthy()
 })
 
-test('when a player reaches 11 hands, show game winner and switch to New Game', async () => {
+test('when a player has a unique score above 11, show game winner and switch to New Game', async () => {
   const onStart = vitest
     .fn()
     .mockImplementationOnce(() =>
       Ok(
         testGame({
           state: 'stop',
-          wins: [11, 0],
+          score: [12, 10],
           players: [
             { id: 0, hand: [], pile: [], scope: 0 },
             { id: 1, hand: [], pile: [], scope: 0 },
@@ -623,7 +623,7 @@ test('when a player reaches 11 hands, show game winner and switch to New Game', 
       Ok(
         testGame({
           turn: 0,
-          wins: [0, 0],
+          score: [0, 0],
           players: [
             { id: 0, hand: [denari(1)], pile: [], scope: 0 },
             { id: 1, hand: [denari(2)], pile: [], scope: 0 },
@@ -648,6 +648,33 @@ test('when a player reaches 11 hands, show game winner and switch to New Game', 
   expect(screen.getByText('🤖 0')).toBeTruthy()
 })
 
+test('when all top scores are tied at 11 or more, keep playing next hand', async () => {
+  const onStart = vitest.fn(() =>
+    Ok(
+      testGame({
+        state: 'stop',
+        score: [12, 12],
+        players: [
+          { id: 0, hand: [], pile: [], scope: 0 },
+          { id: 1, hand: [], pile: [], scope: 0 },
+        ],
+      }),
+    ),
+  )
+
+  const onScore = vitest.fn(() => [
+    { playerId: 0, total: 2, details: [] },
+    { playerId: 1, total: 2, details: [] },
+  ])
+
+  render(<Game onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={onScore} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
+
+  expect(screen.getByRole('button', { name: 'Next Hand' })).toBeTruthy()
+  expect(screen.getByText("It's a draw")).toBeTruthy()
+})
+
 test('renders "Scopa!" when a player takes all cards on the table', async () => {
   render(
     <Game
@@ -655,7 +682,7 @@ test('renders "Scopa!" when a player takes all cards on the table', async () => 
         Ok({
           state: 'play',
           turn: 0,
-          wins: [0, 0],
+          score: [0, 0],
           players: [
             { id: 0, hand: [denari(5)], pile: [], scope: 0 },
             { id: 1, hand: [denari(1)], pile: [], scope: 0 },
@@ -669,7 +696,7 @@ test('renders "Scopa!" when a player takes all cards on the table', async () => 
         Ok({
           state: 'play',
           turn: 1,
-          wins: [0, 0],
+          score: [0, 0],
           players: [
             { id: 0, hand: [], pile: [denari(2), denari(3), denari(5)], scope: 1 },
             { id: 1, hand: [denari(1)], pile: [], scope: 0 },
@@ -697,7 +724,7 @@ test('does not render "Scopa!" when a player does not take all cards on the tabl
         Ok({
           state: 'play',
           turn: 0,
-          wins: [0, 0],
+          score: [0, 0],
           players: [
             { id: 0, hand: [bastoni(2)], pile: [], scope: 0 },
             { id: 1, hand: [denari(1)], pile: [], scope: 0 },
@@ -711,7 +738,7 @@ test('does not render "Scopa!" when a player does not take all cards on the tabl
         Ok({
           state: 'play',
           turn: 1,
-          wins: [0, 0],
+          score: [0, 0],
           players: [
             { id: 0, hand: [], pile: [denari(2), bastoni(5)], scope: 0 },
             { id: 1, hand: [denari(1)], pile: [], scope: 0 },

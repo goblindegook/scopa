@@ -11,7 +11,7 @@
   "draw": "Pareggio",
   "winsHand": "{avatar} vince la mano",
   "winsGame": "{avatar} vince la partita",
-  "handsWon": "Mani vinte",
+  "gameScore": "Punteggio partita",
   "gameScoreboard": "Punteggio della partita",
   "gameScoreboardCaption": "Punteggio della partita per ogni giocatore",
   "scoreCategory": "Categoria",

@@ -7,7 +7,7 @@ import type { Move, Player, State } from './state'
 
 interface Options {
   players?: 2 | 3 | 4 | 6
-  wins?: readonly number[]
+  score?: readonly number[]
 }
 
 const DEFAULT_PLAYERS = 2
@@ -33,16 +33,9 @@ const hasTakenCards = (allowedCards: readonly Pile[], cardsToTake: readonly Pile
     (candidate) => candidate.length === cardsToTake.length && candidate.every((card) => hasCard(cardsToTake, card)),
   )
 
-function computeHandWinner(players: readonly Player[]): number | null {
-  const scores = score(players)
-  const maxTotal = Math.max(...scores.map((s) => s.total))
-  const winners = scores.filter((s) => s.total === maxTotal)
-  return winners.length === 1 ? winners[0].playerId : null
-}
-
 export function deal(cards: Pile, options?: Options): Result<State, Error> {
   const players = options?.players ?? DEFAULT_PLAYERS
-  const wins = options?.wins ?? Array.from({ length: players }, () => 0)
+  const score = options?.score ?? Array.from({ length: players }, () => 0)
   const [table, rest] = splitAt(4, cards)
   const dealtKings = table.filter(([value]) => value === 10).length
 
@@ -56,7 +49,7 @@ export function deal(cards: Pile, options?: Options): Result<State, Error> {
         pile,
         table,
         lastTaken: [],
-        wins,
+        score,
       })
     : Err(Error('More than two kings on the table. Deal again.'))
 }
@@ -110,8 +103,10 @@ function next({ card, take }: Move, game: State): State {
   const finalTable = nextState === 'stop' && lastTaker != null ? [] : nextTable
 
   if (nextState === 'stop') {
-    const winner = computeHandWinner(finalPlayers)
-    const wins = game.wins.map((w, idx) => (idx === winner ? w + 1 : w))
+    const handTotals = score(finalPlayers).reduce<Map<number, number>>((totals, { playerId, total }) => {
+      totals.set(playerId, total)
+      return totals
+    }, new Map())
     return {
       state: nextState,
       pile: nextPile,
@@ -120,7 +115,7 @@ function next({ card, take }: Move, game: State): State {
       turn: nextTurn,
       lastTaken: take,
       lastTaker,
-      wins,
+      score: game.score.map((total, playerId) => total + (handTotals.get(playerId) ?? 0)),
     }
   }
 
@@ -132,7 +127,7 @@ function next({ card, take }: Move, game: State): State {
     turn: nextTurn,
     lastTaken: take,
     lastTaker,
-    wins: game.wins,
+    score: game.score,
   }
 }
 

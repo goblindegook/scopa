@@ -185,7 +185,7 @@ const LangButtonText = styled('span')`
 
 interface SavedGame {
   avatars: string[]
-  wins: readonly number[]
+  score: readonly number[]
 }
 
 interface TitleScreenProps {
@@ -230,7 +230,7 @@ export const TitleScreen = ({ loadingProgress, onStart, savedGame, onResume }: T
                 <Button onClick={onResume}>
                   <ResumeButtonContent>
                     <ResumeScores>
-                      {savedGame.avatars.map((avatar, i) => `${avatar} ${savedGame.wins[i]}`).join(' · ')}
+                      {savedGame.avatars.map((avatar, i) => `${avatar} ${savedGame.score[i]}`).join(' · ')}
                     </ResumeScores>
                     <ResumeLabel>{t('resume')}</ResumeLabel>
                   </ResumeButtonContent>

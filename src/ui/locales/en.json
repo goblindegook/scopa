@@ -11,7 +11,7 @@
   "draw": "It's a draw",
   "winsHand": "{avatar} wins the hand",
   "winsGame": "{avatar} wins the game",
-  "handsWon": "Hands won",
+  "gameScore": "Game score",
   "gameScoreboard": "Game scoreboard",
   "gameScoreboardCaption": "Game scoreboard showing scores for each player",
   "scoreCategory": "Score category",

@@ -15,7 +15,7 @@ export interface State {
   readonly table: Pile
   readonly lastTaken: Pile
   readonly lastTaker?: number
-  readonly wins: readonly number[]
+  readonly score: readonly number[]
 }
 
 export interface Move {

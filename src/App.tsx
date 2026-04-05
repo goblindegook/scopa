@@ -6,7 +6,7 @@ import { deal, play } from './engine/scopa'
 import { score } from './engine/scores'
 import { Game } from './ui/Game'
 
-const dealShuffledDeck = (wins?: readonly number[], players: 2 | 3 = 2) => deal(shuffle(deck()), { players, wins })
+const dealShuffledDeck = (score?: readonly number[], players: 2 | 3 = 2) => deal(shuffle(deck()), { players, score })
 
 const App = () => (
   <Game

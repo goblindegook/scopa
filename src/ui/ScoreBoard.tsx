@@ -144,7 +144,7 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, handWins,
   return (
     <ScoreBoardStack>
       <WinnerTitle>{title}</WinnerTitle>
-      <RunningTotal aria-label={t('handsWon')}>
+      <RunningTotal aria-label={t('gameScore')}>
         {playerAvatars.map((playerAvatar, index) => (
           <RunningTotalBox key={`running-total-${playerAvatar}`}>
             {playerAvatar} {handWins[index]}
