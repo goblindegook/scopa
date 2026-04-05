@@ -1,6 +1,6 @@
 import { shuffle } from '@pacote/shuffle'
 import fc from 'fast-check'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { bastoni, coppe, deck, denari, isSame, type Pile, spade } from './cards'
 import { move } from './opponent'
 import type { State } from './state'
@@ -20,34 +20,20 @@ function setupGame(table: Pile, hand: Pile, pile: Pile = []): State {
   }
 }
 
-async function runMove(game: State, canCountCards = false, canLookAhead = false) {
-  const promisedMove = move(game, { canCountCards, canLookAhead })
-  await vi.runAllTimersAsync()
-  return promisedMove
-}
-
-beforeEach(() => {
-  vi.useFakeTimers()
-})
-
-afterEach(() => {
-  vi.useRealTimers()
-})
-
 describe('taking moves', () => {
-  test('prefer to sweep the table when possible', async () => {
+  test('prefer to sweep the table when possible', () => {
     const game = setupGame([bastoni(2), denari(1)], [coppe(3), coppe(1)])
 
-    const { card, take } = await runMove(game)
+    const { card, take } = move(game)
 
     expect(card).toEqual(coppe(3))
     expect(take).toEqual([bastoni(2), denari(1)])
   })
 
-  test('prefer sweeping the table with a settebello', async () => {
+  test('prefer sweeping the table with a settebello', () => {
     const game = setupGame([coppe(5), coppe(2)], [denari(7), coppe(7)])
 
-    const { card, take } = await runMove(game)
+    const { card, take } = move(game)
 
     expect(card).toEqual(denari(7))
     expect(take).toEqual([coppe(5), coppe(2)])
@@ -56,42 +42,42 @@ describe('taking moves', () => {
   test.each([
     [[denari(6), coppe(6)]],
     [[coppe(6), denari(6)]],
-  ])('prefer sweeping the table with the coins suit', async (hand) => {
+  ])('prefer sweeping the table with the coins suit', (hand) => {
     const game = setupGame([coppe(4), coppe(2)], hand)
 
-    const { card, take } = await runMove(game)
+    const { card, take } = move(game)
 
     expect(card).toEqual(denari(6))
     expect(take).toEqual([coppe(4), coppe(2)])
   })
 
-  test('must pick the least number of cards when multiple combinations exist', async () => {
+  test('must pick the least number of cards when multiple combinations exist', () => {
     const game = setupGame([coppe(5), coppe(3), coppe(2)], [spade(5)])
 
-    const { take } = await runMove(game)
+    const { take } = move(game)
 
     expect(take).toEqual([coppe(5)])
   })
 
-  test('take settebello when possible', async () => {
+  test('take settebello when possible', () => {
     const game = setupGame([denari(7), bastoni(7), denari(2)], [coppe(7)])
 
-    const { card, take } = await runMove(game)
+    const { card, take } = move(game)
 
     expect(card).toEqual(coppe(7))
     expect(take).toEqual([denari(7)])
   })
 
-  test('take settebello as part of a group', async () => {
+  test('take settebello as part of a group', () => {
     const game = setupGame([denari(7), bastoni(7), denari(2)], [coppe(9)])
 
-    const { card, take } = await runMove(game)
+    const { card, take } = move(game)
 
     expect(card).toEqual(coppe(9))
     expect(take).toEqual([denari(7), denari(2)])
   })
 
-  test('with counting and lookahead, take settebello immediately when available', async () => {
+  test('with counting and lookahead, take settebello immediately when available', () => {
     const game: State = {
       state: 'play',
       turn: 0,
@@ -105,93 +91,93 @@ describe('taking moves', () => {
       lastTaken: [],
     }
 
-    const { card, take } = await runMove(game, true, true)
+    const { card, take } = move(game, { canCountCards: true, canLookAhead: true })
 
     expect(card).toEqual(coppe(7))
     expect(take).toEqual([denari(7)])
   })
 
-  test('prefer taking coins suit among equal single-card options', async () => {
+  test('prefer taking coins suit among equal single-card options', () => {
     const game = setupGame([denari(1), spade(1)], [coppe(1)])
 
-    const { card, take } = await runMove(game)
+    const { card, take } = move(game)
 
     expect(card).toEqual(coppe(1))
     expect(take).toEqual([denari(1)])
   })
 
-  test('prefer to take with coins suit', async () => {
+  test('prefer to take with coins suit', () => {
     const game = setupGame([coppe(1)], [bastoni(1), denari(1), spade(1)])
 
-    const { card } = await runMove(game)
+    const { card } = move(game)
 
     expect(card).toEqual(denari(1))
   })
 
-  test('prefer taking the most valuable cards when multiple combinations exist', async () => {
+  test('prefer taking the most valuable cards when multiple combinations exist', () => {
     const game = setupGame([bastoni(1), bastoni(2), bastoni(3), bastoni(4)], [coppe(5)])
 
-    const { take } = await runMove(game)
+    const { take } = move(game)
 
     expect(take).toEqual([bastoni(1), bastoni(4)])
   })
 
-  test('if all options are equal, take with the first available suit', async () => {
+  test('if all options are equal, take with the first available suit', () => {
     const game = setupGame([coppe(1)], [bastoni(1), spade(1)])
 
-    const { card } = await runMove(game)
+    const { card } = move(game)
 
     expect(card).toEqual(bastoni(1))
   })
 
-  test('prefer taking with higher marginal primiera gain', async () => {
+  test('prefer taking with higher marginal primiera gain', () => {
     const game = setupGame([bastoni(5), bastoni(2), bastoni(4)], [coppe(5), coppe(6)])
 
-    const { card, take } = await runMove(game)
+    const { card, take } = move(game)
 
     expect(card).toEqual(coppe(6))
     expect(take).toEqual([bastoni(2), bastoni(4)])
   })
 
-  test('prefer taking in a new suit over one that does not improve an already-covered suit', async () => {
+  test('prefer taking in a new suit over one that does not improve an already-covered suit', () => {
     const game = setupGame([denari(1), coppe(1)], [bastoni(1)], [denari(7)])
 
-    const { card, take } = await runMove(game)
+    const { card, take } = move(game)
 
     expect(card).toEqual(bastoni(1))
     expect(take).toEqual([coppe(1)])
   })
 
-  test('deprioritise taking coins suit cards when already taken more than half', async () => {
+  test('deprioritise taking coins suit cards when already taken more than half', () => {
     const manyDenari = [denari(1), denari(2), denari(4), denari(5), denari(6), denari(8)]
     const game = setupGame([denari(3), bastoni(7)], [coppe(3), spade(7)], manyDenari)
 
-    const { card, take } = await runMove(game)
+    const { card, take } = move(game)
 
     expect(card).toEqual(spade(7))
     expect(take).toEqual([bastoni(7)])
   })
 
-  test('still take settebello when already taken more than half of all coins suit cards', async () => {
+  test('still take settebello when already taken more than half of all coins suit cards', () => {
     const manyDenari = [denari(1), denari(2), denari(4), denari(5), denari(6), denari(8)]
     const game = setupGame([denari(7), bastoni(3)], [coppe(7), coppe(3)], manyDenari)
 
-    const { card, take } = await runMove(game)
+    const { card, take } = move(game)
 
     expect(card).toEqual(coppe(7))
     expect(take).toEqual([denari(7)])
   })
 
-  test('avoid capture that leaves the table fully sweepable', async () => {
+  test('avoid capture that leaves the table fully sweepable', () => {
     const game = setupGame([coppe(3), spade(5), bastoni(4), denari(6)], [bastoni(6), bastoni(9)])
 
-    const { card, take } = await runMove(game)
+    const { card, take } = move(game)
 
     expect(card).toEqual(bastoni(6))
     expect(take).toEqual([denari(6)])
   })
 
-  test('avoid gifting a scopa even when the alternative takes three denari', async () => {
+  test('avoid gifting a scopa even when the alternative takes three denari', () => {
     const game: State = {
       state: 'play',
       turn: 0,
@@ -205,7 +191,7 @@ describe('taking moves', () => {
       lastTaken: [],
     }
 
-    const { card, take } = await runMove(game)
+    const { card, take } = move(game)
 
     expect(card).toEqual(spade(2))
     expect(take).toEqual([denari(2)])
@@ -213,12 +199,12 @@ describe('taking moves', () => {
 })
 
 describe('discard moves', () => {
-  test('discard least valuable suit when taking is not possible', async () => {
-    await fc.assert(
-      fc.asyncProperty(fc.constantFrom(bastoni, spade, coppe), async (suitToDiscard) => {
+  test('discard least valuable suit when taking is not possible', () => {
+    fc.assert(
+      fc.property(fc.constantFrom(bastoni, spade, coppe), (suitToDiscard) => {
         const game = setupGame([], shuffle([denari(1), suitToDiscard(1)]))
 
-        const { card, take } = await runMove(game)
+        const { card, take } = move(game)
 
         expect(card).toEqual(suitToDiscard(1))
         expect(take).toHaveLength(0)
@@ -226,15 +212,15 @@ describe('discard moves', () => {
     )
   })
 
-  test('discard least valuable card when taking is not possible', async () => {
-    await fc.assert(
-      fc.asyncProperty(
+  test('discard least valuable card when taking is not possible', () => {
+    fc.assert(
+      fc.property(
         fc.constantFrom(1, 2, 3, 4, 5, 6, 8, 9, 10),
         fc.constantFrom(denari, coppe, bastoni, spade),
-        async (valueToDiscard, suit) => {
+        (valueToDiscard, suit) => {
           const game = setupGame([], shuffle([suit(7), suit(valueToDiscard)]))
 
-          const { card, take } = await runMove(game)
+          const { card, take } = move(game)
 
           expect(card).toEqual(suit(valueToDiscard))
           expect(take).toHaveLength(0)
@@ -243,27 +229,27 @@ describe('discard moves', () => {
     )
   })
 
-  test('if all options are equal, discard the first available suit', async () => {
+  test('if all options are equal, discard the first available suit', () => {
     const game = setupGame([], [bastoni(1), spade(1)])
 
-    const { card } = await runMove(game)
+    const { card } = move(game)
 
     expect(card).toEqual(bastoni(1))
   })
 
-  test('avoid discarding a card that enables the opponent to sweep the table', async () => {
+  test('avoid discarding a card that enables the opponent to sweep the table', () => {
     const game = setupGame([denari(5)], [coppe(2), spade(7)])
 
-    const { card, take } = await runMove(game)
+    const { card, take } = move(game)
 
     expect(card).toEqual(spade(7))
     expect(take).toHaveLength(0)
   })
 
-  test('with counting and lookahead, keep settebello in hand when another discard exists', async () => {
+  test('with counting and lookahead, keep settebello in hand when another discard exists', () => {
     const game = setupGame([denari(2), denari(3)], [denari(7), denari(1)])
 
-    const { card, take } = await runMove(game, true, true)
+    const { card, take } = move(game, { canCountCards: true, canLookAhead: true })
 
     expect(card).toEqual(denari(1))
     expect(take).toHaveLength(0)
@@ -271,7 +257,7 @@ describe('discard moves', () => {
 })
 
 describe('next-player pressure', () => {
-  test('weighs denari pressure from the next player, not any other opponent', async () => {
+  test('weighs denari pressure from the next player, not any other opponent', () => {
     const myPile = [denari(7)]
     const base: State = {
       state: 'play',
@@ -289,21 +275,21 @@ describe('next-player pressure', () => {
     const manyDenari = [denari(1), denari(2), denari(3), denari(4), denari(5)]
 
     // player 2 (next) leads on denari → urgently take denari(9)
-    const whenNextLeads = await runMove(
+    const whenNextLeads = move(
       { ...base, players: [base.players[0], base.players[1], { ...base.players[2], pile: manyDenari }] },
-      true,
+      { canCountCards: true },
     )
     // player 1 (not next) leads on denari → no urgency, take bastoni(2) for better primes
-    const whenOtherLeads = await runMove(
+    const whenOtherLeads = move(
       { ...base, players: [base.players[0], { ...base.players[1], pile: manyDenari }, base.players[2]] },
-      true,
+      { canCountCards: true },
     )
 
     expect(whenNextLeads.take).toEqual([denari(9)])
     expect(whenOtherLeads.take).toEqual([bastoni(2)])
   })
 
-  test('doubles prime gain for suits where the next player leads, not any other opponent', async () => {
+  test('doubles prime gain for suits where the next player leads, not any other opponent', () => {
     const base: State = {
       state: 'play',
       turn: 0,
@@ -319,14 +305,14 @@ describe('next-player pressure', () => {
     }
 
     // player 2 (next) leads in COPPE → doubled coppe gain → take coppe(6)
-    const whenNextLeads = await runMove(
+    const whenNextLeads = move(
       { ...base, players: [base.players[0], base.players[1], { ...base.players[2], pile: [coppe(7)] }] },
-      true,
+      { canCountCards: true },
     )
     // player 1 (not next) leads in COPPE → no doubling → tie broken by table order → bastoni(6)
-    const whenOtherLeads = await runMove(
+    const whenOtherLeads = move(
       { ...base, players: [base.players[0], { ...base.players[1], pile: [coppe(7)] }, base.players[2]] },
-      true,
+      { canCountCards: true },
     )
 
     expect(whenNextLeads.take).toEqual([coppe(6)])
@@ -335,7 +321,7 @@ describe('next-player pressure', () => {
 })
 
 describe('last table', () => {
-  test('captures when draw pile is exhausted, even when it would otherwise discard', async () => {
+  test('captures when draw pile is exhausted, even when it would otherwise discard', () => {
     const state: State = {
       state: 'play',
       turn: 0,
@@ -349,14 +335,14 @@ describe('last table', () => {
       lastTaken: [],
     }
 
-    const normalPlay = await runMove(state)
-    const atLastTable = await runMove({ ...state, pile: [] })
+    const normalPlay = move(state)
+    const atLastTable = move({ ...state, pile: [] })
 
     expect(normalPlay.take).toHaveLength(0)
     expect(atLastTable.take).not.toHaveLength(0)
   })
 
-  test('prefers larger capture at last table', async () => {
+  test('prefers larger capture at last table', () => {
     const playerPile = [coppe(6), spade(6), denari(6), bastoni(6)]
     const state: State = {
       state: 'play',
@@ -371,8 +357,8 @@ describe('last table', () => {
       lastTaken: [],
     }
 
-    const normalPlay = await runMove(state)
-    const atLastTable = await runMove({ ...state, pile: [] })
+    const normalPlay = move(state)
+    const atLastTable = move({ ...state, pile: [] })
 
     expect(normalPlay.card).toEqual(coppe(1))
     expect(normalPlay.take).toEqual([denari(1)])
@@ -382,7 +368,7 @@ describe('last table', () => {
 })
 
 describe('card counting', () => {
-  test('doubles prime weight for suits where any opponent leads', async () => {
+  test('doubles prime weight for suits where any opponent leads', () => {
     const game: State = {
       state: 'play',
       turn: 0,
@@ -396,8 +382,8 @@ describe('card counting', () => {
       lastTaken: [],
     }
 
-    const withoutCounting = await runMove(game)
-    const withCounting = await runMove(game, true)
+    const withoutCounting = move(game)
+    const withCounting = move(game, { canCountCards: true })
 
     // Without counting: coppe(6) and bastoni(6) both give 18 prime pts — tie broken by table order (bastoni first)
     expect(withoutCounting.take).toEqual([bastoni(6)])
@@ -405,7 +391,7 @@ describe('card counting', () => {
     expect(withCounting.take).toEqual([coppe(6)])
   })
 
-  test('increases denari weight when trailing an opponent on denari', async () => {
+  test('increases denari weight when trailing an opponent on denari', () => {
     const game: State = {
       state: 'play',
       turn: 0,
@@ -419,8 +405,8 @@ describe('card counting', () => {
       lastTaken: [],
     }
 
-    const withoutCounting = await runMove(game)
-    const withCounting = await runMove(game, true)
+    const withoutCounting = move(game)
+    const withCounting = move(game, { canCountCards: true })
 
     // Without counting:
     //   coppe(2) takes bastoni(2): prime COPPE=12+BASTONI=12=24, cards=2, denari=0 → 26
@@ -434,7 +420,7 @@ describe('card counting', () => {
     expect(withCounting.take).toEqual([denari(9)])
   })
 
-  test('prefers larger capture when trailing on card count', async () => {
+  test('prefers larger capture when trailing on card count', () => {
     const game: State = {
       state: 'play',
       turn: 0,
@@ -448,9 +434,9 @@ describe('card counting', () => {
       lastTaken: [],
     }
 
-    const withCounting = await runMove(game, true)
+    const withCounting = move(game, { canCountCards: true })
 
-    const withoutCounting = await runMove(game)
+    const withoutCounting = move(game)
     expect(withCounting.take.length).toBeGreaterThan(withoutCounting.take.length)
     expect(withCounting.take).toEqual(expect.arrayContaining([coppe(5), coppe(2), coppe(3)]))
     expect(withCounting.card).toEqual(coppe(10))
@@ -458,7 +444,7 @@ describe('card counting', () => {
 })
 
 describe('canLookAhead', () => {
-  test('can switch from immediate take to discard when lookahead sees a better follow-up', async () => {
+  test('can switch from immediate take to discard when lookahead sees a better follow-up', () => {
     const table: Pile = [denari(7), coppe(2)]
     const hand: Pile = [denari(1), denari(2)]
     const knownCards = [...table, ...hand]
@@ -475,8 +461,8 @@ describe('canLookAhead', () => {
       lastTaken: [],
     }
 
-    const withoutLookahead = await runMove(game)
-    const withLookahead = await runMove(game, false, true)
+    const withoutLookahead = move(game)
+    const withLookahead = move(game, { canCountCards: false, canLookAhead: true })
 
     expect(withoutLookahead.card).toEqual(denari(2))
     expect(withoutLookahead.take).toEqual([coppe(2)])
@@ -484,7 +470,7 @@ describe('canLookAhead', () => {
     expect(withLookahead.take).toHaveLength(0)
   })
 
-  test('discounts setup when opponent can plausibly disrupt it', async () => {
+  test('discounts setup when opponent can plausibly disrupt it', () => {
     const table: Pile = [denari(3), denari(9)]
     const hand: Pile = [denari(1), denari(2)]
     const knownCards = [...table, ...hand]
@@ -501,12 +487,35 @@ describe('canLookAhead', () => {
       lastTaken: [],
     }
 
-    const naiveLookahead = await runMove(game, false, true)
-    const countingLookahead = await runMove(game, true, true)
+    const naiveLookahead = move(game, { canCountCards: false, canLookAhead: true })
+    const countingLookahead = move(game, { canCountCards: true, canLookAhead: true })
 
     expect(naiveLookahead.take).toHaveLength(0)
     expect(countingLookahead.take).toHaveLength(0)
     expect(naiveLookahead.card).toEqual(denari(2))
     expect(countingLookahead.card).toEqual(denari(1))
+  })
+})
+
+describe('aggression', () => {
+  test('defaults aggression to 0', () => {
+    const game = setupGame([denari(1), denari(2), denari(3), bastoni(4)], [coppe(6), spade(9)])
+
+    const implicit = move(game)
+    const explicit = move(game, { canCountCards: false, canLookAhead: false, aggression: 0 })
+
+    expect(implicit).toEqual(explicit)
+  })
+
+  test('with aggression above 0 it captures more aggressively, below 0 it prioritizes blocking', () => {
+    const game = setupGame([denari(1), denari(4), denari(5), coppe(9)], [coppe(8), bastoni(9)])
+
+    const aggressive = move(game, { canCountCards: false, canLookAhead: false, aggression: 0.9 })
+    const defensive = move(game, { canCountCards: false, canLookAhead: false, aggression: -0.9 })
+
+    expect(aggressive.card).toEqual(bastoni(9))
+    expect(aggressive.take).toEqual([coppe(9)])
+    expect(defensive.card).toEqual(coppe(8))
+    expect(defensive.take).toHaveLength(0)
   })
 })

@@ -3,7 +3,17 @@ import { findCardsToTake } from './move.ts'
 import { primePoints } from './scores.ts'
 import type { Move, Player, State } from './state'
 
-const LOOKAHEAD_DISCOUNT = 0.4
+export interface OpponentOptions {
+  canCountCards?: boolean
+  canLookAhead?: boolean
+  aggression?: number
+}
+
+interface Temperament {
+  eagerness: number
+  caution: number
+  defensiveBias: number
+}
 
 interface OpponentProfile {
   cardCount: number
@@ -17,11 +27,18 @@ interface CardCountContext {
   nextOpponent: OpponentProfile
 }
 
-export async function move(
+export function move(
   game: State,
-  { canCountCards = false, canLookAhead = false }: OpponenOptions,
-): Promise<Move> {
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+  { canCountCards = false, canLookAhead = false, aggression = 0 }: OpponentOptions = {},
+): Move {
+  const aggressiveBias = Math.max(aggression, 0)
+  const defensiveBias = Math.max(-aggression, 0)
+  const temperament: Temperament = {
+    eagerness: 1 + aggressiveBias * 0.8 - defensiveBias * 0.4,
+    caution: 1 - aggressiveBias * 0.4 + defensiveBias * 1.2,
+    defensiveBias,
+  }
+  const lookaheadDiscount = 0.4 * (1 + aggressiveBias * 0.5 - defensiveBias * 0.2)
 
   const { hand, pile } = game.players[game.turn]
   const table = game.table
@@ -44,10 +61,10 @@ export async function move(
         : [discardTable]
       : []
     const discardLookahead = canLookAhead
-      ? LOOKAHEAD_DISCOUNT *
-        lookaheadScore(remainingHand, discardTables, currentBestPrimes, ownDenariCount, isLastTable)
+      ? lookaheadDiscount *
+        lookaheadScore(remainingHand, discardTables, currentBestPrimes, ownDenariCount, isLastTable, temperament)
       : 0
-    const discardScore = evaluateDiscard(card, table) + discardLookahead
+    const discardScore = evaluateDiscard(card, table, temperament) + discardLookahead
     if (discardScore > bestScore) {
       bestScore = discardScore
       bestMove = { card, take: [] }
@@ -62,10 +79,12 @@ export async function move(
           : [nextTable]
         : []
       const takeLookahead = canLookAhead
-        ? LOOKAHEAD_DISCOUNT * lookaheadScore(remainingHand, takeTables, currentBestPrimes, ownDenariCount, isLastTable)
+        ? lookaheadDiscount *
+          lookaheadScore(remainingHand, takeTables, currentBestPrimes, ownDenariCount, isLastTable, temperament)
         : 0
       const takeScore =
-        evaluateTake([card, ...takenCards], table, currentBestPrimes, ownDenariCount, ctx, isLastTable) + takeLookahead
+        evaluateTake([card, ...takenCards], table, currentBestPrimes, ownDenariCount, temperament, ctx, isLastTable) +
+        takeLookahead
       if (takeScore > bestScore) {
         bestScore = takeScore
         bestMove = { card, take: takenCards }
@@ -74,6 +93,10 @@ export async function move(
   }
 
   return bestMove ?? { card: hand[0], take: [] }
+}
+
+function tableCapturePotential(table: Pile): number {
+  return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((total, value) => total + findCardsToTake(value, table).length, 0)
 }
 
 function buildProfile(pile: Pile): OpponentProfile {
@@ -97,11 +120,11 @@ function buildContext(game: State): CardCountContext {
   }
 }
 
-export function inferUncountedCards(game: State): Pile {
+function inferUncountedCards(game: State): Pile {
   return [...game.pile, ...getOpponents(game).flatMap((p) => p.hand)]
 }
 
-export function simulatedOpponentTables(nextTable: Pile, uncountedCards: Pile): readonly Pile[] {
+function simulatedOpponentTables(nextTable: Pile, uncountedCards: Pile): readonly Pile[] {
   const tables: Pile[] = [nextTable]
   for (const card of uncountedCards) {
     const captures = findCardsToTake(card[0], nextTable)
@@ -136,6 +159,7 @@ function evaluateTake(
   table: Pile,
   currentBest: Map<Suit, number>,
   ownDenariCount: number,
+  temperament: Temperament,
   ctx?: CardCountContext | null,
   isLastTable = false,
 ): number {
@@ -146,14 +170,14 @@ function evaluateTake(
   const trailingCards = ctx?.opponents.some((o) => o.cardCount > ctx.mine.cardCount) ?? false
   const leadingCards = ctx?.opponents.every((o) => o.cardCount <= ctx.mine.cardCount) ?? false
   const cardUnitWeight = trailingCards ? 2 : leadingCards ? 0.5 : 1
-  const cardsWeight = ctx != null ? (cards.length - 1) * cardUnitWeight : cards.length
+  const cardsWeight = (ctx != null ? (cards.length - 1) * cardUnitWeight : cards.length) * temperament.eagerness
 
   const takenDenari = ownDenariCount > 5 ? 5 : 10
   const trailingDenari = ctx != null && ctx.nextOpponent.denariCount > ctx.mine.denariCount ? 5 : 0
   const denariCards = cards.filter(isDenari)
-  const denariWeight = denariCards.length * (takenDenari + trailingDenari)
+  const denariWeight = denariCards.length * (takenDenari + trailingDenari) * temperament.eagerness
 
-  const primeWeight = evaluatePrimes(cards, currentBest, ctx)
+  const primeWeight = evaluatePrimes(cards, currentBest, ctx) * temperament.eagerness
 
   const takenCards = cards.slice(1)
   const remainingTable = table.filter((c) => !takenCards.some((t) => isSame(t, c)))
@@ -162,12 +186,24 @@ function evaluateTake(
     [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].some((value) =>
       findCardsToTake(value, remainingTable).some((combo) => combo.length === remainingTable.length),
     )
-      ? -30
+      ? -30 * temperament.caution
       : 0
 
-  const lastTableBonus = isLastTable ? takenCards.length * 10 : 0
+  const blockOpponentWeight =
+    temperament.defensiveBias > 0 ? -tableCapturePotential(remainingTable) * 6 * temperament.defensiveBias : 0
 
-  return scopaWeight + settebelloWeight + denariWeight + primeWeight + cardsWeight + scopaGiftWeight + lastTableBonus
+  const lastTableBonus = isLastTable ? takenCards.length * 10 * temperament.eagerness : 0
+
+  return (
+    scopaWeight +
+    settebelloWeight +
+    denariWeight +
+    primeWeight +
+    cardsWeight +
+    scopaGiftWeight +
+    blockOpponentWeight +
+    lastTableBonus
+  )
 }
 
 function enablesOpponentScopa(card: Card, table: Pile): boolean {
@@ -177,13 +213,14 @@ function enablesOpponentScopa(card: Card, table: Pile): boolean {
   )
 }
 
-function evaluateDiscard(card: Card, table: Pile): number {
-  const scopaPreventionWeight = enablesOpponentScopa(card, table) ? -1000 : 0
-  const settebelloWeight = isSettebello(card) ? -1700 : 0
-  const primeWeight = -primePoints(card)
-  const denariWeight = isDenari(card) ? -10 : 0
+function evaluateDiscard(card: Card, table: Pile, temperament: Temperament): number {
+  const scopaPreventionWeight = enablesOpponentScopa(card, table) ? -1000 * temperament.caution : 0
+  const settebelloWeight = isSettebello(card) ? -1700 * temperament.caution : 0
+  const primeWeight = -primePoints(card) * temperament.caution
+  const denariWeight = isDenari(card) ? -10 * temperament.caution : 0
+  const blockOpponentWeight = -tableCapturePotential([...table, card]) * 8 * temperament.defensiveBias
 
-  return scopaPreventionWeight + settebelloWeight + primeWeight + denariWeight
+  return scopaPreventionWeight + settebelloWeight + primeWeight + denariWeight + blockOpponentWeight
 }
 
 export function lookaheadScore(
@@ -192,25 +229,29 @@ export function lookaheadScore(
   currentBestPrimes: Map<Suit, number>,
   ownDenariCount: number,
   isLastTable: boolean,
+  temperament: Temperament,
 ): number {
   if (tables.length === 0) return 0
   let total = 0
   for (const table of tables) {
     let best = -Infinity
     for (const card of remainingHand) {
-      const discardScore = evaluateDiscard(card, table)
+      const discardScore = evaluateDiscard(card, table, temperament)
       if (discardScore > best) best = discardScore
       for (const taken of findCardsToTake(card[0], table)) {
-        const takeScore = evaluateTake([card, ...taken], table, currentBestPrimes, ownDenariCount, null, isLastTable)
+        const takeScore = evaluateTake(
+          [card, ...taken],
+          table,
+          currentBestPrimes,
+          ownDenariCount,
+          temperament,
+          null,
+          isLastTable,
+        )
         if (takeScore > best) best = takeScore
       }
     }
     total += best === -Infinity ? 0 : best
   }
   return total / tables.length
-}
-
-interface OpponenOptions {
-  canCountCards?: boolean
-  canLookAhead?: boolean
 }

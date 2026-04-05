@@ -12,7 +12,10 @@ const App = () => (
   <Game
     onStart={dealShuffledDeck}
     onPlay={play}
-    onOpponentTurn={(game) => move(game, { canCountCards: true, canLookAhead: true })}
+    onOpponentTurn={async (state, options) => {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      return move(state, options)
+    }}
     onScore={score}
   />
 )
