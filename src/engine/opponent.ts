@@ -179,7 +179,7 @@ function enablesOpponentScopa(card: Card, table: Pile): boolean {
 
 function evaluateDiscard(card: Card, table: Pile): number {
   const scopaPreventionWeight = enablesOpponentScopa(card, table) ? -1000 : 0
-  const settebelloWeight = isSettebello(card) ? -2000 : 0
+  const settebelloWeight = isSettebello(card) ? -1700 : 0
   const primeWeight = -primePoints(card)
   const denariWeight = isDenari(card) ? -10 : 0
 

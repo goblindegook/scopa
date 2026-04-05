@@ -24,7 +24,7 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "landscape",
+  "orientation": "landscape-primary",
   "theme_color": "#0f5a0f",
   "background_color": "#0f5a0f",
   "categories": ["games", "entertainment"]
