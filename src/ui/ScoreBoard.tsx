@@ -132,11 +132,11 @@ const RunningTotalBox = styled('span')`
 interface ScoreBoardProps {
   scores: readonly Score[]
   title: string
-  handWins: readonly number[]
+  runningScore: readonly number[]
   playerAvatars: readonly string[]
 }
 
-export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, handWins, playerAvatars }) => {
+export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, runningScore, playerAvatars }) => {
   const { t } = useTranslation()
 
   if (scores.length === 0) return null
@@ -147,7 +147,7 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, handWins,
       <RunningTotal aria-label={t('gameScore')}>
         {playerAvatars.map((playerAvatar, index) => (
           <RunningTotalBox key={`running-total-${playerAvatar}`}>
-            {playerAvatar} {handWins[index]}
+            {playerAvatar} {runningScore[index]}
           </RunningTotalBox>
         ))}
       </RunningTotal>
@@ -234,38 +234,31 @@ const GameOverContent = styled('div')`
 
 interface GameOverProps {
   scores: readonly Score[]
-  handWins: readonly number[]
+  runningScore: readonly number[]
   playerAvatars: string[]
-  handWinner?: number | null
-  gameWinner?: number | null
-  onNextHand: () => void
+  winner?: number | null
+  onNextRound: () => void
   onReset: () => void
 }
 
 export const GameOver: React.FC<GameOverProps> = ({
   scores,
-  gameWinner,
-  handWinner,
-  handWins,
+  winner,
+  runningScore,
   playerAvatars,
-  onNextHand,
+  onNextRound,
   onReset,
 }) => {
   const { t } = useTranslation()
 
-  const title =
-    handWinner == null
-      ? t('draw')
-      : gameWinner == null
-        ? t('winsHand', { avatar: playerAvatars[handWinner] })
-        : t('winsGame', { avatar: playerAvatars[gameWinner] })
+  const title = winner == null ? t('endOfRound') : t('winsGame', { avatar: playerAvatars[winner] })
 
   return (
     <GameOverContainer>
       <GameOverContent>
-        <ScoreBoard scores={scores} title={title} handWins={handWins} playerAvatars={playerAvatars} />
-        <Button onClick={gameWinner == null ? onNextHand : onReset}>
-          {gameWinner == null ? t('nextHand') : t('backToTitle')}
+        <ScoreBoard scores={scores} title={title} runningScore={runningScore} playerAvatars={playerAvatars} />
+        <Button onClick={winner == null ? onNextRound : onReset}>
+          {winner == null ? t('nextRound') : t('backToTitle')}
         </Button>
       </GameOverContent>
     </GameOverContainer>

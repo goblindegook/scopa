@@ -22,7 +22,7 @@ describe('deal', () => {
     expect(getGameState(deal(deck())).score).toEqual([0, 0])
   })
 
-  test('deal carries over score from a previous hand', () => {
+  test('deal carries over score from a previous round', () => {
     expect(getGameState(deal(deck(), { score: [3, 5] })).score).toEqual([3, 5])
   })
 

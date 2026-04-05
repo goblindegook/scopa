@@ -457,14 +457,14 @@ test('end game and show scores', async () => {
   expect(screen.getByText('3')).toBeTruthy()
   expect(screen.getByRole('columnheader', { name: '🤖' })).toBeTruthy()
   expect(screen.getByText('4')).toBeTruthy()
-  expect(screen.getByText('🤖 wins the hand')).toBeTruthy()
+  expect(screen.getByText('End of Round')).toBeTruthy()
   expect(screen.getByLabelText('Game score')).toBeTruthy()
   expect(screen.getByText('🐵 0')).toBeTruthy()
   expect(screen.getByText('🤖 1')).toBeTruthy()
-  expect(screen.getByRole('button', { name: 'Next Hand' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Next Round' })).toBeTruthy()
 })
 
-test('tracks game score and carries it to next hand', async () => {
+test('tracks game score and carries it to next round', async () => {
   const onStart = vitest
     .fn<(score?: readonly number[]) => ReturnType<typeof Ok<State>>>()
     .mockImplementationOnce(() =>
@@ -520,7 +520,7 @@ test('tracks game score and carries it to next hand', async () => {
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
   fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
-  fireEvent.click(await screen.findByRole('button', { name: 'Next Hand' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Next Round' }))
 
   expect(screen.getByText('🐵 1')).toBeTruthy()
   expect(screen.getByText('🤖 0')).toBeTruthy()
@@ -594,7 +594,7 @@ test('starting a new game resets running game score', async () => {
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
   fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
-  fireEvent.click(await screen.findByRole('button', { name: 'Next Hand' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Next Round' }))
   expect(screen.getByText('🐵 1')).toBeTruthy()
 
   fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
@@ -604,14 +604,14 @@ test('starting a new game resets running game score', async () => {
   expect(screen.getByText('🤖 0')).toBeTruthy()
 })
 
-test('when a player has a unique score above 11, show game winner and switch to New Game', async () => {
+test('when a player reaches 11 with a unique top score, show game winner and switch to New Game', async () => {
   const onStart = vitest
     .fn()
     .mockImplementationOnce(() =>
       Ok(
         testGame({
           state: 'stop',
-          score: [12, 10],
+          score: [11, 10],
           players: [
             { id: 0, hand: [], pile: [], scope: 0 },
             { id: 1, hand: [], pile: [], scope: 0 },
@@ -648,12 +648,12 @@ test('when a player has a unique score above 11, show game winner and switch to 
   expect(screen.getByText('🤖 0')).toBeTruthy()
 })
 
-test('when all top scores are tied at 11 or more, keep playing next hand', async () => {
+test('when all top scores are tied at 11, keep playing next round', async () => {
   const onStart = vitest.fn(() =>
     Ok(
       testGame({
         state: 'stop',
-        score: [12, 12],
+        score: [11, 11],
         players: [
           { id: 0, hand: [], pile: [], scope: 0 },
           { id: 1, hand: [], pile: [], scope: 0 },
@@ -671,8 +671,8 @@ test('when all top scores are tied at 11 or more, keep playing next hand', async
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
-  expect(screen.getByRole('button', { name: 'Next Hand' })).toBeTruthy()
-  expect(screen.getByText("It's a draw")).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Next Round' })).toBeTruthy()
+  expect(screen.getByText('End of Round')).toBeTruthy()
 })
 
 test('renders "Scopa!" when a player takes all cards on the table', async () => {

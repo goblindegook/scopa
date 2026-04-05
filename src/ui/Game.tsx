@@ -149,7 +149,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   })
   const [persistedGameState, setPersistedGameState] = useLocalStorage<LegacySavedGameState | null>('saved-game', null)
   const tableRef = React.useRef<HTMLElement | null>(null)
-  const handScoresRef = React.useRef<readonly Score[]>([])
+  const roundScoresRef = React.useRef<readonly Score[]>([])
   const [cardRefs, getCardRef] = useRefMap<string>()
   const [playerPileRefs, getPlayerPileRef] = useRefMap<number>()
   const [animation, setAnimation] = React.useState<AnimationController>({ phase: 'idle' })
@@ -163,25 +163,25 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     preloadCardAssets((progress) => setLoadingProgress(progress))
   }, [])
 
-  const getGameWinner = (totals: readonly number[]): number | null => {
+  const getWinner = (totals: readonly number[]): number | null => {
     const maxTotal = Math.max(...totals)
-    if (maxTotal <= 11) return null
+    if (maxTotal < 11) return null
     const winners = totals
       .map((total, playerId) => (total === maxTotal ? playerId : -1))
       .filter((playerId) => playerId !== -1)
     return winners.length === 1 ? winners[0] : null
   }
 
-  const gameWinner = getGameWinner(game.score)
+  const winner = getWinner(game.score)
 
   React.useEffect(() => {
     if (game.state === 'initial') return
-    if (gameWinner !== null) {
+    if (winner !== null) {
       setPersistedGameState(null)
       return
     }
     setPersistedGameState({ game, playerAvatars })
-  }, [game, playerAvatars, gameWinner, setPersistedGameState])
+  }, [game, playerAvatars, winner, setPersistedGameState])
 
   React.useEffect(() => {
     if (!hasLegacyGameState(persistedGameState) || !savedGameState) return
@@ -192,12 +192,6 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: cardRefs is stable, empty deps are correct
   const getCardPosition = React.useCallback((card?: Card) => getPosition(cardRefs.current.get(getCardId(card))), [])
-
-  const getWinner = (scores: readonly Score[]): number | null => {
-    const maxTotal = Math.max(...scores.map((player) => player.total))
-    const winners = scores.filter((player) => player.total === maxTotal)
-    return winners.length === 1 ? winners[0].playerId : null
-  }
 
   const start = React.useCallback(
     (resetScore = false, count: 2 | 3 = playerCount) => {
@@ -217,7 +211,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
           if (hasRedealt) showAlert('Opening table with more than two kings, re-dealing hand.')
 
-          if (nextState.state === 'stop') handScoresRef.current = onScore(nextState.players)
+          if (nextState.state === 'stop') roundScoresRef.current = onScore(nextState.players)
           setTableDealOrder(toOrder(nextState.table))
           setAnimation({ phase: 'idle' })
           previousTableRef.current = []
@@ -274,7 +268,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
           if (game.table.length > 0 && nextState.lastTaken.length === game.table.length) showAlert(t('scopa'))
 
-          if (nextState.state === 'stop') handScoresRef.current = onScore(nextState.players)
+          if (nextState.state === 'stop') roundScoresRef.current = onScore(nextState.players)
         },
         invalidMove,
         onPlay(move, game),
@@ -588,11 +582,10 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
       {game.state === 'stop' && (
         <GameOver
           playerAvatars={playerAvatars}
-          scores={handScoresRef.current}
-          handWins={game.score}
-          handWinner={getWinner(handScoresRef.current)}
-          gameWinner={gameWinner}
-          onNextHand={() => start()}
+          scores={roundScoresRef.current}
+          runningScore={game.score}
+          winner={winner}
+          onNextRound={() => start()}
           onReset={resetToTitle}
         />
       )}

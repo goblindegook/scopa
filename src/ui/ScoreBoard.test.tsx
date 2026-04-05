@@ -38,7 +38,7 @@ test('renders player names and scores', () => {
     },
   ]
 
-  render(<ScoreBoard scores={scores} title="🤖 Wins" handWins={[0, 0]} playerAvatars={['🧑', '🤖']} />)
+  render(<ScoreBoard scores={scores} title="🤖 Wins" runningScore={[0, 0]} playerAvatars={['🧑', '🤖']} />)
 
   expect(screen.getByText('🤖 Wins')).toBeTruthy()
 
@@ -76,15 +76,15 @@ test('renders player names and scores', () => {
   expect(totalRowCells[1]).toHaveTextContent('4')
 })
 
-test(`renders "It's a draw" when all players have the same total score`, () => {
+test('renders the provided title', () => {
   const scores: Score[] = [
     { playerId: 0, details: [], total: 3 },
     { playerId: 1, details: [], total: 3 },
   ]
 
-  render(<ScoreBoard scores={scores} title="It's a draw" handWins={[0, 0]} playerAvatars={['🧑', '🤖']} />)
+  render(<ScoreBoard scores={scores} title="End of round" runningScore={[0, 0]} playerAvatars={['🧑', '🤖']} />)
 
-  expect(screen.getByText("It's a draw")).toBeTruthy()
+  expect(screen.getByText('End of round')).toBeTruthy()
 })
 
 test('renders running game score when provided', () => {
@@ -93,7 +93,7 @@ test('renders running game score when provided', () => {
     { playerId: 1, details: [], total: 0 },
   ]
 
-  render(<ScoreBoard scores={scores} title="🧑 wins the hand" handWins={[3, 2]} playerAvatars={['🧑', '🤖']} />)
+  render(<ScoreBoard scores={scores} title="🧑 wins the round" runningScore={[3, 2]} playerAvatars={['🧑', '🤖']} />)
 
   expect(screen.getByLabelText('Game score')).toBeTruthy()
   expect(screen.getByText('🧑 3')).toBeTruthy()
