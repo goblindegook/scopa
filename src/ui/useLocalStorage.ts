@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { State } from '../engine/state'
 
 type Updater<T> = T | ((current: T) => T)
 
@@ -25,4 +26,83 @@ export function useLocalStorage<T>(key: string, fallback: T): [T, (updater: Upda
   )
 
   return [value, update]
+}
+
+interface PersistedGameState {
+  game: Omit<State, 'score'> & {
+    score?: readonly number[]
+    wins?: readonly number[]
+  }
+  playerAvatars: string[]
+  playerAggressiveness?: readonly number[]
+}
+
+interface SavedPlayerProfile {
+  avatar: string
+  aggressiveness: number
+}
+
+interface SavedGameState {
+  game: State
+  playerProfiles: readonly SavedPlayerProfile[]
+}
+
+interface UseSavedGameStorageOptions {
+  game: State
+  playerProfiles: readonly SavedPlayerProfile[]
+  winner: number | null
+}
+
+export function useSavedGameStorage({ game, playerProfiles, winner }: UseSavedGameStorageOptions) {
+  const [persistedGameState, setPersistedGameState] = useLocalStorage<PersistedGameState | null>('saved-game', null)
+  const savedGameState = useMemo(() => normalizeSavedGameState(persistedGameState), [persistedGameState])
+
+  useEffect(() => {
+    if (game.state === 'initial') return
+    if (winner !== null) {
+      setPersistedGameState(null)
+      return
+    }
+    setPersistedGameState({
+      game,
+      playerAvatars: playerProfiles.map((profile) => profile.avatar),
+      playerAggressiveness: playerProfiles.map((profile) => profile.aggressiveness),
+    })
+  }, [game, playerProfiles, winner, setPersistedGameState])
+
+  useEffect(() => {
+    if (!hasLegacyGameState(persistedGameState) || !savedGameState) return
+
+    setPersistedGameState({
+      game: savedGameState.game,
+      playerAvatars: savedGameState.playerProfiles.map((profile) => profile.avatar),
+      playerAggressiveness: savedGameState.playerProfiles.map((profile) => profile.aggressiveness),
+    })
+  }, [persistedGameState, savedGameState, setPersistedGameState])
+
+  const clearSavedGame = useCallback(() => setPersistedGameState(null), [setPersistedGameState])
+
+  return { savedGameState, clearSavedGame }
+}
+
+function normalizeSavedGameState(savedGameState: PersistedGameState | null): SavedGameState | null {
+  if (!savedGameState) return null
+
+  const { game, playerAvatars, playerAggressiveness } = savedGameState
+  const { wins, score, ...rest } = game
+
+  return {
+    playerProfiles: playerAvatars.map((avatar, i) => ({
+      avatar,
+      aggressiveness: playerAggressiveness?.[i] ?? 0,
+    })),
+    game: {
+      ...rest,
+      score: score ?? wins ?? Array<number>(playerAvatars.length).fill(0),
+    },
+  }
+}
+
+function hasLegacyGameState(state: PersistedGameState | null): boolean {
+  return state != null && (state.playerAggressiveness == null || (state.game.score == null && state.game.wins != null))
 }

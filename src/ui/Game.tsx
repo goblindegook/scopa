@@ -13,12 +13,11 @@ import { OPPONENT_SCALE, Opponent, OpponentCard, Opponents } from './Opponent'
 import { FanCard, Player, PlayerCard } from './Player'
 import { preloadCardAssets } from './preload'
 import { GameOver } from './ScoreBoard'
-import { hasLegacyGameState, type LegacySavedGameState, normalizeSavedGameState } from './savedGameMigration'
 import { Table, TableCard, TableCardLabel, TableCardSelector } from './Table'
 import { TitleScreen } from './TitleScreen'
 import { useAlerts } from './useAlerts'
 import { type DragState, useDragState } from './useDragState'
-import { useLocalStorage } from './useLocalStorage'
+import { useSavedGameStorage } from './useLocalStorage'
 import { useRefMap } from './useRefMap'
 
 const MAIN_PLAYER = 0
@@ -155,7 +154,6 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     lastTaken: [],
     score: [0, 0],
   })
-  const [persistedGameState, setPersistedGameState] = useLocalStorage<LegacySavedGameState | null>('saved-game', null)
   const tableRef = React.useRef<HTMLElement | null>(null)
   const roundScoresRef = React.useRef<readonly Score[]>([])
   const [cardRefs, getCardRef] = useRefMap<string>()
@@ -165,7 +163,6 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   const previousPlayersHandsRef = React.useRef<readonly (readonly Card[])[]>([])
   const [tableDealOrder, setTableDealOrder] = React.useState(new Map<string, number>())
   const playCardFromRef = React.useRef<{ card: Card; position: Position } | null>(null)
-  const savedGameState = React.useMemo(() => normalizeSavedGameState(persistedGameState), [persistedGameState])
 
   React.useEffect(() => {
     preloadCardAssets((progress) => setLoadingProgress(progress))
@@ -181,24 +178,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   }
 
   const winner = getWinner(game.score)
-
-  React.useEffect(() => {
-    if (game.state === 'initial') return
-    if (winner !== null) {
-      setPersistedGameState(null)
-      return
-    }
-    setPersistedGameState({
-      game,
-      playerAvatars: playerProfiles.map((profile) => profile.avatar),
-      playerAggressiveness: playerProfiles.map((profile) => profile.aggressiveness),
-    })
-  }, [game, playerProfiles, winner, setPersistedGameState])
-
-  React.useEffect(() => {
-    if (!hasLegacyGameState(persistedGameState) || !savedGameState) return
-    setPersistedGameState(savedGameState)
-  }, [persistedGameState, savedGameState, setPersistedGameState])
+  const { savedGameState, clearSavedGame } = useSavedGameStorage({ game, playerProfiles, winner })
 
   const invalidMove = React.useCallback((error: Error) => showAlert(error.message), [showAlert])
 
@@ -238,12 +218,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
   const resume = React.useCallback(() => {
     if (!savedGameState) return
-    setPlayerProfiles(
-      savedGameState.playerAvatars.map((avatar, i) => ({
-        avatar,
-        aggressiveness: savedGameState.playerAggressiveness[i] ?? 0,
-      })),
-    )
+    setPlayerProfiles(savedGameState.playerProfiles)
     setGame(savedGameState.game)
   }, [savedGameState])
 
@@ -412,7 +387,12 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
         <TitleScreen
           loadingProgress={loadingProgress}
           savedGame={
-            savedGameState ? { avatars: savedGameState.playerAvatars, score: savedGameState.game.score } : undefined
+            savedGameState
+              ? {
+                  avatars: savedGameState.playerProfiles.map((profile) => profile.avatar),
+                  score: savedGameState.game.score,
+                }
+              : undefined
           }
           onResume={resume}
           onStart={(playerOneAvatar, count) => {
@@ -421,7 +401,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                 .slice(0, count)
                 .map((avatar) => ({ avatar, aggressiveness: Math.random() * 2 - 1 })),
             )
-            setPersistedGameState(null)
+            clearSavedGame()
             start(true, count)
           }}
         />
@@ -438,6 +418,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                     key={`player-score-${playerId}`}
                     active={game.turn === playerId}
                     data-active={game.turn === playerId}
+                    title={`${playerProfiles[playerId].aggressiveness}`}
                   >
                     {playerProfiles[playerId].avatar} {game.score[playerId] ?? 0}
                   </TurnScore>
