@@ -1,6 +1,6 @@
 import { type Card, isDenari, isSame, isSettebello, type Pile, type Suit } from './cards'
 import { findCardsToTake } from './move.ts'
-import { primePoints } from './scores.ts'
+import { primePoints, score } from './scores.ts'
 import type { Move, Player, State } from './state'
 
 export interface OpponentOptions {
@@ -29,10 +29,11 @@ interface CardCountContext {
 
 export function move(
   game: State,
-  { canCountCards = false, canLookAhead = false, aggression = 0 }: OpponentOptions = {},
+  { canCountCards = false, canLookAhead = false, aggression }: OpponentOptions = {},
 ): Move {
-  const aggressiveBias = Math.max(aggression, 0)
-  const defensiveBias = Math.max(-aggression, 0)
+  const effectiveAggression = aggression ?? dynamicAggression(game, canCountCards)
+  const aggressiveBias = Math.max(effectiveAggression, 0)
+  const defensiveBias = Math.max(-effectiveAggression, 0)
   const temperament: Temperament = {
     eagerness: 1 + aggressiveBias * 0.8 - defensiveBias * 0.4,
     caution: 1 - aggressiveBias * 0.4 + defensiveBias * 1.2,
@@ -93,6 +94,53 @@ export function move(
   }
 
   return bestMove ?? { card: hand[0], take: [] }
+}
+
+const clamp = (value: number, min: number, max: number): number => Math.max(min, Math.min(max, value))
+
+const WINNING_SCORE = 11
+const HALF_DECK = 20
+const HALF_DENARI = 5
+const MAX_PRIMIERA = 84
+
+function dynamicAggression(game: State, canCountCards: boolean): number {
+  const myScore = game.score[game.turn] ?? 0
+  const opponentsScore = game.score.filter((_, index) => index !== game.turn)
+  const prospectiveWinner = Math.max(...game.score)
+  const bestOpponentScore = opponentsScore.length > 0 ? Math.max(...opponentsScore) : myScore
+
+  if (myScore < prospectiveWinner) return clamp((prospectiveWinner - myScore) / WINNING_SCORE, 0, 1)
+
+  if (myScore > bestOpponentScore) return clamp(-(0.35 + (myScore - bestOpponentScore) / WINNING_SCORE), -1, -0.2)
+
+  if (canCountCards) {
+    const roundTotals = score(game.players).map(({ total }) => total)
+    const myRoundTotal = roundTotals[game.turn] ?? 0
+    const bestOpponentRoundTotal = roundTotals
+      .filter((_, index) => index !== game.turn)
+      .reduce((best, total) => Math.max(best, total), -Infinity)
+
+    if (bestOpponentRoundTotal !== -Infinity && myRoundTotal !== bestOpponentRoundTotal) {
+      return clamp((bestOpponentRoundTotal - myRoundTotal) / 2, -0.8, 0.8)
+    }
+
+    return 0
+  }
+
+  const pile = game.players[game.turn]?.pile ?? []
+  const cardsReadiness = 1 - clamp(Math.abs(HALF_DECK - pile.length) / HALF_DECK, 0, 1)
+  const primieraReadiness = clamp(
+    bestPrimes(pile)
+      .values()
+      .reduce((total, pts) => total + pts, 0) / MAX_PRIMIERA,
+    0,
+    1,
+  )
+  const denariReadiness = 1 - clamp(Math.abs(HALF_DENARI - pile.filter(isDenari).length) / HALF_DENARI, 0, 1)
+  const settebelloReadiness = pile.some(isSettebello) ? 1 : 0
+  const readiness = cardsReadiness * 0.35 + primieraReadiness * 0.3 + denariReadiness * 0.25 + settebelloReadiness * 0.1
+
+  return clamp((0.5 - readiness) * 0.6, -0.35, 0.35)
 }
 
 function tableCapturePotential(table: Pile): number {
@@ -223,7 +271,7 @@ function evaluateDiscard(card: Card, table: Pile, temperament: Temperament): num
   return scopaPreventionWeight + settebelloWeight + primeWeight + denariWeight + blockOpponentWeight
 }
 
-export function lookaheadScore(
+function lookaheadScore(
   remainingHand: Pile,
   tables: readonly Pile[],
   currentBestPrimes: Map<Suit, number>,

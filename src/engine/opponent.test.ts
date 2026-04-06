@@ -7,11 +7,11 @@ import { move, type OpponentOptions } from './opponent'
 import { deal, play } from './scopa'
 import type { State } from './state'
 
-function setupGame(table: Pile, hand: Pile, pile: Pile = []): State {
+function setupGame(table: Pile, hand: Pile, pile: Pile = [], score: readonly number[] = [0, 0]): State {
   return {
     state: 'play',
     turn: 0,
-    score: [0, 0],
+    score,
     table,
     players: [
       { id: 0, hand, pile, scope: 0 },
@@ -500,13 +500,84 @@ describe('canLookAhead', () => {
 })
 
 describe('aggression', () => {
-  test('defaults aggression to 0', () => {
-    const game = setupGame([denari(1), denari(2), denari(3), bastoni(4)], [coppe(6), spade(9)])
+  test('when behind in running score and aggression is undefined, it plays aggressively', () => {
+    const game = setupGame([denari(1), denari(4), denari(5), coppe(9)], [coppe(8), bastoni(9)], [], [2, 9])
 
-    const implicit = move(game)
-    const explicit = move(game, { canCountCards: false, canLookAhead: false, aggression: 0 })
+    const implicit = move(game, { canCountCards: false, canLookAhead: false })
+    const aggressive = move(game, { canCountCards: false, canLookAhead: false, aggression: 0.9 })
+    const defensive = move(game, { canCountCards: false, canLookAhead: false, aggression: -0.9 })
 
-    expect(implicit).toEqual(explicit)
+    expect(implicit).toEqual(aggressive)
+    expect(implicit).not.toEqual(defensive)
+  })
+
+  test('when ahead in running score and aggression is undefined, it plays defensively', () => {
+    const game = setupGame([denari(1), denari(4), denari(5), coppe(9)], [coppe(8), bastoni(9)], [], [9, 2])
+
+    const implicit = move(game, { canCountCards: false, canLookAhead: false })
+    const defensive = move(game, { canCountCards: false, canLookAhead: false, aggression: -0.9 })
+    const aggressive = move(game, { canCountCards: false, canLookAhead: false, aggression: 0.9 })
+
+    expect(implicit).toEqual(defensive)
+    expect(implicit).not.toEqual(aggressive)
+  })
+
+  test('when tied on running score and counting cards, it uses projected round standings', () => {
+    const base = setupGame([denari(1), denari(4), denari(5), coppe(9)], [coppe(8), bastoni(9)], [], [5, 5])
+    const behindOnRound: State = {
+      ...base,
+      players: [base.players[0], { ...base.players[1], pile: [denari(7)] }],
+    }
+    const aheadOnRound: State = {
+      ...base,
+      players: [{ ...base.players[0], pile: [denari(7)] }, base.players[1]],
+    }
+
+    const implicitBehind = move(behindOnRound, { canCountCards: true, canLookAhead: false })
+    const implicitAhead = move(aheadOnRound, { canCountCards: true, canLookAhead: false })
+    const aggressiveBehind = move(behindOnRound, { canCountCards: true, canLookAhead: false, aggression: 0.9 })
+    const defensiveAhead = move(aheadOnRound, { canCountCards: true, canLookAhead: false, aggression: -0.9 })
+
+    expect(implicitBehind).toEqual(aggressiveBehind)
+    expect(implicitAhead).toEqual(defensiveAhead)
+  })
+
+  test('when tied and not counting cards, it uses objective progress heuristics', () => {
+    const base = setupGame([denari(1), denari(4), denari(5), coppe(9)], [coppe(8), bastoni(9)], [], [5, 5])
+    const highProgressPile: Pile = [
+      denari(1),
+      denari(2),
+      denari(3),
+      denari(4),
+      denari(7),
+      coppe(1),
+      coppe(2),
+      coppe(3),
+      coppe(4),
+      coppe(7),
+      bastoni(1),
+      bastoni(2),
+      bastoni(3),
+      bastoni(4),
+      bastoni(7),
+      spade(1),
+      spade(2),
+      spade(3),
+      spade(4),
+      spade(7),
+    ]
+    const weakProgress: State = { ...base, players: [{ ...base.players[0], pile: [] }, base.players[1]] }
+    const strongProgress: State = {
+      ...base,
+      players: [{ ...base.players[0], pile: highProgressPile }, base.players[1]],
+    }
+
+    const implicitWeak = move(weakProgress, { canCountCards: false, canLookAhead: false })
+    const implicitStrong = move(strongProgress, { canCountCards: false, canLookAhead: false })
+    const defensiveStrong = move(strongProgress, { canCountCards: false, canLookAhead: false, aggression: -0.9 })
+
+    expect(implicitWeak.take.length).toBeGreaterThanOrEqual(implicitStrong.take.length)
+    expect(implicitStrong).toEqual(defensiveStrong)
   })
 
   test('with aggression above 0 it captures more aggressively, below 0 it prioritizes blocking', () => {

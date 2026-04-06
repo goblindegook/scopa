@@ -34,12 +34,10 @@ interface PersistedGameState {
     wins?: readonly number[]
   }
   playerAvatars: string[]
-  playerAggressiveness?: readonly number[]
 }
 
 interface SavedPlayerProfile {
   avatar: string
-  aggressiveness: number
 }
 
 interface SavedGameState {
@@ -66,7 +64,6 @@ export function useSavedGameStorage({ game, playerProfiles, winner }: UseSavedGa
     setPersistedGameState({
       game,
       playerAvatars: playerProfiles.map((profile) => profile.avatar),
-      playerAggressiveness: playerProfiles.map((profile) => profile.aggressiveness),
     })
   }, [game, playerProfiles, winner, setPersistedGameState])
 
@@ -76,7 +73,6 @@ export function useSavedGameStorage({ game, playerProfiles, winner }: UseSavedGa
     setPersistedGameState({
       game: savedGameState.game,
       playerAvatars: savedGameState.playerProfiles.map((profile) => profile.avatar),
-      playerAggressiveness: savedGameState.playerProfiles.map((profile) => profile.aggressiveness),
     })
   }, [persistedGameState, savedGameState, setPersistedGameState])
 
@@ -88,13 +84,12 @@ export function useSavedGameStorage({ game, playerProfiles, winner }: UseSavedGa
 function normalizeSavedGameState(savedGameState: PersistedGameState | null): SavedGameState | null {
   if (!savedGameState) return null
 
-  const { game, playerAvatars, playerAggressiveness } = savedGameState
+  const { game, playerAvatars } = savedGameState
   const { wins, score, ...rest } = game
 
   return {
-    playerProfiles: playerAvatars.map((avatar, i) => ({
+    playerProfiles: playerAvatars.map((avatar, _i) => ({
       avatar,
-      aggressiveness: playerAggressiveness?.[i] ?? 0,
     })),
     game: {
       ...rest,
@@ -104,5 +99,5 @@ function normalizeSavedGameState(savedGameState: PersistedGameState | null): Sav
 }
 
 function hasLegacyGameState(state: PersistedGameState | null): boolean {
-  return state != null && (state.playerAggressiveness == null || (state.game.score == null && state.game.wins != null))
+  return state != null && state.game.score == null && state.game.wins != null
 }

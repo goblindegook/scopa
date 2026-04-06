@@ -24,7 +24,7 @@ const MAIN_PLAYER = 0
 
 interface PlayerProfile {
   avatar: string
-  aggressiveness: number
+  aggression?: number
 }
 
 const Header = styled('header')`
@@ -141,8 +141,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   const [loadingProgress, setLoadingProgress] = React.useState(0)
   const [alert, showAlert] = useAlerts(3000)
   const [playerProfiles, setPlayerProfiles] = React.useState<readonly PlayerProfile[]>([
-    { avatar: '🐵', aggressiveness: 0 },
-    { avatar: '🤖', aggressiveness: 0 },
+    { avatar: '🐵', aggression: undefined },
+    { avatar: '🤖', aggression: undefined },
   ])
   const [take, setTake] = React.useState<readonly Card[]>([])
   const [game, setGame] = React.useState<State>({
@@ -348,7 +348,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           onOpponentTurn(game, {
             canCountCards: true,
             canLookAhead: true,
-            aggression: playerProfiles[game.turn]?.aggressiveness ?? 0,
+            aggression: playerProfiles[game.turn].aggression,
           })
             .then(play)
             .catch(invalidMove),
