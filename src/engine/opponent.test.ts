@@ -541,6 +541,6 @@ describe('full game simulation', () => {
     }
 
     expect(game.state).toBe('stop')
-    console.table(game.score.map((score, playerId) => ({ playerId, score })))
+    // console.table(game.score.map((score, playerId) => ({ playerId, score })))
   })
 })

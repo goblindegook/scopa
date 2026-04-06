@@ -11,7 +11,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'icon.png', 'manifest.json'],
+      includeAssets: ['favicon.ico', 'icon.png', 'icon-192.png', 'icon-512.png', 'manifest.json'],
       manifest: {
         name: 'Scopa',
         short_name: 'Scopa',
@@ -24,13 +24,13 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: 'icon.png',
+            src: 'icon-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable',
           },
           {
-            src: 'icon.png',
+            src: 'icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable',

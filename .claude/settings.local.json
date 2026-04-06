@@ -7,7 +7,10 @@
       "Bash(mise exec -- npx vitest run src/ui/Game.test.tsx)",
       "Bash(mise exec:*)",
       "mcp__Claude_Preview__preview_start",
-      "Bash(grep -r \"button\\\\|Button\\\\|label\\\\|Label\" /Users/lrodrigues/Developer/scopa/src/ui/*.tsx -A 2 -B 1)"
+      "Bash(TOKF_DB_PATH=/tmp/tokf.db tokf raw)",
+      "Bash(node -e \":*)",
+      "Skill(update-config)",
+      "Skill(update-config:*)"
     ]
   },
   "sandbox": {
