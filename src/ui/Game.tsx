@@ -418,7 +418,6 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                     key={`player-score-${playerId}`}
                     active={game.turn === playerId}
                     data-active={game.turn === playerId}
-                    title={`${playerProfiles[playerId].aggressiveness}`}
                   >
                     {playerProfiles[playerId].avatar} {game.score[playerId] ?? 0}
                   </TurnScore>

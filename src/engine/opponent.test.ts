@@ -1,8 +1,10 @@
+import { isOk, type Result } from '@pacote/result'
 import { shuffle } from '@pacote/shuffle'
 import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
 import { bastoni, coppe, deck, denari, isSame, type Pile, spade } from './cards'
-import { move } from './opponent'
+import { move, type OpponentOptions } from './opponent'
+import { deal, play } from './scopa'
 import type { State } from './state'
 
 function setupGame(table: Pile, hand: Pile, pile: Pile = []): State {
@@ -517,5 +519,28 @@ describe('aggression', () => {
     expect(aggressive.take).toEqual([coppe(9)])
     expect(defensive.card).toEqual(coppe(8))
     expect(defensive.take).toHaveLength(0)
+  })
+})
+
+describe('full game simulation', () => {
+  function getGameState(game: Result<State, Error>): State {
+    if (isOk(game)) return game.value
+    throw new Error('invalid game state')
+  }
+
+  test('plays a complete game with two AI players', () => {
+    let game = getGameState(deal(deck(), { players: 2 }))
+    const playerProfiles: readonly OpponentOptions[] = [
+      { canCountCards: true, canLookAhead: true, aggression: 0 },
+      { canCountCards: true, canLookAhead: true, aggression: 0 },
+      { canCountCards: true, canLookAhead: true, aggression: 0 },
+    ]
+
+    while (game.state !== 'stop') {
+      game = getGameState(play(move(game, playerProfiles[game.turn]), game))
+    }
+
+    expect(game.state).toBe('stop')
+    console.table(game.score.map((score, playerId) => ({ playerId, score })))
   })
 })
