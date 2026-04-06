@@ -11,7 +11,14 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'icon.png', 'icon-192.png', 'icon-512.png', 'manifest.json'],
+      includeAssets: [
+        'favicon.ico',
+        'icon.png',
+        'icon-192.png',
+        'icon-512.png',
+        'manifest.json',
+        'screenshots/desktop-wide.png',
+      ],
       manifest: {
         name: 'Scopa',
         short_name: 'Scopa',
@@ -34,6 +41,15 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable',
+          },
+        ],
+        screenshots: [
+          {
+            src: 'screenshots/desktop-wide.png',
+            sizes: '1280x720',
+            type: 'image/png',
+            form_factor: 'wide',
+            label: 'Scopa gameplay',
           },
         ],
         categories: ['games', 'entertainment'],

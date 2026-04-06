@@ -21,6 +21,15 @@
       "purpose": "any maskable"
     }
   ],
+  "screenshots": [
+    {
+      "src": "screenshots/desktop-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Scopa gameplay"
+    }
+  ],
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
