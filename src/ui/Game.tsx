@@ -23,6 +23,11 @@ import { useRefMap } from './useRefMap'
 
 const MAIN_PLAYER = 0
 
+interface PlayerProfile {
+  avatar: string
+  aggressiveness: number
+}
+
 const Header = styled('header')`
   display: flex;
   align-items: center;
@@ -136,8 +141,10 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   const { t } = useTranslation()
   const [loadingProgress, setLoadingProgress] = React.useState(0)
   const [alert, showAlert] = useAlerts(3000)
-  const [playerAvatars, setPlayerAvatars] = React.useState<string[]>(['🐵', '🤖'])
-  const [playerCount, setPlayerCount] = React.useState<2 | 3>(2)
+  const [playerProfiles, setPlayerProfiles] = React.useState<readonly PlayerProfile[]>([
+    { avatar: '🐵', aggressiveness: 0 },
+    { avatar: '🤖', aggressiveness: 0 },
+  ])
   const [take, setTake] = React.useState<readonly Card[]>([])
   const [game, setGame] = React.useState<State>({
     state: 'initial',
@@ -181,8 +188,12 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
       setPersistedGameState(null)
       return
     }
-    setPersistedGameState({ game, playerAvatars })
-  }, [game, playerAvatars, winner, setPersistedGameState])
+    setPersistedGameState({
+      game,
+      playerAvatars: playerProfiles.map((profile) => profile.avatar),
+      playerAggressiveness: playerProfiles.map((profile) => profile.aggressiveness),
+    })
+  }, [game, playerProfiles, winner, setPersistedGameState])
 
   React.useEffect(() => {
     if (!hasLegacyGameState(persistedGameState) || !savedGameState) return
@@ -195,10 +206,10 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   const getCardPosition = React.useCallback((card?: Card) => getPosition(cardRefs.current.get(getCardId(card))), [])
 
   const start = React.useCallback(
-    (resetScore = false, count: 2 | 3 = playerCount) => {
+    (resetScore = false, count = playerProfiles.length) => {
       const runningScore = resetScore ? Array<number>(count).fill(0) : game.score
       let hasRedealt = false
-      let startResult = onStart(runningScore, count)
+      let startResult = onStart(runningScore, count as 2 | 3)
 
       while (isErr(startResult)) {
         hasRedealt = true
@@ -222,13 +233,17 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
         startResult,
       )
     },
-    [invalidMove, onScore, onStart, showAlert, game.score, playerCount],
+    [invalidMove, onScore, onStart, showAlert, game.score, playerProfiles],
   )
 
   const resume = React.useCallback(() => {
     if (!savedGameState) return
-    setPlayerAvatars(savedGameState.playerAvatars)
-    setPlayerCount(savedGameState.playerAvatars.length as 2 | 3)
+    setPlayerProfiles(
+      savedGameState.playerAvatars.map((avatar, i) => ({
+        avatar,
+        aggressiveness: savedGameState.playerAggressiveness[i] ?? 0,
+      })),
+    )
     setGame(savedGameState.game)
   }, [savedGameState])
 
@@ -355,14 +370,18 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
       const animationDelay = Duration.TURN + Duration.PLAY
       const timeoutId = setTimeout(
         () =>
-          onOpponentTurn(game, { canCountCards: true, canLookAhead: true, aggression: 0 })
+          onOpponentTurn(game, {
+            canCountCards: true,
+            canLookAhead: true,
+            aggression: playerProfiles[game.turn]?.aggressiveness ?? 0,
+          })
             .then(play)
             .catch(invalidMove),
         1000 * animationDelay,
       )
       return () => clearTimeout(timeoutId)
     }
-  }, [game, invalidMove, onOpponentTurn, play, tableDealOrder])
+  }, [game, invalidMove, onOpponentTurn, play, playerProfiles, tableDealOrder])
 
   const toggleTakeTarget = React.useCallback((card: Card) => {
     setTake((current) => (hasCard(current, card) ? current.filter((c) => !isSame(c, card)) : [...current, card]))
@@ -396,9 +415,12 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
             savedGameState ? { avatars: savedGameState.playerAvatars, score: savedGameState.game.score } : undefined
           }
           onResume={resume}
-          onStart={(avatar, count) => {
-            setPlayerAvatars(count === 3 ? [avatar, '🤖', '👾'] : [avatar, '🤖'])
-            setPlayerCount(count)
+          onStart={(playerOneAvatar, count) => {
+            setPlayerProfiles(
+              [playerOneAvatar, '🤖', '👾']
+                .slice(0, count)
+                .map((avatar) => ({ avatar, aggressiveness: Math.random() * 2 - 1 })),
+            )
             setPersistedGameState(null)
             start(true, count)
           }}
@@ -417,7 +439,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                     active={game.turn === playerId}
                     data-active={game.turn === playerId}
                   >
-                    {playerAvatars[playerId]} {game.score[playerId] ?? 0}
+                    {playerProfiles[playerId].avatar} {game.score[playerId] ?? 0}
                   </TurnScore>
                 ))}
               </Turn>
@@ -431,7 +453,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                   key={`opponent-${id}`}
                   ref={getPlayerPileRef(id)}
                   index={id}
-                  avatar={playerAvatars[id]}
+                  avatar={playerProfiles[id].avatar}
                   pile={getFilteredPile(id)}
                 >
                   <HandCards
@@ -552,7 +574,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           </AnimatePresence>
           <Player
             ref={getPlayerPileRef(MAIN_PLAYER)}
-            avatar={playerAvatars[MAIN_PLAYER]}
+            avatar={playerProfiles[MAIN_PLAYER].avatar}
             pile={getFilteredPile(MAIN_PLAYER)}
           >
             <HandCards
@@ -588,7 +610,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
       )}
       {game.state === 'stop' && (
         <GameOver
-          playerAvatars={playerAvatars}
+          playerAvatars={playerProfiles.map((profile) => profile.avatar)}
           scores={roundScoresRef.current}
           runningScore={game.score}
           winner={winner}
