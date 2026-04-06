@@ -118,13 +118,8 @@ function dynamicAggression(game: State, canCountCards: boolean): number {
     const myRoundTotal = roundTotals[game.turn] ?? 0
     const bestOpponentRoundTotal = roundTotals
       .filter((_, index) => index !== game.turn)
-      .reduce((best, total) => Math.max(best, total), -Infinity)
-
-    if (bestOpponentRoundTotal !== -Infinity && myRoundTotal !== bestOpponentRoundTotal) {
-      return clamp((bestOpponentRoundTotal - myRoundTotal) / 2, -0.8, 0.8)
-    }
-
-    return 0
+      .reduce((best, total) => Math.max(best, total), 0)
+    return clamp((bestOpponentRoundTotal - myRoundTotal) / 2, -0.8, 0.8)
   }
 
   const pile = game.players[game.turn]?.pile ?? []
