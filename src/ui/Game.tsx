@@ -377,7 +377,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   }, [game.lastTaken, game.players, game.state, game.table])
 
   React.useEffect(() => {
-    if (game.state === 'play' && game.turn !== MAIN_PLAYER && !tableDealOrder.size) {
+    if (game.state === 'play' && game.turn !== MAIN_PLAYER && !tableDealOrder.size && animation.phase === 'idle') {
       const animationDelay = Duration.TURN + Duration.PLAY
       const timeoutId = setTimeout(
         () =>
@@ -392,7 +392,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
       )
       return () => clearTimeout(timeoutId)
     }
-  }, [game, invalidMove, onOpponentTurn, play, playerProfiles, tableDealOrder])
+  }, [animation.phase, game, invalidMove, onOpponentTurn, play, playerProfiles, tableDealOrder])
 
   React.useEffect(() => {
     if (game.turn !== MAIN_PLAYER || game.state !== 'play') {
@@ -663,7 +663,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           <DragOverlay dragState={dragState} onSpringBackComplete={clearDragging} />
         </Main>
       )}
-      {game.state === 'stop' && (
+      {game.state === 'stop' && animation.phase === 'idle' && (
         <GameOver
           playerAvatars={playerProfiles.map((profile) => profile.avatar)}
           scores={roundScoresRef.current}

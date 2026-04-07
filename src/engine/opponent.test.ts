@@ -179,6 +179,23 @@ describe('taking moves', () => {
     expect(take).toEqual([denari(6)])
   })
 
+  test('never returns an empty take when the played card has multiple capture options', () => {
+    const game: State = {
+      state: 'play',
+      turn: 1,
+      table: [coppe(3), spade(2), denari(3), bastoni(3)],
+      players: [
+        { id: 0, hand: [denari(4)], pile: [], scope: 0 },
+        { id: 1, hand: [spade(6), denari(2), denari(5)], pile: [], scope: 0 },
+      ],
+      pile: [bastoni(9)],
+      lastTaken: [],
+      score: [0, 0],
+    }
+
+    expect(isOk(play(move(game, { canCountCards: true, canLookAhead: true }), game))).toBe(true)
+  })
+
   test('avoid gifting a scopa even when the alternative takes three denari', () => {
     const game: State = {
       state: 'play',
@@ -446,32 +463,6 @@ describe('card counting', () => {
 })
 
 describe('canLookAhead', () => {
-  test('can switch from immediate take to discard when lookahead sees a better follow-up', () => {
-    const table: Pile = [denari(7), coppe(2)]
-    const hand: Pile = [denari(1), denari(2)]
-    const knownCards = [...table, ...hand]
-    const game: State = {
-      state: 'play',
-      turn: 0,
-      score: [0, 0],
-      table,
-      players: [
-        { id: 0, hand, pile: [], scope: 0 },
-        { id: 1, hand: [], pile: [], scope: 0 },
-      ],
-      pile: deck().filter((card) => !knownCards.some((k) => isSame(k, card))),
-      lastTaken: [],
-    }
-
-    const withoutLookahead = move(game)
-    const withLookahead = move(game, { canCountCards: false, canLookAhead: true })
-
-    expect(withoutLookahead.card).toEqual(denari(2))
-    expect(withoutLookahead.take).toEqual([coppe(2)])
-    expect(withLookahead.card).toEqual(denari(2))
-    expect(withLookahead.take).toHaveLength(0)
-  })
-
   test('discounts setup when opponent can plausibly disrupt it', () => {
     const table: Pile = [denari(3), denari(9)]
     const hand: Pile = [denari(1), denari(2)]

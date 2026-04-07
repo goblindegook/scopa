@@ -54,24 +54,26 @@ export function move(
 
   for (const card of hand) {
     const remainingHand = hand.filter((c) => !isSame(c, card))
+    const availableTakes = findCardsToTake(card[0], table)
 
-    const discardTable = [...table, card]
-    const discardTables = canLookAhead
-      ? canCountCards
-        ? simulatedOpponentTables(discardTable, uncountedCards)
-        : [discardTable]
-      : []
-    const discardLookahead = canLookAhead
-      ? lookaheadDiscount *
-        lookaheadScore(remainingHand, discardTables, currentBestPrimes, ownDenariCount, isLastTable, temperament)
-      : 0
-    const discardScore = evaluateDiscard(card, table, temperament) + discardLookahead
-    if (discardScore > bestScore) {
-      bestScore = discardScore
-      bestMove = { card, take: [] }
+    if (availableTakes.length === 0) {
+      const discardTable = [...table, card]
+      const discardTables = canLookAhead
+        ? canCountCards
+          ? simulatedOpponentTables(discardTable, uncountedCards)
+          : [discardTable]
+        : []
+      const discardLookahead = canLookAhead
+        ? lookaheadDiscount *
+          lookaheadScore(remainingHand, discardTables, currentBestPrimes, ownDenariCount, isLastTable, temperament)
+        : 0
+      const discardScore = evaluateDiscard(card, table, temperament) + discardLookahead
+      if (discardScore > bestScore) {
+        bestScore = discardScore
+        bestMove = { card, take: [] }
+      }
     }
 
-    const availableTakes = findCardsToTake(card[0], table)
     for (const takenCards of availableTakes) {
       const nextTable = table.filter((c) => !takenCards.some((t) => isSame(t, c)))
       const takeTables = canLookAhead
