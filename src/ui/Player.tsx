@@ -37,12 +37,12 @@ export const FanCard = styled('div')<{ $fanIndex: number; $fanTotal: number }>`
   display: inline-block;
 `
 
-export const PlayerCard = styled('button')`
+export const PlayerCard = styled('button')<{ $aimed?: boolean }>`
   background-color: transparent;
   border: none;
   border-radius: 0.75vw;
   overflow: hidden;
-  transition: transform 0.2s ease-in;
+  transition: transform 0.2s ease-in, box-shadow 0.2s ease-in, opacity 0.2s ease-in;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 
@@ -57,6 +57,15 @@ export const PlayerCard = styled('button')`
     border: 2px solid red;
     padding: -2px;
   }
+
+  ${({ $aimed }) =>
+    $aimed &&
+    `
+    transform: translateY(-8px) scale(1.1);
+    box-shadow: 0 0 0 3px #93c5fd, 0 12px 24px rgba(29, 78, 216, 0.6);
+    border-radius: 1rem;
+    `}
+
 `
 
 type PlayerProps = React.PropsWithChildren<{

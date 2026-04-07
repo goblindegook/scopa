@@ -3,7 +3,8 @@ import { fold, isErr, type Result } from '@pacote/result'
 import { AnimatePresence, motion, type Target } from 'framer-motion'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { type Card, hasCard, isSame } from '../engine/cards'
+import { type Card, hasCard, isSame, type Pile } from '../engine/cards'
+import { findCardsToTake } from '../engine/move'
 import type { OpponentOptions } from '../engine/opponent'
 import type { Score } from '../engine/scores'
 import type { Move, State } from '../engine/state'
@@ -145,6 +146,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     { avatar: '🤖', aggression: undefined },
   ])
   const [take, setTake] = React.useState<readonly Card[]>([])
+  const [aimed, setAimed] = React.useState<Card | null>(null)
   const [game, setGame] = React.useState<State>({
     state: 'initial',
     turn: 0,
@@ -154,6 +156,14 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     lastTaken: [],
     score: [0, 0],
   })
+
+  const validCombos = React.useMemo(() => (aimed ? findCardsToTake(aimed[0], game.table) : []), [aimed, game.table])
+
+  const capturableSet = React.useMemo(
+    () => (aimed && validCombos.length > 1 ? capturableCards(validCombos, take) : []),
+    [aimed, validCombos, take],
+  )
+
   const tableRef = React.useRef<HTMLElement | null>(null)
   const roundScoresRef = React.useRef<readonly Score[]>([])
   const [cardRefs, getCardRef] = useRefMap<string>()
@@ -200,6 +210,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
         (nextState: State) => {
           setGame(nextState)
           setTake([])
+          setAimed(null)
 
           if (hasRedealt) showAlert('Opening table with more than two kings, re-dealing hand.')
 
@@ -220,6 +231,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     if (!savedGameState) return
     setPlayerProfiles(savedGameState.playerProfiles)
     setGame(savedGameState.game)
+    setTake([])
+    setAimed(null)
   }, [savedGameState])
 
   const resetToTitle = React.useCallback(() => {
@@ -256,6 +269,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           previousPlayersHandsRef.current = game.players.map((p) => p.hand)
           setGame(nextState)
           setTake([])
+          setAimed(null)
 
           if (game.table.length > 0 && nextState.lastTaken.length === game.table.length) showAlert(t('scopa'))
 
@@ -280,13 +294,35 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           pointer.y >= rect.top &&
           pointer.y <= rect.bottom
         if (isOnTable) {
+          const combos = findCardsToTake(card[0], game.table)
+          if (
+            combos.length > 1 &&
+            !combos.some((combo) => combo.length === take.length && combo.every((c) => hasCard(take, c)))
+          ) {
+            setAimed(card)
+            setTake([])
+            return false
+          }
           playCardFromRef.current = { card, position }
           play({ card, take })
+        } else {
+          setAimed(null)
+          setTake([])
         }
         return isOnTable
       },
-      [take, play],
+      [take, play, game.table],
     ),
+  )
+
+  const dragAimedCard = dragState?.type === 'pointer' && dragState.active ? dragState.card : null
+  const dragValidCombos = React.useMemo(
+    () => (dragAimedCard ? findCardsToTake(dragAimedCard[0], game.table) : []),
+    [dragAimedCard, game.table],
+  )
+  const dragCapturableSet = React.useMemo(
+    () => (dragAimedCard && dragValidCombos.length > 1 ? capturableCards(dragValidCombos, take) : []),
+    [dragAimedCard, dragValidCombos, take],
   )
 
   const animatePlayTo = React.useCallback(
@@ -357,6 +393,13 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
       return () => clearTimeout(timeoutId)
     }
   }, [game, invalidMove, onOpponentTurn, play, playerProfiles, tableDealOrder])
+
+  React.useEffect(() => {
+    if (game.turn !== MAIN_PLAYER || game.state !== 'play') {
+      setAimed(null)
+      setTake([])
+    }
+  }, [game.turn, game.state])
 
   const toggleTakeTarget = React.useCallback((card: Card) => {
     setTake((current) => (hasCard(current, card) ? current.filter((c) => !isSame(c, card)) : [...current, card]))
@@ -461,6 +504,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                 const isAnimating = animatingCardIds.includes(cardId)
                 const order = tableDealOrder.get(cardId)
                 const motion = getTableCardMotion({ isAnimating, order })
+                const activeAimed = aimed ?? (dragValidCombos.length > 1 ? dragAimedCard : null)
+                const activeCapturable = aimed ? capturableSet : dragCapturableSet
 
                 return (
                   <TableCardLabel
@@ -479,13 +524,26 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                     style={{ pointerEvents: isAnimating ? 'none' : 'auto' }}
                   >
                     <TableCardSelector
-                      disabled={game.turn !== MAIN_PLAYER || isTaken || isAnimating}
+                      disabled={
+                        game.turn !== MAIN_PLAYER ||
+                        isTaken ||
+                        isAnimating ||
+                        (activeAimed != null && !hasCard(activeCapturable, card) && !hasCard(take, card))
+                      }
                       type="checkbox"
                       checked={hasCard(take, card)}
                       onChange={() => toggleTakeTarget(card)}
                       id={`table-${cardId}`}
                     />
-                    <TableCard card={card} />
+                    <TableCard
+                      card={card}
+                      $state={(() => {
+                        if (!activeAimed) return undefined
+                        if (hasCard(take, card)) return undefined
+                        if (hasCard(activeCapturable, card)) return 'capturable'
+                        return 'dimmed'
+                      })()}
+                    />
                   </TableCardLabel>
                 )
               })}
@@ -565,15 +623,32 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                   ref={getCardRef(getCardId(card))}
                   disabled={game.turn !== MAIN_PLAYER || animation.phase !== 'idle'}
                   draggable={false}
+                  $aimed={aimed != null && isSame(aimed, card)}
                   onPointerDown={(event) => {
                     if (event.button !== 0) return
                     startDragging(card, event.currentTarget, { x: event.clientX, y: event.clientY }, event.pointerId)
                   }}
                   onClick={() => {
-                    if (!isClickSuppressed()) play({ card, take })
+                    if (isClickSuppressed()) return
+                    const combos = findCardsToTake(card[0], game.table)
+                    if (aimed != null && isSame(aimed, card)) {
+                      if (take.length > 0) {
+                        play({ card, take })
+                      } else {
+                        setAimed(null)
+                        setTake([])
+                      }
+                    } else if (combos.length > 1) {
+                      setAimed(card)
+                      setTake([])
+                    } else {
+                      setAimed(null)
+                      play({ card, take: combos.length === 1 ? combos[0] : [] })
+                    }
                   }}
                   style={
-                    isSame(dragState?.card, card) && (dragState?.type === 'returning' || dragState?.active)
+                    isSame(dragState?.card, card) &&
+                    (dragState?.type === 'returning' || (dragState?.type === 'pointer' && dragState.active))
                       ? { opacity: 0, visibility: 'hidden' }
                       : {
                           opacity: animation.phase === 'play' && isSame(animation.playCard, card) ? 0 : 1,
@@ -683,4 +758,18 @@ const toOrder = (pile: readonly Card[]) => new Map(pile.map((card, index) => [ge
 const getPosition = (element?: Element | null): { x: number; y: number } | null => {
   const r = element?.getBoundingClientRect()
   return r ? { x: r.left, y: r.top } : null
+}
+
+function capturableCards(validCombos: readonly Pile[], selected: readonly Card[]): readonly Card[] {
+  const capturable: Card[] = []
+  for (const combo of validCombos) {
+    const compatible = selected.every((s) => combo.some((c) => isSame(c, s)))
+    if (!compatible) continue
+    for (const card of combo) {
+      if (!selected.some((s) => isSame(s, card)) && !capturable.some((c) => isSame(c, card))) {
+        capturable.push(card)
+      }
+    }
+  }
+  return capturable
 }

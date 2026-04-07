@@ -360,6 +360,7 @@ test('select cards to take', async () => {
   render(<Game onStart={() => Ok(initialState)} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
+  fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
   fireEvent.click(screen.getByRole('checkbox', { name: cn(1, Suit.COPPE) }))
   fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
 
@@ -715,6 +716,83 @@ test('renders "Scopa!" when a player takes all cards on the table', async () => 
   fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
 
   expect(screen.getByText('Scopa!')).toBeTruthy()
+})
+
+test('tapping a hand card with multiple valid combos enters aim mode without playing', async () => {
+  const initialState = testGame({
+    players: [
+      { id: 0, hand: [denari(5)], pile: [], scope: 0 },
+      { id: 1, hand: [], pile: [], scope: 0 },
+    ],
+    table: [coppe(2), coppe(3), spade(1), spade(4)],
+  })
+  const onPlay = vitest.fn(() => Ok(testGame()))
+
+  render(<Game onStart={() => Ok(initialState)} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
+  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
+
+  fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
+
+  expect(onPlay).not.toHaveBeenCalled()
+})
+
+test('second tap on aimed card with a valid selection plays the card', async () => {
+  const initialState = testGame({
+    players: [
+      { id: 0, hand: [denari(5)], pile: [], scope: 0 },
+      { id: 1, hand: [], pile: [], scope: 0 },
+    ],
+    table: [coppe(2), coppe(3), spade(1), spade(4)],
+  })
+  const onPlay = vitest.fn(() => Ok(testGame()))
+
+  render(<Game onStart={() => Ok(initialState)} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
+  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
+
+  fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
+  fireEvent.click(screen.getByRole('checkbox', { name: cn(2, Suit.COPPE) }))
+  fireEvent.click(screen.getByRole('checkbox', { name: cn(3, Suit.COPPE) }))
+  fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
+
+  expect(onPlay).toHaveBeenCalledWith({ card: denari(5), take: [coppe(2), coppe(3)] }, initialState)
+})
+
+test('second tap on aimed card with empty selection cancels aim mode', async () => {
+  const initialState = testGame({
+    players: [
+      { id: 0, hand: [denari(5)], pile: [], scope: 0 },
+      { id: 1, hand: [], pile: [], scope: 0 },
+    ],
+    table: [coppe(2), coppe(3), spade(1), spade(4)],
+  })
+  const onPlay = vitest.fn(() => Ok(testGame()))
+
+  render(<Game onStart={() => Ok(initialState)} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
+  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
+
+  fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
+  fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
+
+  expect(onPlay).not.toHaveBeenCalled()
+})
+
+test('tapping a different hand card while in aim mode switches to that card', async () => {
+  const initialState = testGame({
+    players: [
+      { id: 0, hand: [denari(5), denari(1)], pile: [], scope: 0 },
+      { id: 1, hand: [], pile: [], scope: 0 },
+    ],
+    table: [coppe(2), coppe(3), spade(1), spade(4)],
+  })
+  const onPlay = vitest.fn(() => Ok(testGame()))
+
+  render(<Game onStart={() => Ok(initialState)} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
+  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
+
+  fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
+  fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
+
+  expect(onPlay).toHaveBeenCalledWith({ card: denari(1), take: [spade(1)] }, initialState)
 })
 
 test('does not render "Scopa!" when a player does not take all cards on the table', async () => {

@@ -13,8 +13,8 @@ export const Table = styled(motion.section)`
   gap: 1rem;
 `
 
-export const TableCard = styled(Card)`
-  transition: transform 0.2s ease-in, box-shadow 0.2s ease-in;
+export const TableCard = styled(Card)<{ $state?: 'capturable' | 'dimmed' }>`
+  transition: transform 0.2s ease-in, box-shadow 0.2s ease-in, opacity 0.2s ease-in;
   touch-action: manipulation;
 
   input:focus + &,
@@ -29,8 +29,18 @@ export const TableCard = styled(Card)`
 
   input:checked + & {
     box-shadow: 0 0 0 2px #22c55e, 0 10px 15px rgba(0, 0, 0, 0.5);
-    transform: scale(1.1);
+    transform: scale(1.1) translateY(-4px);
   }
+
+  ${({ $state }) => $state === 'capturable' && `box-shadow: 0 0 0 2px #22c55e, 0 0 10px rgba(34, 197, 94, 0.4);`}
+
+  ${({ $state }) =>
+    $state === 'dimmed' &&
+    `
+    opacity: 0.35;
+    transform: scale(0.88);
+    pointer-events: none;
+    `}
 `
 
 export const TableCardLabel = styled(motion.label)`
