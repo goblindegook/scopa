@@ -2,6 +2,7 @@ import { Err, Ok } from '@pacote/result'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, expect, test, vi, vitest } from 'vitest'
 import { bastoni, coppe, denari, Suit, spade, type Value } from '../engine/cards'
+import type { OpponentOptions } from '../engine/opponent'
 import type { Move, State } from '../engine/state'
 import { SUITS } from './Card'
 import { Game } from './Game'
@@ -102,6 +103,32 @@ test('show re-deal message when opening table has too many kings', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
   expect(screen.getByRole('alert')).toHaveTextContent('Opening table with more than two kings, re-dealing hand.')
+})
+
+test('re-deal preserves requested three-player mode', async () => {
+  const onStart = vitest
+    .fn()
+    .mockReturnValueOnce(Err(Error('re-deal')))
+    .mockReturnValueOnce(
+      Ok(
+        testGame({
+          turn: 0,
+          score: [0, 0, 0],
+          players: [
+            { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+            { id: 1, hand: [denari(2)], pile: [], scope: 0 },
+            { id: 2, hand: [denari(3)], pile: [], scope: 0 },
+          ],
+        }),
+      ),
+    )
+
+  render(<Game onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />)
+
+  fireEvent.click(await screen.findByRole('button', { name: 'New Three-Player Game' }))
+
+  expect(onStart).toHaveBeenCalledTimes(2)
+  expect(onStart).toHaveBeenLastCalledWith(expect.anything(), 3)
 })
 
 test('alerts auto-dismiss after 5 seconds', async () => {
@@ -431,6 +458,47 @@ test('computer opponent plays a card', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
   await screen.findByRole('button', { name: cn(1, Suit.DENARI) })
+})
+
+test('opponent turn receives configured aggression from player profile', async () => {
+  const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.75)
+
+  const initialState = testGame({
+    turn: 1,
+    score: [0, 0],
+    players: [
+      { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+      { id: 1, hand: [denari(2)], pile: [], scope: 0 },
+    ],
+  })
+
+  const onOpponentTurn = vitest.fn<(game: State, options: OpponentOptions) => Promise<Move>>(async () => ({
+    card: denari(2),
+    take: [],
+  }))
+
+  render(
+    <Game
+      onStart={() => Ok(initialState)}
+      onPlay={vitest.fn()}
+      onOpponentTurn={onOpponentTurn}
+      onScore={vitest.fn()}
+    />,
+  )
+
+  fireEvent.click(await screen.findByRole('button', { name: 'New Three-Player Game' }))
+
+  await waitFor(
+    () =>
+      expect(onOpponentTurn).toHaveBeenCalledWith(expect.anything(), {
+        canCountCards: true,
+        canLookAhead: true,
+        aggression: 0.5,
+      }),
+    { timeout: 2500 },
+  )
+
+  randomSpy.mockRestore()
 })
 
 test('end game and show scores', async () => {

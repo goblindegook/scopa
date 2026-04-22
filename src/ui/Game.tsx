@@ -203,7 +203,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
 
       while (isErr(startResult)) {
         hasRedealt = true
-        startResult = onStart(runningScore)
+        startResult = onStart(runningScore, count as 2 | 3)
       }
 
       return fold(
@@ -442,7 +442,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
             setPlayerProfiles(
               [playerOneAvatar, '🤖', '👾']
                 .slice(0, count)
-                .map((avatar) => ({ avatar, aggressiveness: Math.random() * 2 - 1 })),
+                .map((avatar) => ({ avatar, aggression: Math.random() * 2 - 1 })),
             )
             clearSavedGame()
             start(true, count)
