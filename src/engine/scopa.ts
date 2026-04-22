@@ -1,9 +1,9 @@
 import { windowed } from '@pacote/array'
 import { Err, Ok, type Result } from '@pacote/result'
-import { hasCard, isSame, type Pile } from './cards'
+import { hasCard, isSame, type Pile } from './cards.ts'
 import { findCardsToTake } from './move.ts'
 import { score } from './scores.ts'
-import type { Move, Player, State } from './state'
+import type { Move, Player, State } from './state.ts'
 
 interface Options {
   players?: 2 | 3 | 4 | 6

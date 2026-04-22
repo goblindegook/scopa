@@ -1,4 +1,4 @@
-import type { Card, Pile } from './cards'
+import type { Card, Pile } from './cards.ts'
 
 export interface Player {
   readonly id: number

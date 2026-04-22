@@ -1,7 +1,7 @@
-import { type Card, isDenari, isSame, isSettebello, type Pile, type Suit } from './cards'
+import { type Card, isDenari, isSame, isSettebello, type Pile, type Suit } from './cards.ts'
 import { findCardsToTake } from './move.ts'
 import { primePoints, score } from './scores.ts'
-import type { Move, Player, State } from './state'
+import type { Move, Player, State } from './state.ts'
 
 export interface OpponentOptions {
   canCountCards?: boolean

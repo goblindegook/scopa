@@ -1,5 +1,5 @@
-import { type Card, denari, isDenari, isSettebello, type Pile } from './cards'
-import type { Player } from './state'
+import { type Card, denari, isDenari, isSettebello, type Pile } from './cards.ts'
+import type { Player } from './state.ts'
 
 interface ScoreDetail {
   label: string

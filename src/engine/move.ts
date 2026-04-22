@@ -1,4 +1,4 @@
-import type { Pile } from './cards'
+import type { Pile } from './cards.ts'
 
 function combinations(cards: Pile): readonly Pile[] {
   const results: Pile[] = [[]]
