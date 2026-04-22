@@ -491,6 +491,7 @@ test('opponent turn receives configured aggression from player profile', async (
   await waitFor(
     () =>
       expect(onOpponentTurn).toHaveBeenCalledWith(expect.anything(), {
+        avatar: expect.anything(),
         canCountCards: true,
         canLookAhead: true,
         aggression: 0.5,

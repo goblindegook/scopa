@@ -25,6 +25,8 @@ const MAIN_PLAYER = 0
 
 interface PlayerProfile {
   avatar: string
+  canCountCards?: boolean
+  canLookAhead?: boolean
   aggression?: number
 }
 
@@ -142,8 +144,8 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   const [loadingProgress, setLoadingProgress] = React.useState(0)
   const [alert, showAlert] = useAlerts(3000)
   const [playerProfiles, setPlayerProfiles] = React.useState<readonly PlayerProfile[]>([
-    { avatar: '🐵', aggression: undefined },
-    { avatar: '🤖', aggression: undefined },
+    { avatar: '🐵' },
+    { avatar: '🤖' },
   ])
   const [take, setTake] = React.useState<readonly Card[]>([])
   const [aimed, setAimed] = React.useState<Card | null>(null)
@@ -380,14 +382,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
     if (game.state === 'play' && game.turn !== MAIN_PLAYER && !tableDealOrder.size) {
       const animationDelay = Duration.TURN + Duration.PLAY
       const timeoutId = setTimeout(
-        () =>
-          onOpponentTurn(game, {
-            canCountCards: true,
-            canLookAhead: true,
-            aggression: playerProfiles[game.turn].aggression,
-          })
-            .then(play)
-            .catch(invalidMove),
+        () => onOpponentTurn(game, playerProfiles[game.turn]).then(play).catch(invalidMove),
         1000 * animationDelay,
       )
       return () => clearTimeout(timeoutId)
@@ -440,9 +435,12 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           onResume={resume}
           onStart={(playerOneAvatar, count) => {
             setPlayerProfiles(
-              [playerOneAvatar, '🤖', '👾']
-                .slice(0, count)
-                .map((avatar) => ({ avatar, aggression: Math.random() * 2 - 1 })),
+              [playerOneAvatar, '🤖', '👾'].slice(0, count).map((avatar) => ({
+                avatar,
+                canCountCards: Math.random() >= 0.5,
+                canLookAhead: Math.random() >= 0.5,
+                aggression: Math.random() >= 0.5 ? Math.random() * 2 - 1 : undefined,
+              })),
             )
             clearSavedGame()
             start(true, count)
