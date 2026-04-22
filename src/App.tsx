@@ -13,7 +13,7 @@ const App = () => (
     onStart={dealShuffledDeck}
     onPlay={play}
     onOpponentTurn={async (state, options) => {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 500 + Math.random() * 500))
       return move(state, options)
     }}
     onScore={score}

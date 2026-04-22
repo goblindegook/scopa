@@ -212,7 +212,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           setTake([])
           setAimed(null)
 
-          if (hasRedealt) showAlert('Opening table with more than two kings, re-dealing hand.')
+          if (hasRedealt) showAlert(t('redeal'))
 
           if (nextState.state === 'stop') roundScoresRef.current = onScore(nextState.players)
           setTableDealOrder(toOrder(nextState.table))
@@ -224,7 +224,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
         startResult,
       )
     },
-    [invalidMove, onScore, onStart, showAlert, game.score, playerProfiles],
+    [invalidMove, onScore, onStart, showAlert, game.score, playerProfiles, t],
   )
 
   const resume = React.useCallback(() => {
