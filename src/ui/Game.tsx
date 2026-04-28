@@ -438,7 +438,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
               [playerOneAvatar, '🤖', '👾'].slice(0, count).map((avatar) => ({
                 avatar,
                 canCountCards: Math.random() >= 0.5,
-                canLookAhead: Math.random() >= 0.5,
+                canLookAhead: false, // FIXME: negative lift
                 aggression: Math.random() >= 0.5 ? Math.random() * 2 - 1 : undefined,
               })),
             )
