@@ -21,8 +21,6 @@ import { type DragState, useDragState } from './useDragState'
 import { useSavedGameStorage } from './useLocalStorage'
 import { useRefMap } from './useRefMap'
 
-const MAIN_PLAYER = 0
-
 interface PlayerProfile {
   avatar: string
   canCountCards?: boolean
@@ -108,6 +106,7 @@ interface Position {
 }
 
 interface GameProps {
+  playerId: number
   onStart: (score?: readonly number[], players?: 2 | 3) => Result<State, Error>
   onPlay: (move: Move, game: State) => Result<State, Error>
   onOpponentTurn: (game: State, options: OpponentOptions) => Promise<Move>
@@ -139,7 +138,7 @@ type AnimationController =
     }
   | { phase: 'taking'; takes: readonly TakingAnimationState[] }
 
-export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) => {
+export const Game = ({ playerId, onStart, onPlay, onOpponentTurn, onScore }: GameProps) => {
   const { t } = useTranslation()
   const [loadingProgress, setLoadingProgress] = React.useState(0)
   const [alert, showAlert] = useAlerts(3000)
@@ -248,7 +247,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           const playCardFrom = playCardFromRef.current
           playCardFromRef.current = null
 
-          const isOpponentTurn = game.turn !== MAIN_PLAYER
+          const isOpponentTurn = game.turn !== playerId
           const baseInitial =
             getCardId(playCardFrom?.card) === getCardId(move.card)
               ? { ...playCardFrom?.position }
@@ -281,11 +280,11 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
         onPlay(move, game),
       )
     },
-    [onPlay, game, invalidMove, getCardPosition, onScore, showAlert, t],
+    [onPlay, game, invalidMove, getCardPosition, onScore, showAlert, t, playerId],
   )
 
   const { dragState, isClickSuppressed, startDragging, clearDragging } = useDragState(
-    game.turn === MAIN_PLAYER && animation.phase === 'idle',
+    game.turn === playerId && animation.phase === 'idle',
     React.useCallback(
       (card: Card, position: { x: number; y: number }, pointer: { x: number; y: number }) => {
         const rect = tableRef.current?.getBoundingClientRect()
@@ -379,7 +378,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
   }, [game.lastTaken, game.players, game.state, game.table])
 
   React.useEffect(() => {
-    if (game.state === 'play' && game.turn !== MAIN_PLAYER && !tableDealOrder.size) {
+    if (game.state === 'play' && game.turn !== playerId && !tableDealOrder.size) {
       const animationDelay = Duration.TURN + Duration.PLAY
       const timeoutId = setTimeout(
         () => onOpponentTurn(game, playerProfiles[game.turn]).then(play).catch(invalidMove),
@@ -387,14 +386,14 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
       )
       return () => clearTimeout(timeoutId)
     }
-  }, [game, invalidMove, onOpponentTurn, play, playerProfiles, tableDealOrder])
+  }, [game, invalidMove, onOpponentTurn, play, playerProfiles, tableDealOrder, playerId])
 
   React.useEffect(() => {
-    if (game.turn !== MAIN_PLAYER || game.state !== 'play') {
+    if (game.turn !== playerId || game.state !== 'play') {
       setAimed(null)
       setTake([])
     }
-  }, [game.turn, game.state])
+  }, [game.turn, game.state, playerId])
 
   const toggleTakeTarget = React.useCallback((card: Card) => {
     setTake((current) => (hasCard(current, card) ? current.filter((c) => !isSame(c, card)) : [...current, card]))
@@ -468,7 +467,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
           )}
           <Opponents>
             {game.players
-              .filter(({ id }) => id !== MAIN_PLAYER)
+              .filter(({ id }) => id !== playerId)
               .map(({ id, hand }) => (
                 <Opponent
                   key={`opponent-${id}`}
@@ -523,7 +522,7 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                   >
                     <TableCardSelector
                       disabled={
-                        game.turn !== MAIN_PLAYER ||
+                        game.turn !== playerId ||
                         isTaken ||
                         isAnimating ||
                         (activeAimed != null && !hasCard(activeCapturable, card) && !hasCard(take, card))
@@ -609,17 +608,17 @@ export const Game = ({ onStart, onPlay, onOpponentTurn, onScore }: GameProps) =>
                 ))}
           </AnimatePresence>
           <Player
-            ref={getPlayerPileRef(MAIN_PLAYER)}
-            avatar={playerProfiles[MAIN_PLAYER].avatar}
-            pile={getFilteredPile(MAIN_PLAYER)}
+            ref={getPlayerPileRef(playerId)}
+            avatar={playerProfiles[playerId].avatar}
+            pile={getFilteredPile(playerId)}
           >
             <HandCards
-              hand={game.players[MAIN_PLAYER].hand}
-              previousHand={previousPlayersHandsRef.current[MAIN_PLAYER] ?? []}
+              hand={game.players[playerId].hand}
+              previousHand={previousPlayersHandsRef.current[playerId] ?? []}
               renderCard={(card) => (
                 <PlayerCard
                   ref={getCardRef(getCardId(card))}
-                  disabled={game.turn !== MAIN_PLAYER || animation.phase !== 'idle'}
+                  disabled={game.turn !== playerId || animation.phase !== 'idle'}
                   draggable={false}
                   $aimed={aimed != null && isSame(aimed, card)}
                   onPointerDown={(event) => {

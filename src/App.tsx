@@ -10,6 +10,7 @@ const dealShuffledDeck = (score?: readonly number[], players: 2 | 3 = 2) => deal
 
 const App = () => (
   <Game
+    playerId={0}
     onStart={dealShuffledDeck}
     onPlay={play}
     onOpponentTurn={async (state, options) => {
