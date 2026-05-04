@@ -4,12 +4,12 @@ import './ui/i18n'
 import { move } from './engine/opponent'
 import { deal, play } from './engine/scopa'
 import { score } from './engine/scores'
-import { Game } from './ui/Game'
+import { Scopa } from './ui/Scopa'
 
 const dealShuffledDeck = (score?: readonly number[], players: 2 | 3 = 2) => deal(shuffle(deck()), { players, score })
 
 const App = () => (
-  <Game
+  <Scopa
     playerId={0}
     onStart={dealShuffledDeck}
     onPlay={play}

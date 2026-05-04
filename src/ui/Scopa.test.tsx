@@ -5,8 +5,8 @@ import { bastoni, coppe, denari, Suit, spade, type Value } from '../engine/cards
 import type { OpponentOptions } from '../engine/opponent'
 import type { Move, State } from '../engine/state'
 import { SUITS } from './Card'
-import { Game } from './Game'
 import i18n from './i18n'
+import { Scopa } from './Scopa'
 
 function cn(value: Value, suit: Suit): string {
   return i18n.t('cardName', { value: i18n.t(`cardValues.${value}`), suit: i18n.t(`cardSuits.${SUITS[suit]}`) })
@@ -46,7 +46,13 @@ function testGame(overrides: Partial<State> = {}): State {
 
 test('preload card assets', async () => {
   render(
-    <Game playerId={0} onStart={vitest.fn()} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
+    <Scopa
+      playerId={0}
+      onStart={vitest.fn()}
+      onPlay={vitest.fn()}
+      onOpponentTurn={vitest.fn()}
+      onScore={vitest.fn()}
+    />,
   )
 
   await waitFor(() => {
@@ -58,7 +64,7 @@ test('deal new game on start', async () => {
   const turn = 0
   const onStart = vitest.fn(() => Ok(testGame({ turn })))
   render(
-    <Game
+    <Scopa
       playerId={0}
       onStart={onStart}
       onPlay={vitest.fn()}
@@ -79,7 +85,7 @@ test('deal new game on start', async () => {
 test('selected avatar appears in header after starting game', async () => {
   const onStart = vitest.fn(() => Ok(testGame({ turn: 0 })))
   render(
-    <Game
+    <Scopa
       playerId={0}
       onStart={onStart}
       onPlay={vitest.fn()}
@@ -96,7 +102,7 @@ test('selected avatar appears in header after starting game', async () => {
 
 test('show re-deal message when opening table has too many kings', async () => {
   render(
-    <Game
+    <Scopa
       playerId={0}
       onStart={vitest.fn().mockReturnValueOnce(Err(Error())).mockReturnValueOnce(Ok(testGame()))}
       onPlay={vitest.fn()}
@@ -129,7 +135,7 @@ test('re-deal preserves requested three-player mode', async () => {
     )
 
   render(
-    <Game playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
+    <Scopa playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
   )
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Three-Player Game' }))
@@ -140,7 +146,7 @@ test('re-deal preserves requested three-player mode', async () => {
 
 test('alerts auto-dismiss after 5 seconds', async () => {
   render(
-    <Game
+    <Scopa
       playerId={0}
       onStart={() =>
         Ok(
@@ -181,7 +187,7 @@ test('renders opponent hand', async () => {
       }),
     )
   render(
-    <Game playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
+    <Scopa playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
   )
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
@@ -212,7 +218,7 @@ test('card visibility', async () => {
       }),
     )
   render(
-    <Game playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
+    <Scopa playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
   )
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
@@ -248,7 +254,7 @@ test('player piles', async () => {
       }),
     )
   render(
-    <Game playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
+    <Scopa playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
   )
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
@@ -277,7 +283,7 @@ test('allow playing a card', async () => {
     ),
   )
   render(
-    <Game
+    <Scopa
       playerId={0}
       onStart={() => Ok(initialState)}
       onPlay={onPlay}
@@ -313,7 +319,7 @@ test('allow playing a card by dragging it to the table', async () => {
   )
 
   render(
-    <Game
+    <Scopa
       playerId={0}
       onStart={() => Ok(initialState)}
       onPlay={onPlay}
@@ -371,7 +377,7 @@ test(`block interaction when not a player's turn`, async () => {
   })
   const onPlay = vitest.fn()
   render(
-    <Game
+    <Scopa
       playerId={0}
       onStart={() => Ok(initialState)}
       onOpponentTurn={() => new Promise((resolve) => setTimeout(() => resolve({ card: denari(1), take: [] }), 10))}
@@ -416,7 +422,7 @@ test('select cards to take', async () => {
   )
 
   render(
-    <Game
+    <Scopa
       playerId={0}
       onStart={() => Ok(initialState)}
       onPlay={onPlay}
@@ -438,7 +444,7 @@ test('invalid move handling', async () => {
   const onPlay = vitest.fn(() => Err(Error(message)))
 
   render(
-    <Game
+    <Scopa
       playerId={0}
       onStart={() =>
         Ok(
@@ -493,7 +499,7 @@ test('computer opponent plays a card', async () => {
     take: [],
   })
 
-  render(<Game playerId={0} onStart={onStart} onPlay={onPlay} onOpponentTurn={onOpponentPlay} onScore={vitest.fn()} />)
+  render(<Scopa playerId={0} onStart={onStart} onPlay={onPlay} onOpponentTurn={onOpponentPlay} onScore={vitest.fn()} />)
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
@@ -518,7 +524,7 @@ test('opponent turn receives configured aggression from player profile', async (
   }))
 
   render(
-    <Game
+    <Scopa
       playerId={0}
       onStart={() => Ok(initialState)}
       onPlay={vitest.fn()}
@@ -559,7 +565,13 @@ test('end game and show scores', async () => {
   ])
 
   render(
-    <Game playerId={0} onStart={() => Ok(state)} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={onScore} />,
+    <Scopa
+      playerId={0}
+      onStart={() => Ok(state)}
+      onPlay={vitest.fn()}
+      onOpponentTurn={vitest.fn()}
+      onScore={onScore}
+    />,
   )
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
@@ -629,7 +641,7 @@ test('tracks game score and carries it to next round', async () => {
     ])
     .mockReturnValue([])
 
-  render(<Game playerId={0} onStart={onStart} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={onScore} />)
+  render(<Scopa playerId={0} onStart={onStart} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={onScore} />)
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
   fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
@@ -703,7 +715,7 @@ test('starting a new game resets running game score', async () => {
     ])
     .mockReturnValue([])
 
-  render(<Game playerId={0} onStart={onStart} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={onScore} />)
+  render(<Scopa playerId={0} onStart={onStart} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={onScore} />)
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
   fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
@@ -750,7 +762,7 @@ test('when a player reaches 11 with a unique top score, show game winner and swi
     { playerId: 1, total: 0, details: [] },
   ])
 
-  render(<Game playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={onScore} />)
+  render(<Scopa playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={onScore} />)
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
@@ -780,7 +792,7 @@ test('when all top scores are tied at 11, keep playing next round', async () => 
     { playerId: 1, total: 2, details: [] },
   ])
 
-  render(<Game playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={onScore} />)
+  render(<Scopa playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={onScore} />)
 
   fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
@@ -790,7 +802,7 @@ test('when all top scores are tied at 11, keep playing next round', async () => 
 
 test('renders "Scopa!" when a player takes all cards on the table', async () => {
   render(
-    <Game
+    <Scopa
       playerId={0}
       onStart={() =>
         Ok({
@@ -842,7 +854,7 @@ test('tapping a hand card with multiple valid combos enters aim mode without pla
   const onPlay = vitest.fn(() => Ok(testGame()))
 
   render(
-    <Game
+    <Scopa
       playerId={0}
       onStart={() => Ok(initialState)}
       onPlay={onPlay}
@@ -868,7 +880,7 @@ test('second tap on aimed card with a valid selection plays the card', async () 
   const onPlay = vitest.fn(() => Ok(testGame()))
 
   render(
-    <Game
+    <Scopa
       playerId={0}
       onStart={() => Ok(initialState)}
       onPlay={onPlay}
@@ -897,7 +909,7 @@ test('second tap on aimed card with empty selection cancels aim mode', async () 
   const onPlay = vitest.fn(() => Ok(testGame()))
 
   render(
-    <Game
+    <Scopa
       playerId={0}
       onStart={() => Ok(initialState)}
       onPlay={onPlay}
@@ -924,7 +936,7 @@ test('tapping a different hand card while in aim mode switches to that card', as
   const onPlay = vitest.fn(() => Ok(testGame()))
 
   render(
-    <Game
+    <Scopa
       playerId={0}
       onStart={() => Ok(initialState)}
       onPlay={onPlay}
@@ -942,7 +954,7 @@ test('tapping a different hand card while in aim mode switches to that card', as
 
 test('does not render "Scopa!" when a player does not take all cards on the table', async () => {
   render(
-    <Game
+    <Scopa
       playerId={0}
       onStart={() =>
         Ok({

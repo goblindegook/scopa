@@ -105,7 +105,7 @@ interface Position {
   y: number
 }
 
-interface GameProps {
+interface ScopaProps {
   playerId: number
   onStart: (score?: readonly number[], players?: 2 | 3) => Result<State, Error>
   onPlay: (move: Move, game: State) => Result<State, Error>
@@ -138,7 +138,7 @@ type AnimationController =
     }
   | { phase: 'taking'; takes: readonly TakingAnimationState[] }
 
-export const Game = ({ playerId, onStart, onPlay, onOpponentTurn, onScore }: GameProps) => {
+export function Scopa({ playerId, onStart, onPlay, onOpponentTurn, onScore }: ScopaProps) {
   const { t } = useTranslation()
   const [loadingProgress, setLoadingProgress] = React.useState(0)
   const [alert, showAlert] = useAlerts(3000)
