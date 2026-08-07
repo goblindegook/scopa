@@ -6,12 +6,14 @@ import { score } from './scores.ts'
 import type { Move, Player, State } from './state.ts'
 
 interface Options {
+  previousFirstPlayer: number
   players?: 2 | 3 | 4 | 6
   score?: readonly number[]
-  previousFirstPlayer?: number
 }
 
 const DEFAULT_PLAYERS = 2
+
+export const randomFirstPlayer = (players: number): number => Math.floor(Math.random() * players)
 
 const createPlayers = (cards: Pile): readonly Player[] =>
   windowed(3, 3, cards).map((hand, index) => ({
@@ -34,19 +36,15 @@ const hasTakenCards = (allowedCards: readonly Pile[], cardsToTake: readonly Pile
     (candidate) => candidate.length === cardsToTake.length && candidate.every((card) => hasCard(cardsToTake, card)),
   )
 
-export function deal(cards: Pile, options?: Options): Result<State, Error> {
-  const players = options?.players ?? DEFAULT_PLAYERS
-  const score = options?.score ?? Array.from({ length: players }, () => 0)
+export function deal(cards: Pile, options: Options): Result<State, Error> {
+  const players = options.players ?? DEFAULT_PLAYERS
+  const score = options.score ?? Array.from({ length: players }, () => 0)
   const [table, rest] = splitAt(4, cards)
   const dealtKings = table.filter(([value]) => value === 10).length
 
   const [playerCards, pile] = splitAt(players * 3, rest)
 
-  const previousFirstPlayer = options?.previousFirstPlayer
-  const turn =
-    previousFirstPlayer === undefined
-      ? Math.floor(Math.random() * players)
-      : (previousFirstPlayer + players - 1) % players
+  const turn = (options.previousFirstPlayer + players - 1) % players
 
   return dealtKings <= 2
     ? Ok({

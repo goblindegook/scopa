@@ -603,7 +603,7 @@ describe('full game simulation', () => {
   }
 
   test('plays a complete game with two AI players', () => {
-    let game = getGameState(deal(deck(), { players: 2 }))
+    let game = getGameState(deal(deck(), { players: 2, previousFirstPlayer: 1 }))
     const playerProfiles: readonly OpponentOptions[] = [
       { canCountCards: true, canLookAhead: true, aggression: 0 },
       { canCountCards: true, canLookAhead: true, aggression: 0 },

@@ -2,7 +2,7 @@ import { Err, isErr, isOk, Ok, type Result } from '@pacote/result'
 import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
 import { bastoni, coppe, deck, denari, type Pile, spade } from './cards'
-import { deal, play } from './scopa'
+import { deal, play, randomFirstPlayer } from './scopa'
 import type { State } from './state'
 
 function getGameState(game: Result<State, Error>): State {
@@ -15,29 +15,29 @@ function getGameState(game: Result<State, Error>): State {
 
 describe('deal', () => {
   test('deal sets state', () => {
-    expect(deal(deck())).toMatchObject(Ok({ state: 'play' }))
+    expect(deal(deck(), { previousFirstPlayer: 1 })).toMatchObject(Ok({ state: 'play' }))
   })
 
   test('deal starts with zero score', () => {
-    expect(getGameState(deal(deck())).score).toEqual([0, 0])
+    expect(getGameState(deal(deck(), { previousFirstPlayer: 1 })).score).toEqual([0, 0])
   })
 
   test('deal carries over score from a previous round', () => {
-    expect(getGameState(deal(deck(), { score: [3, 5] })).score).toEqual([3, 5])
+    expect(getGameState(deal(deck(), { score: [3, 5], previousFirstPlayer: 1 })).score).toEqual([3, 5])
   })
 
   test('deal four cards on the table', () => {
-    expect(getGameState(deal(deck())).table).toHaveLength(4)
+    expect(getGameState(deal(deck(), { previousFirstPlayer: 1 })).table).toHaveLength(4)
   })
 
   test('can deal up to two kings', () => {
-    const game = deal([bastoni(10), coppe(10), spade(7), denari(7)])
+    const game = deal([bastoni(10), coppe(10), spade(7), denari(7)], { previousFirstPlayer: 1 })
 
     expect(getGameState(game).table).toHaveLength(4)
   })
 
   test('reshuffle cards and deal again if three or more kings are on the table', () => {
-    const game = deal([bastoni(10), coppe(10), spade(10), denari(7)])
+    const game = deal([bastoni(10), coppe(10), spade(10), denari(7)], { previousFirstPlayer: 1 })
 
     expect(game).toMatchObject(
       Err({
@@ -49,28 +49,28 @@ describe('deal', () => {
   test('Scopa is a game for 2, 3, 4 or 6 players', () => {
     fc.assert(
       fc.property(fc.constantFrom(2, 3, 4, 6), (players) => {
-        const game = getGameState(deal(deck(), { players }))
+        const game = getGameState(deal(deck(), { players, previousFirstPlayer: 1 }))
         return game.players.length === players
       }),
     )
   })
 
   test('deal three cards to each player', () => {
-    const game = getGameState(deal(deck()))
+    const game = getGameState(deal(deck(), { previousFirstPlayer: 1 }))
     for (const p of game.players) {
       expect(p.hand).toHaveLength(3)
     }
   })
 
   test('each player begins with an empty pile', () => {
-    const game = getGameState(deal(deck()))
+    const game = getGameState(deal(deck(), { previousFirstPlayer: 1 }))
     for (const p of game.players) {
       expect(p.pile).toHaveLength(0)
     }
   })
 
   test('each player begins with no score', () => {
-    const game = getGameState(deal(deck()))
+    const game = getGameState(deal(deck(), { previousFirstPlayer: 1 }))
     for (const p of game.players) {
       expect(p.scope).toEqual(0)
     }
@@ -78,26 +78,43 @@ describe('deal', () => {
 
   test('table pile contains remaining cards', () => {
     const cards = deck()
-    const game = getGameState(deal(cards))
+    const game = getGameState(deal(cards, { previousFirstPlayer: 1 }))
     const hands = game.players.reduce<Pile>((all, p) => all.concat(p.hand), [])
     expect(game.pile).toHaveLength(30)
     expect([...game.table, ...hands, ...game.pile]).toEqual(cards)
   })
 
-  test('random player begins', () => {
-    const game = getGameState(deal(deck()))
-    expect(game.players[game.turn]).toBeDefined()
+  test('deals the same first player from the same inputs', () => {
+    const turns = Array.from(
+      { length: 25 },
+      () => getGameState(deal(deck(), { players: 3, previousFirstPlayer: 2 })).turn,
+    )
+    expect(new Set(turns).size).toEqual(1)
+  })
+
+  test('randomFirstPlayer picks a seat within range', () => {
+    fc.assert(
+      fc.property(fc.constantFrom(2, 3, 4, 6), (players) => {
+        const seat = randomFirstPlayer(players)
+        return Number.isInteger(seat) && seat >= 0 && seat < players
+      }),
+    )
+  })
+
+  test('randomFirstPlayer does not always pick the same seat', () => {
+    const seats = new Set(Array.from({ length: 50 }, () => randomFirstPlayer(3)))
+    expect(seats.size).toBeGreaterThan(1)
   })
 
   test('deal records the first player of the round', () => {
-    const game = getGameState(deal(deck()))
+    const game = getGameState(deal(deck(), { previousFirstPlayer: 1 }))
     expect(game.firstPlayer).toEqual(game.turn)
   })
 
   test('the next round begins with the player counterclockwise from the previous first player', () => {
     fc.assert(
       fc.property(fc.constantFrom(2, 3, 4, 6), (players) => {
-        const first = getGameState(deal(deck(), { players }))
+        const first = getGameState(deal(deck(), { players, previousFirstPlayer: 1 }))
         const second = getGameState(deal(deck(), { players, previousFirstPlayer: first.firstPlayer }))
         return second.turn === (first.firstPlayer + players - 1) % players
       }),

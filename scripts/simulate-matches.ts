@@ -153,19 +153,23 @@ function parseArgs(argv: readonly string[]): ParsedArgs | HelpArgs {
   }
 }
 
+// Every match opens on seat 0 so seat luck doesn't skew the benchmark. deal()
+// rotates counterclockwise, so seeding the previous lead as 1 yields a lead of 0.
+const MATCH_OPENING_SEED = 1
+
 function dealRound({
   players,
   score,
-  forcePlayerZero,
+  previousFirstPlayer,
 }: {
   players: PlayerCount
   score: readonly number[]
-  forcePlayerZero: boolean
+  previousFirstPlayer: number
 }): State {
   while (true) {
-    const maybeGame = deal(shuffle(deck()), { players, score: [...score] })
+    const maybeGame = deal(shuffle(deck()), { players, score: [...score], previousFirstPlayer })
     if (!isOk(maybeGame)) continue
-    return forcePlayerZero ? { ...maybeGame.value, turn: 0 } : maybeGame.value
+    return maybeGame.value
   }
 }
 
@@ -210,16 +214,16 @@ function simulate({ matches, players, profiles }: ParsedArgs): void {
     roundsTied: 0,
   }))
   let matchScore = Array(players).fill(0)
-  let firstRoundInMatch = true
+  let previousFirstPlayer = MATCH_OPENING_SEED
   let completedMatches = 0
   let totalRounds = 0
 
   while (completedMatches < matches) {
-    const scoreAtRoundStart = firstRoundInMatch ? Array(players).fill(0) : [...matchScore]
+    const scoreAtRoundStart = [...matchScore]
     const initialGame = dealRound({
       players,
       score: scoreAtRoundStart,
-      forcePlayerZero: firstRoundInMatch,
+      previousFirstPlayer,
     })
     const finalGame = playUntilStop(initialGame, profiles)
     totalRounds += 1
@@ -243,10 +247,10 @@ function simulate({ matches, players, profiles }: ParsedArgs): void {
       stats[winner].matchesWon += 1
       completedMatches += 1
       matchScore = Array(players).fill(0)
-      firstRoundInMatch = true
+      previousFirstPlayer = MATCH_OPENING_SEED
     } else {
       matchScore = scoreAtRoundEnd
-      firstRoundInMatch = false
+      previousFirstPlayer = finalGame.firstPlayer
     }
   }
 
