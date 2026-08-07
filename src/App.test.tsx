@@ -42,14 +42,14 @@ test('render without crashing', () => {
 test('shows the title screen on load', async () => {
   render(<App />)
 
-  expect(await screen.findByRole('button', { name: 'New Two-Player Game' })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'New Three-Player Game' })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: /new local game\s*2 players/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /new local game\s*3 players/i })).toBeInTheDocument()
 })
 
 test('starts a local game from the title screen', async () => {
   render(<App />)
 
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
+  fireEvent.click(await screen.findByRole('button', { name: /new local game\s*2 players/i }))
 
   expect(await screen.findByLabelText('Game score')).toBeInTheDocument()
 })
@@ -58,7 +58,7 @@ test('uses the selected avatar in the local game header', async () => {
   render(<App />)
 
   fireEvent.click(await screen.findByRole('button', { name: 'Select avatar 🦊' }))
-  fireEvent.click(screen.getByRole('button', { name: 'New Two-Player Game' }))
+  fireEvent.click(screen.getByRole('button', { name: /new local game\s*2 players/i }))
 
   expect(await screen.findByText('🦊 0')).toBeInTheDocument()
 })
@@ -115,7 +115,7 @@ test('starting a new local game ignores the saved running score', async () => {
 
   render(<App />)
 
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
+  fireEvent.click(await screen.findByRole('button', { name: /new local game\s*2 players/i }))
 
   expect(await screen.findByText('🐵 0')).toBeInTheDocument()
   expect(screen.getByText('🤖 0')).toBeInTheDocument()

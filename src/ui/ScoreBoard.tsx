@@ -232,11 +232,19 @@ const GameOverContent = styled('div')`
   }
 `
 
+const WaitingNotice = styled('p')`
+  margin: 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.95rem;
+  text-align: center;
+`
+
 interface GameOverProps {
   scores: readonly Score[]
   runningScore: readonly number[]
   playerAvatars: string[]
   winner?: number | null
+  awaitingConfirmations?: boolean
   onNextRound: () => void
   onReset: () => void
 }
@@ -246,6 +254,7 @@ export const GameOver: React.FC<GameOverProps> = ({
   winner,
   runningScore,
   playerAvatars,
+  awaitingConfirmations,
   onNextRound,
   onReset,
 }) => {
@@ -257,9 +266,10 @@ export const GameOver: React.FC<GameOverProps> = ({
     <GameOverContainer>
       <GameOverContent>
         <ScoreBoard scores={scores} title={title} runningScore={runningScore} playerAvatars={playerAvatars} />
-        <Button onClick={winner == null ? onNextRound : onReset}>
+        <Button onClick={winner == null ? onNextRound : onReset} disabled={awaitingConfirmations}>
           {winner == null ? t('nextRound') : t('backToTitle')}
         </Button>
+        {awaitingConfirmations && <WaitingNotice role="status">{t('waitingForNextRound')}</WaitingNotice>}
       </GameOverContent>
     </GameOverContainer>
   )

@@ -70,7 +70,7 @@ const ProgressBarFill = styled('div')<{ progress: number }>`
   transition: width 0.3s ease;
 `
 
-const AvatarPickerLabel = styled('p')`
+const SectionLabel = styled('p')`
   color: rgba(255, 255, 255, 0.8);
   font-size: 0.875rem;
   margin: 0;
@@ -82,12 +82,13 @@ const AvatarGrid = styled('div')`
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 0.5rem;
+  width: 100%;
 `
 
 const AvatarButton = styled('button')<{ selected: boolean }>`
-  font-size: 1.75rem;
-  width: 3rem;
-  height: 3rem;
+  font-size: 2.25rem;
+  width: 100%;
+  aspect-ratio: 1;
   border-radius: 0.5rem;
   border: 2px solid ${({ selected }) => (selected ? 'rgba(74, 222, 128, 0.9)' : 'rgba(255, 255, 255, 0.2)')};
   background-color: ${({ selected }) => (selected ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.05)')};
@@ -123,21 +124,57 @@ const ButtonStack = styled('div')`
   gap: 0.75rem;
   width: 100%;
   align-items: stretch;
+
+  & button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 3.5rem;
+  }
 `
 
-const ResumeButtonContent = styled('span')`
+const ResumeSection = styled('div')`
+  display: flex;
+  width: 100%;
+  margin-bottom: 1rem;
+
+  & > button {
+    width: 100%;
+  }
+`
+
+const LocalGameRow = styled('div')`
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+
+  & > button {
+    flex: 1;
+  }
+`
+
+const OnlineGameSection = styled('div')`
+  display: flex;
+  width: 100%;
+
+  & > button {
+    width: 100%;
+  }
+`
+
+const StackedButtonContent = styled('span')`
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.2rem;
 `
 
-const ResumeScores = styled('span')`
+const StackedButtonMain = styled('span')`
   font-size: 1rem;
   letter-spacing: 0.05em;
 `
 
-const ResumeLabel = styled('span')`
+const StackedButtonCaption = styled('span')`
   font-size: 0.75rem;
   opacity: 0.8;
   letter-spacing: 0.1em;
@@ -218,7 +255,7 @@ export const TitleScreen = ({
         ) : (
           <>
             <AvatarSection>
-              <AvatarPickerLabel>{t('chooseAvatar')}</AvatarPickerLabel>
+              <SectionLabel>{t('chooseAvatar')}</SectionLabel>
               <AvatarGrid>
                 {AVATARS.map((emoji) => (
                   <AvatarButton
@@ -235,19 +272,35 @@ export const TitleScreen = ({
             </AvatarSection>
             <ButtonStack>
               {savedGame && onResume && (
-                <Button onClick={onResume}>
-                  <ResumeButtonContent>
-                    <ResumeScores>
-                      {savedGame.avatars.map((avatar, i) => `${avatar} ${savedGame.score[i]}`).join(' · ')}
-                    </ResumeScores>
-                    <ResumeLabel>{t('resume')}</ResumeLabel>
-                  </ResumeButtonContent>
-                </Button>
+                <ResumeSection>
+                  <Button onClick={onResume}>
+                    <StackedButtonContent>
+                      <StackedButtonMain>
+                        {savedGame.avatars.map((avatar, i) => `${avatar} ${savedGame.score[i]}`).join(' · ')}
+                      </StackedButtonMain>
+                      <StackedButtonCaption>{t('resume')}</StackedButtonCaption>
+                    </StackedButtonContent>
+                  </Button>
+                </ResumeSection>
               )}
-              <Button onClick={() => onStart(selectedAvatar, 2)}>{t('newTwoPlayerGame')}</Button>
-              <Button onClick={() => onStart(selectedAvatar, 3)}>{t('newThreePlayerGame')}</Button>
+              <LocalGameRow>
+                <Button onClick={() => onStart(selectedAvatar, 2)}>
+                  <StackedButtonContent>
+                    <StackedButtonMain>{t('newLocalGame')}</StackedButtonMain>
+                    <StackedButtonCaption>{t('twoPlayers')}</StackedButtonCaption>
+                  </StackedButtonContent>
+                </Button>
+                <Button onClick={() => onStart(selectedAvatar, 3)}>
+                  <StackedButtonContent>
+                    <StackedButtonMain>{t('newLocalGame')}</StackedButtonMain>
+                    <StackedButtonCaption>{t('threePlayers')}</StackedButtonCaption>
+                  </StackedButtonContent>
+                </Button>
+              </LocalGameRow>
               {onStartMultiplayer && (
-                <Button onClick={() => onStartMultiplayer(selectedAvatar)}>{t('vsFriends')}</Button>
+                <OnlineGameSection>
+                  <Button onClick={() => onStartMultiplayer(selectedAvatar)}>{t('vsFriends')}</Button>
+                </OnlineGameSection>
               )}
             </ButtonStack>
             <LangRow>

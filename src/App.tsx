@@ -320,6 +320,8 @@ const MultiplayerApp = ({ roomId, initialAvatar }: { roomId: string; initialAvat
     [seat, sendMove],
   )
 
+  const awaitingConfirmations = lobby.find((player) => player.avatar === avatar)?.confirmed ?? false
+
   const leaveRoom = React.useCallback(() => {
     clearSession()
     window.location.assign(window.location.pathname)
@@ -344,6 +346,7 @@ const MultiplayerApp = ({ roomId, initialAvatar }: { roomId: string; initialAvat
       onPlay={playAndSend}
       onOpponentTurn={nextMove}
       onNextRound={confirm}
+      awaitingConfirmations={awaitingConfirmations}
       onScore={score}
     />
   )
