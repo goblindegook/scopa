@@ -504,121 +504,121 @@ export function Scopa({
               </Opponent>
             ))}
         </Opponents>
-          <Table data-testid="table" ref={tableRef}>
-            <AnimatePresence mode="popLayout">
-              {/* Table cards */}
-              {tableCards.map((card) => {
-                const cardId = getCardId(card)
-                const isTaken = hasCard(game.lastTaken, card)
-                const isAnimating = animatingCardIds.includes(cardId)
-                const order = tableDealOrder.get(cardId)
-                const motion = getTableCardMotion({ isAnimating, order })
-                const activeAimed = aimed ?? (dragValidCombos.length > 1 ? dragAimedCard : null)
-                const activeCapturable = aimed ? capturableSet : dragCapturableSet
+        <Table data-testid="table" ref={tableRef}>
+          <AnimatePresence mode="popLayout">
+            {/* Table cards */}
+            {tableCards.map((card) => {
+              const cardId = getCardId(card)
+              const isTaken = hasCard(game.lastTaken, card)
+              const isAnimating = animatingCardIds.includes(cardId)
+              const order = tableDealOrder.get(cardId)
+              const motion = getTableCardMotion({ isAnimating, order })
+              const activeAimed = aimed ?? (dragValidCombos.length > 1 ? dragAimedCard : null)
+              const activeCapturable = aimed ? capturableSet : dragCapturableSet
 
-                return (
-                  <TableCardLabel
-                    key={`table-${cardId}`}
-                    htmlFor={`table-${cardId}`}
-                    layout
-                    onLayoutAnimationComplete={() =>
-                      animatePlayTo(
-                        animation.phase === 'play' ? cardRefs.current.get(getCardId(animation.playCard)) : undefined,
-                      )
-                    }
-                    initial={{ opacity: 0 }}
-                    animate={motion.animate}
-                    exit={{ opacity: 0, scale: 0.3 }}
-                    transition={motion.transition}
-                    style={{ pointerEvents: isAnimating ? 'none' : 'auto' }}
-                  >
-                    <TableCardSelector
-                      disabled={
-                        game.turn !== playerId ||
-                        isTaken ||
-                        isAnimating ||
-                        (activeAimed != null && !hasCard(activeCapturable, card) && !hasCard(take, card))
-                      }
-                      type="checkbox"
-                      checked={hasCard(take, card)}
-                      onChange={() => toggleTakeTarget(card)}
-                      id={`table-${cardId}`}
-                    />
-                    <TableCard
-                      card={card}
-                      $state={(() => {
-                        if (!activeAimed) return undefined
-                        if (hasCard(take, card)) return undefined
-                        if (hasCard(activeCapturable, card)) return 'capturable'
-                        return 'dimmed'
-                      })()}
-                    />
-                  </TableCardLabel>
-                )
-              })}
-            </AnimatePresence>
-          </Table>
-          {alert && <Alert role="alert">{alert}</Alert>}
-          <AnimatePresence>
-            {/* Play animation */}
-            {animation.phase === 'play' && animation.playAnimate && (
-              <AnimatedCard
-                card={animation.playCard}
-                initial={animation.playInitial}
-                animate={animation.playAnimate}
-                faceDown={animation.playFaceDown}
-                onComplete={() => {
-                  if (animation.phase !== 'play') return
-                  const { activePlayerId, playCard: playedCard, playAnimate, playInitial } = animation
-                  const pileRef = game.lastTaken.length ? playerPileRefs.current.get(activePlayerId) : undefined
-
-                  if (!pileRef) {
-                    setAnimation({ phase: 'idle' })
-                    return
+              return (
+                <TableCardLabel
+                  key={`table-${cardId}`}
+                  htmlFor={`table-${cardId}`}
+                  layout
+                  onLayoutAnimationComplete={() =>
+                    animatePlayTo(
+                      animation.phase === 'play' ? cardRefs.current.get(getCardId(animation.playCard)) : undefined,
+                    )
                   }
-
-                  const animatedW = Math.min(window.innerWidth * 0.08, (window.innerHeight * 0.4) / 1.66)
-                  const animatedH = animatedW * 1.66
-
-                  const pileAreaRect = pileRef.getBoundingClientRect()
-                  const targetRect = Array.from(pileRef.children).at(-1)?.getBoundingClientRect() ?? pileAreaRect
-
-                  setAnimation({
-                    phase: 'taking',
-                    takes: [...game.lastTaken, playedCard].map((card, index) => ({
-                      card,
-                      initial:
-                        getPosition(tableRef.current?.querySelector(`label[for="table-${getCardId(card)}"]`)) ??
-                        playAnimate ??
-                        playInitial,
-                      animate: {
-                        x: targetRect.left + targetRect.width / 2 - animatedW / 2,
-                        y: targetRect.top + targetRect.height / 2 - animatedH / 2 - (index + 1) * 2,
-                        scale: pileRef.offsetWidth > 0 ? pileAreaRect.width / pileRef.offsetWidth : 1,
-                      },
-                    })),
-                  })
-                }}
-              />
-            )}
-            {/* Taking animations */}
-            {animation.phase === 'taking' &&
-              animation.takes
-                .filter((a): a is TakingAnimationState & { readonly animate: Target } => a.animate != null)
-                .map((a, index, filtered) => (
-                  <AnimatedCard
-                    key={`taken-${getCardId(a.card)}`}
-                    card={a.card}
-                    initial={a.initial}
-                    animate={a.animate}
-                    faceDown={false}
-                    flip
-                    onComplete={() => {
-                      if (index === filtered.length - 1) setAnimation({ phase: 'idle' })
-                    }}
+                  initial={{ opacity: 0 }}
+                  animate={motion.animate}
+                  exit={{ opacity: 0, scale: 0.3 }}
+                  transition={motion.transition}
+                  style={{ pointerEvents: isAnimating ? 'none' : 'auto' }}
+                >
+                  <TableCardSelector
+                    disabled={
+                      game.turn !== playerId ||
+                      isTaken ||
+                      isAnimating ||
+                      (activeAimed != null && !hasCard(activeCapturable, card) && !hasCard(take, card))
+                    }
+                    type="checkbox"
+                    checked={hasCard(take, card)}
+                    onChange={() => toggleTakeTarget(card)}
+                    id={`table-${cardId}`}
                   />
-                ))}
+                  <TableCard
+                    card={card}
+                    $state={(() => {
+                      if (!activeAimed) return undefined
+                      if (hasCard(take, card)) return undefined
+                      if (hasCard(activeCapturable, card)) return 'capturable'
+                      return 'dimmed'
+                    })()}
+                  />
+                </TableCardLabel>
+              )
+            })}
           </AnimatePresence>
+        </Table>
+        {alert && <Alert role="alert">{alert}</Alert>}
+        <AnimatePresence>
+          {/* Play animation */}
+          {animation.phase === 'play' && animation.playAnimate && (
+            <AnimatedCard
+              card={animation.playCard}
+              initial={animation.playInitial}
+              animate={animation.playAnimate}
+              faceDown={animation.playFaceDown}
+              onComplete={() => {
+                if (animation.phase !== 'play') return
+                const { activePlayerId, playCard: playedCard, playAnimate, playInitial } = animation
+                const pileRef = game.lastTaken.length ? playerPileRefs.current.get(activePlayerId) : undefined
+
+                if (!pileRef) {
+                  setAnimation({ phase: 'idle' })
+                  return
+                }
+
+                const animatedW = Math.min(window.innerWidth * 0.08, (window.innerHeight * 0.4) / 1.66)
+                const animatedH = animatedW * 1.66
+
+                const pileAreaRect = pileRef.getBoundingClientRect()
+                const targetRect = Array.from(pileRef.children).at(-1)?.getBoundingClientRect() ?? pileAreaRect
+
+                setAnimation({
+                  phase: 'taking',
+                  takes: [...game.lastTaken, playedCard].map((card, index) => ({
+                    card,
+                    initial:
+                      getPosition(tableRef.current?.querySelector(`label[for="table-${getCardId(card)}"]`)) ??
+                      playAnimate ??
+                      playInitial,
+                    animate: {
+                      x: targetRect.left + targetRect.width / 2 - animatedW / 2,
+                      y: targetRect.top + targetRect.height / 2 - animatedH / 2 - (index + 1) * 2,
+                      scale: pileRef.offsetWidth > 0 ? pileAreaRect.width / pileRef.offsetWidth : 1,
+                    },
+                  })),
+                })
+              }}
+            />
+          )}
+          {/* Taking animations */}
+          {animation.phase === 'taking' &&
+            animation.takes
+              .filter((a): a is TakingAnimationState & { readonly animate: Target } => a.animate != null)
+              .map((a, index, filtered) => (
+                <AnimatedCard
+                  key={`taken-${getCardId(a.card)}`}
+                  card={a.card}
+                  initial={a.initial}
+                  animate={a.animate}
+                  faceDown={false}
+                  flip
+                  onComplete={() => {
+                    if (index === filtered.length - 1) setAnimation({ phase: 'idle' })
+                  }}
+                />
+              ))}
+        </AnimatePresence>
         <Player
           ref={getPlayerPileRef(playerId)}
           avatar={playerProfiles[playerId].avatar}

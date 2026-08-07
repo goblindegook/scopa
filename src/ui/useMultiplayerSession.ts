@@ -89,7 +89,9 @@ function normalizeStoredValue(value: string | null | undefined): string | null {
 
 export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSessionOptions): MultiplayerSession {
   const [avatar, setAvatar] = React.useState<string | null>(
-    () => normalizeStoredValue(initialAvatar) ?? normalizeStoredValue(window.sessionStorage.getItem(avatarStorageKey(roomId))),
+    () =>
+      normalizeStoredValue(initialAvatar) ??
+      normalizeStoredValue(window.sessionStorage.getItem(avatarStorageKey(roomId))),
   )
   const [sid, setSid] = React.useState<string>(() => window.sessionStorage.getItem(sidStorageKey(roomId)) ?? '')
   const [lobby, setLobby] = React.useState<readonly LobbyPlayer[]>([])

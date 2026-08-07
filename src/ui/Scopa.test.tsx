@@ -153,9 +153,7 @@ test('renders opponent hand', async () => {
     table: [],
     pile: [],
   })
-  render(
-    <Scopa playerId={0} state={state} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
-  )
+  render(<Scopa playerId={0} state={state} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />)
 
   expect(screen.getByTestId('p1-hand').children).toHaveLength(2)
 })
@@ -179,9 +177,7 @@ test('card visibility', async () => {
     table: [denari(5)],
     pile: [denari(6)],
   })
-  render(
-    <Scopa playerId={0} state={state} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
-  )
+  render(<Scopa playerId={0} state={state} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />)
 
   expect(screen.getByAltText(cn(1, Suit.DENARI))).toBeTruthy()
   expect(screen.getByAltText(cn(5, Suit.DENARI))).toBeTruthy()
@@ -210,9 +206,7 @@ test('player piles', async () => {
     table: [],
     pile: [],
   })
-  render(
-    <Scopa playerId={0} state={state} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
-  )
+  render(<Scopa playerId={0} state={state} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />)
 
   expect(screen.getByTitle('🐵 pile: 2 cards')).toBeTruthy()
   expect(screen.getByTitle('🤖 pile: 3 cards')).toBeTruthy()
@@ -237,15 +231,7 @@ test('allow playing a card', async () => {
       }),
     ),
   )
-  render(
-    <Scopa
-      playerId={0}
-      state={initialState}
-      onPlay={onPlay}
-      onOpponentTurn={vitest.fn()}
-      onScore={() => []}
-    />,
-  )
+  render(<Scopa playerId={0} state={initialState} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
 
   fireEvent.click(screen.getByAltText(cn(1, Suit.DENARI)))
 
@@ -272,15 +258,7 @@ test('allow playing a card by dragging it to the table', async () => {
     ),
   )
 
-  render(
-    <Scopa
-      playerId={0}
-      state={initialState}
-      onPlay={onPlay}
-      onOpponentTurn={vitest.fn()}
-      onScore={() => []}
-    />,
-  )
+  render(<Scopa playerId={0} state={initialState} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
 
   const card = screen.getByRole('button', { name: cn(1, Suit.DENARI) })
   const table = screen.getByTestId('table')
@@ -371,15 +349,7 @@ test('select cards to take', async () => {
     ),
   )
 
-  render(
-    <Scopa
-      playerId={0}
-      state={initialState}
-      onPlay={onPlay}
-      onOpponentTurn={vitest.fn()}
-      onScore={() => []}
-    />,
-  )
+  render(<Scopa playerId={0} state={initialState} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
 
   fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
   fireEvent.click(screen.getByRole('checkbox', { name: cn(1, Suit.COPPE) }))
@@ -462,10 +432,7 @@ test('opponent turn receives configured aggression from player profile', async (
     <Scopa
       playerId={0}
       state={initialState}
-      playerProfiles={[
-        { avatar: '🐵' },
-        { avatar: '🤖', canCountCards: true, canLookAhead: false, aggression: 0.5 },
-      ]}
+      playerProfiles={[{ avatar: '🐵' }, { avatar: '🤖', canCountCards: true, canLookAhead: false, aggression: 0.5 }]}
       onPlay={vitest.fn()}
       onOpponentTurn={onOpponentTurn}
       onScore={vitest.fn()}
@@ -499,15 +466,7 @@ test('end game and show scores', async () => {
     { playerId: 1, total: 4, details: [] },
   ])
 
-  render(
-    <Scopa
-      playerId={0}
-      state={state}
-      onPlay={vitest.fn()}
-      onOpponentTurn={vitest.fn()}
-      onScore={onScore}
-    />,
-  )
+  render(<Scopa playerId={0} state={state} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={onScore} />)
 
   expect(onScore).toHaveBeenCalledWith(state.players)
 
@@ -697,15 +656,7 @@ test('tapping a hand card with multiple valid combos enters aim mode without pla
   })
   const onPlay = vitest.fn(() => Ok(testGame()))
 
-  render(
-    <Scopa
-      playerId={0}
-      state={initialState}
-      onPlay={onPlay}
-      onOpponentTurn={vitest.fn()}
-      onScore={() => []}
-    />,
-  )
+  render(<Scopa playerId={0} state={initialState} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
 
   fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
 
@@ -722,15 +673,7 @@ test('second tap on aimed card with a valid selection plays the card', async () 
   })
   const onPlay = vitest.fn(() => Ok(testGame()))
 
-  render(
-    <Scopa
-      playerId={0}
-      state={initialState}
-      onPlay={onPlay}
-      onOpponentTurn={vitest.fn()}
-      onScore={() => []}
-    />,
-  )
+  render(<Scopa playerId={0} state={initialState} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
 
   fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
   fireEvent.click(screen.getByRole('checkbox', { name: cn(2, Suit.COPPE) }))
@@ -750,15 +693,7 @@ test('second tap on aimed card with empty selection cancels aim mode', async () 
   })
   const onPlay = vitest.fn(() => Ok(testGame()))
 
-  render(
-    <Scopa
-      playerId={0}
-      state={initialState}
-      onPlay={onPlay}
-      onOpponentTurn={vitest.fn()}
-      onScore={() => []}
-    />,
-  )
+  render(<Scopa playerId={0} state={initialState} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
 
   fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
   fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
@@ -776,15 +711,7 @@ test('tapping a different hand card while in aim mode switches to that card', as
   })
   const onPlay = vitest.fn(() => Ok(testGame()))
 
-  render(
-    <Scopa
-      playerId={0}
-      state={initialState}
-      onPlay={onPlay}
-      onOpponentTurn={vitest.fn()}
-      onScore={() => []}
-    />,
-  )
+  render(<Scopa playerId={0} state={initialState} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
 
   fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
   fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))

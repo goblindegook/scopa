@@ -10,8 +10,8 @@ import { deal, play, randomFirstPlayer } from './engine/scopa'
 import { score } from './engine/scores'
 import type { Move, State } from './engine/state'
 import { Lobby } from './ui/Lobby'
-import { Scopa, type PlayerProfile } from './ui/Scopa'
 import { preloadCardAssets } from './ui/preload'
+import { type PlayerProfile, Scopa } from './ui/Scopa'
 import { AVATARS, TitleScreen } from './ui/TitleScreen'
 import { useAlerts } from './ui/useAlerts'
 import { useSavedGameStorage } from './ui/useLocalStorage'
@@ -123,11 +123,7 @@ const ChooseMultiplayerAvatar = ({ onChoose }: { onChoose: (avatar: string) => v
         <AvatarPickerLabel>{t('chooseAvatar')}</AvatarPickerLabel>
         <AvatarGrid>
           {AVATARS.map((emoji) => (
-            <AvatarButton
-              key={emoji}
-              aria-label={t('selectAvatar', { emoji })}
-              onClick={() => onChoose(emoji)}
-            >
+            <AvatarButton key={emoji} aria-label={t('selectAvatar', { emoji })} onClick={() => onChoose(emoji)}>
               {emoji}
             </AvatarButton>
           ))}
@@ -219,20 +215,17 @@ const LocalApp = () => {
     })
   }, [savedGameState])
 
-  const playLocalMove = React.useCallback(
-    (playerMove: Move, game: State): Result<State, Error> => {
-      const result = play(playerMove, game)
-      fold(
-        (nextGame) => {
-          setSession((current) => (current ? { ...current, game: nextGame } : current))
-        },
-        () => undefined,
-        result,
-      )
-      return result
-    },
-    [],
-  )
+  const playLocalMove = React.useCallback((playerMove: Move, game: State): Result<State, Error> => {
+    const result = play(playerMove, game)
+    fold(
+      (nextGame) => {
+        setSession((current) => (current ? { ...current, game: nextGame } : current))
+      },
+      () => undefined,
+      result,
+    )
+    return result
+  }, [])
 
   const startLocalRound = React.useCallback(
     (runningScore?: readonly number[], players: 2 | 3 = 2, previousFirstPlayer?: number): Result<State, Error> => {
@@ -318,15 +311,7 @@ const MultiplayerApp = ({ roomId, initialAvatar }: { roomId: string; initialAvat
   }
 
   if (!state || seat == null) {
-    return (
-      <Lobby
-        players={lobby}
-        isCreator={seat === 0}
-        roomId={roomId}
-        onStart={start}
-        onLeave={leaveRoom}
-      />
-    )
+    return <Lobby players={lobby} isCreator={seat === 0} roomId={roomId} onStart={start} onLeave={leaveRoom} />
   }
 
   return (
