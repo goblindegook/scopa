@@ -140,6 +140,17 @@ type AnimationController =
     }
   | { phase: 'taking'; takes: readonly TakingAnimationState[] }
 
+const EMPTY_GAME: State = {
+  state: 'play',
+  turn: 0,
+  firstPlayer: 0,
+  players: [],
+  pile: [],
+  table: [],
+  lastTaken: [],
+  score: [0, 0],
+}
+
 export function Scopa({
   playerId,
   initialState,
@@ -157,40 +168,7 @@ export function Scopa({
   const playerProfiles = providedPlayerProfiles ?? [{ avatar: '🐵' }, { avatar: '🤖' }, { avatar: '👾' }]
   const [take, setTake] = React.useState<readonly Card[]>([])
   const [aimed, setAimed] = React.useState<Card | null>(null)
-  const [game, setGame] = React.useState<State>(() => {
-    if (initialState) return initialState
-    if (state) return state
-    if (onStart) {
-      let startResult = onStart([0, 0], 2, undefined)
-      while (isErr(startResult)) {
-        startResult = onStart([0, 0], 2, undefined)
-      }
-
-      let nextState: State | null = null
-      fold(
-        (state) => {
-          nextState = state
-        },
-        () => undefined,
-        startResult,
-      )
-      if (nextState) return nextState
-    }
-
-    return {
-      state: 'play',
-      turn: 0,
-      firstPlayer: 0,
-      players: [
-        { id: 0, hand: [], pile: [], scope: 0 },
-        { id: 1, hand: [], pile: [], scope: 0 },
-      ],
-      pile: [],
-      table: [],
-      lastTaken: [],
-      score: [0, 0],
-    }
-  })
+  const [game, setGame] = React.useState<State>(() => initialState ?? state ?? EMPTY_GAME)
 
   const validCombos = React.useMemo(() => (aimed ? findCardsToTake(aimed[0], game.table) : []), [aimed, game.table])
 
@@ -204,8 +182,10 @@ export function Scopa({
   const [cardRefs, getCardRef] = useRefMap<string>()
   const [playerPileRefs, getPlayerPileRef] = useRefMap<number>()
   const [animation, setAnimation] = React.useState<AnimationController>({ phase: 'idle' })
-  const previousTableRef = React.useRef<readonly Card[]>([])
-  const previousPlayersHandsRef = React.useRef<readonly (readonly Card[])[]>([])
+  const previousTableRef = React.useRef<readonly Card[]>(state?.table ?? [])
+  const previousPlayersHandsRef = React.useRef<readonly (readonly Card[])[]>(
+    state?.players.map((player) => player.hand) ?? [],
+  )
   const [tableDealOrder, setTableDealOrder] = React.useState(new Map<string, number>())
   const playCardFromRef = React.useRef<{ card: Card; position: Position } | null>(null)
   const previousStateRef = React.useRef<State | undefined>(state)
@@ -213,9 +193,13 @@ export function Scopa({
   React.useEffect(() => {
     if (state && state !== previousStateRef.current) {
       previousStateRef.current = state
+      previousTableRef.current = state.table
+      previousPlayersHandsRef.current = state.players.map((player) => player.hand)
       setGame(state)
+      setTake([])
+      setAimed(null)
       setAnimation({ phase: 'idle' })
-      setTableDealOrder(toOrder(state.table))
+      setTableDealOrder(new Map())
       if (state.state === 'stop') roundScoresRef.current = onScore(state.players)
     }
   }, [state, onScore])

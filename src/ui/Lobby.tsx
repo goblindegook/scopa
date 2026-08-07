@@ -159,9 +159,6 @@ interface LobbyProps {
   onLeave: () => void
 }
 
-// The invite link deliberately drops `avatar`: sharing the address bar verbatim
-// would hand a friend the sharer's own avatar, and the Worker rejects that as
-// already taken.
 export function inviteUrl(roomId: string): string {
   return `${window.location.origin}${window.location.pathname}?room=${roomId}`
 }

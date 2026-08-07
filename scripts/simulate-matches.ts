@@ -153,8 +153,7 @@ function parseArgs(argv: readonly string[]): ParsedArgs | HelpArgs {
   }
 }
 
-// Every match opens on seat 0 so seat luck doesn't skew the benchmark. deal()
-// rotates counterclockwise, so seeding the previous lead as 1 yields a lead of 0.
+// Seeding the previous lead as 1 opens every match on seat 0, so seat luck cannot skew the benchmark.
 const MATCH_OPENING_SEED = 1
 
 function dealRound({

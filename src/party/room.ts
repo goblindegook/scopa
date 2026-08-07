@@ -16,8 +16,7 @@ export function canJoin(
   sid: string,
   started: boolean,
 ): Result<void, Error> {
-  // Avatar uniqueness is checked before the reconnect path, so a returning
-  // player cannot claim a seat-mate's avatar (spec decision 13).
+  // Before the reconnect path, so a returning player cannot claim a seat-mate's avatar.
   if (players.some((p) => p.avatar === avatar && p.sid !== sid)) return Err(new Error('Avatar already taken.'))
   if (players.some((p) => p.sid === sid)) return Ok(undefined)
   if (started) return Err(new Error('Game has already started.'))

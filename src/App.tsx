@@ -113,8 +113,14 @@ const Alert = styled('aside')`
   pointer-events: none;
 `
 
+interface ChooseMultiplayerAvatar {
+  onChoose: (avatar: string) => void
+  taken?: readonly string[]
+  error?: string | null
+}
+
 /** A friend arriving via a shared link picks an avatar before joining. */
-const ChooseMultiplayerAvatar = ({ onChoose }: { onChoose: (avatar: string) => void }) => {
+const ChooseMultiplayerAvatar = ({ onChoose, taken = [], error }: ChooseMultiplayerAvatar) => {
   const { t } = useTranslation()
 
   return (
@@ -123,11 +129,17 @@ const ChooseMultiplayerAvatar = ({ onChoose }: { onChoose: (avatar: string) => v
         <AvatarPickerLabel>{t('chooseAvatar')}</AvatarPickerLabel>
         <AvatarGrid>
           {AVATARS.map((emoji) => (
-            <AvatarButton key={emoji} aria-label={t('selectAvatar', { emoji })} onClick={() => onChoose(emoji)}>
+            <AvatarButton
+              key={emoji}
+              aria-label={t('selectAvatar', { emoji })}
+              disabled={taken.includes(emoji)}
+              onClick={() => onChoose(emoji)}
+            >
               {emoji}
             </AvatarButton>
           ))}
         </AvatarGrid>
+        {error && <Alert role="alert">{error}</Alert>}
       </AvatarScreenContent>
     </AvatarScreen>
   )
@@ -167,9 +179,19 @@ function getWinner(totals: readonly number[]): number | null {
   return winners.length === 1 ? winners[0] : null
 }
 
+function usePreloadedCards(): number {
+  const [progress, setProgress] = React.useState(0)
+
+  React.useEffect(() => {
+    preloadCardAssets(setProgress)
+  }, [])
+
+  return progress
+}
+
 const LocalApp = () => {
   const { t } = useTranslation()
-  const [loadingProgress, setLoadingProgress] = React.useState(0)
+  const loadingProgress = usePreloadedCards()
   const [alert, showAlert] = useAlerts(3000)
   const [session, setSession] = React.useState<LocalSession | null>(null)
   const { savedGameState, clearSavedGame } = useSavedGameStorage({
@@ -177,10 +199,6 @@ const LocalApp = () => {
     playerProfiles: session?.playerProfiles ?? [],
     winner: session ? getWinner(session.game.score) : null,
   })
-
-  React.useEffect(() => {
-    preloadCardAssets((progress) => setLoadingProgress(progress))
-  }, [])
 
   const startLocalGame = React.useCallback(
     (playerOneAvatar: string, count: 2 | 3) => {
@@ -285,20 +303,21 @@ const LocalApp = () => {
 }
 
 const MultiplayerApp = ({ roomId, initialAvatar }: { roomId: string; initialAvatar?: string | null }) => {
-  const { avatar, lobby, state, seat, chooseAvatar, clearSession, nextMove, start, confirm, sendMove } =
+  usePreloadedCards()
+  const { avatar, lobby, state, seat, error, chooseAvatar, clearSession, nextMove, start, confirm, sendMove } =
     useMultiplayerSession({ roomId, initialAvatar })
 
-  // Stable identities: `playerProfiles` and `onPlay` are dependencies of Scopa's
-  // opponent-turn effect, and re-running it would abandon an in-flight
-  // `nextMove` promise that has already claimed its place in the move queue.
+  // A fresh identity re-runs Scopa's opponent-turn effect, orphaning the pending nextMove.
   const playerProfiles = React.useMemo(() => lobby.map(({ avatar }) => ({ avatar })), [lobby])
 
   const playAndSend = React.useCallback(
     (move: Move, game: State) => {
-      sendMove(move)
+      // Scopa routes remote moves through onPlay too; echoing one back earns a state
+      // snapshot from the Worker, which kills the animation that move just started.
+      if (game.turn === seat) sendMove(move)
       return play(move, game)
     },
-    [sendMove],
+    [seat, sendMove],
   )
 
   const leaveRoom = React.useCallback(() => {
@@ -307,7 +326,9 @@ const MultiplayerApp = ({ roomId, initialAvatar }: { roomId: string; initialAvat
   }, [clearSession])
 
   if (avatar == null) {
-    return <ChooseMultiplayerAvatar onChoose={chooseAvatar} />
+    return (
+      <ChooseMultiplayerAvatar onChoose={chooseAvatar} taken={lobby.map((player) => player.avatar)} error={error} />
+    )
   }
 
   if (!state || seat == null) {

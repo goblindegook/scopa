@@ -22,6 +22,22 @@ To run a single test file:
 mise exec -- npx vitest run src/engine/scopa.test.ts
 ```
 
+### If tests fail on `localStorage` being undefined
+
+Symptom: every test in `Scopa.test.tsx`, `App.test.tsx` or `useMultiplayerSession.test.tsx` fails with
+`TypeError: Cannot read properties of undefined (reading 'clear')`, alongside a Node warning that
+`localStorage is not available because --localstorage-file was not provided`.
+
+**This is an agent-sandbox problem, not a repo problem.** The suite passes in a normal terminal and in CI. It happens
+when Node's experimental web-storage accessor shadows jsdom's `localStorage`. Fix it in your own shell — never by
+touching `vitest.config.ts`, `setupTests.ts`, or by adding a polyfill to the repo:
+
+```bash
+export NODE_OPTIONS="--localstorage-file=$TMPDIR/scopa-localstorage.db"
+```
+
+Then run the tests as usual. If they still fail, the failure is real.
+
 ## Architecture
 
 The codebase is split into two clear layers:

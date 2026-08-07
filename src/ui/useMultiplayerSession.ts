@@ -40,20 +40,14 @@ function createMoveQueue<T>(): MoveQueue<T> {
       const queued = buffered.shift()
       if (queued !== undefined) return Promise.resolve(queued)
 
-      // One waiter, not a queue of them: a fresh ask supersedes an abandoned
-      // one. Scopa's opponent-turn effect re-runs whenever the lobby changes
-      // (a mid-turn reconnect, say) and its cleanup only sets a cancelled
-      // flag — the resolver it already registered stays put. Queueing waiters
-      // would hand the next move to that dead resolver, which discards it,
-      // and the live ask would wait forever.
+      // One waiter, not a queue: a fresh ask supersedes an abandoned one, which would
+      // otherwise swallow the next move and hang the turn.
       return new Promise<T>((resolve) => {
         waiting = resolve
       })
     },
 
-    // Buffered items are dropped, but a live waiter is left intact: a state
-    // snapshot supersedes queued moves, yet whoever is asking still needs the
-    // next real one.
+    // A snapshot supersedes buffered moves; a live waiter still needs the next real one.
     clear() {
       buffered.length = 0
     },
@@ -85,6 +79,7 @@ export interface MultiplayerSession {
   readonly state: State | null
   readonly seat: number | null
   readonly ended: boolean
+  readonly error: string | null
   readonly chooseAvatar: (avatar: string) => void
   readonly clearSession: () => void
   readonly nextMove: () => Promise<Move>
@@ -111,6 +106,7 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
   const [state, setState] = React.useState<State | null>(null)
   const [seat, setSeat] = React.useState<number | null>(null)
   const [ended, setEnded] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     const nextAvatar = normalizeStoredValue(initialAvatar)
@@ -161,8 +157,6 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
           setEnded(true)
           break
 
-        // A snapshot supersedes anything buffered: it is a deal, a reconnect or
-        // a repair, and replaying queued moves on top of it would double-apply.
         case 'state':
           moves.clear()
           setState(message.state)
@@ -173,6 +167,11 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
           break
 
         case 'error':
+          setError(message.message)
+          if (seat === null) {
+            window.sessionStorage.removeItem(avatarStorageKey(roomId))
+            setAvatar(null)
+          }
           break
       }
     },
@@ -183,6 +182,7 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
   const chooseAvatar = React.useCallback(
     (nextAvatar: string) => {
       window.sessionStorage.setItem(avatarStorageKey(roomId), nextAvatar)
+      setError(null)
       setAvatar(nextAvatar)
     },
     [roomId],
@@ -197,6 +197,7 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
     setState(null)
     setSeat(null)
     setEnded(false)
+    setError(null)
     moves.clear()
   }, [moves, roomId])
 
@@ -214,6 +215,7 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
     state,
     seat,
     ended,
+    error,
     chooseAvatar,
     clearSession,
     nextMove,
