@@ -107,9 +107,11 @@ interface ScopaProps {
   initialState?: State
   state?: State
   onReset?: () => void
+  onBack?: () => void
   onStart?: (score?: readonly number[], players?: 2 | 3, previousFirstPlayer?: number) => Result<State, Error>
   onPlay: (move: Move, game: State) => Result<State, Error>
   onOpponentTurn: (game: State, options: OpponentOptions) => Promise<Move>
+  onCancelOpponentTurn?: () => void
   onScore: (game: State['players']) => readonly Score[]
   playerProfiles?: readonly PlayerProfile[]
   onNextRound?: () => void
@@ -157,9 +159,11 @@ export function Scopa({
   initialState,
   state,
   onReset = () => undefined,
+  onBack = onReset,
   onStart,
   onPlay,
   onOpponentTurn,
+  onCancelOpponentTurn,
   onScore,
   playerProfiles: providedPlayerProfiles,
   onNextRound,
@@ -397,21 +401,20 @@ export function Scopa({
     if (game.state === 'play' && game.turn !== playerId && !tableDealOrder.size) {
       let cancelled = false
       const animationDelay = Duration.TURN + Duration.PLAY
-      const timeoutId = setTimeout(
-        () =>
-          onOpponentTurn(game, playerProfiles[game.turn])
-            .then((move) => {
-              if (!cancelled) play(move)
-            })
-            .catch(invalidMove),
-        1000 * animationDelay,
-      )
+      const timeoutId = setTimeout(() => {
+        onOpponentTurn(game, playerProfiles[game.turn])
+          .then((move) => {
+            if (!cancelled) play(move)
+          })
+          .catch(invalidMove)
+      }, 1000 * animationDelay)
       return () => {
         cancelled = true
         clearTimeout(timeoutId)
+        onCancelOpponentTurn?.()
       }
     }
-  }, [game, invalidMove, onOpponentTurn, play, playerProfiles, tableDealOrder, playerId])
+  }, [game, invalidMove, onOpponentTurn, onCancelOpponentTurn, play, playerProfiles, tableDealOrder, playerId])
 
   React.useEffect(() => {
     if (game.turn !== playerId || game.state !== 'play') {
@@ -448,7 +451,7 @@ export function Scopa({
       <Main>
         {game.state === 'play' && (
           <Header>
-            <Button onClick={onReset}>Scopa</Button>
+            <Button onClick={onBack}>Scopa</Button>
             <Turn aria-label={t('gameScore')}>
               {game.players.map((_, playerId) => (
                 <TurnScore

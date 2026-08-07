@@ -13,6 +13,7 @@ import { Lobby } from './ui/Lobby'
 import { preloadCardAssets } from './ui/preload'
 import { type PlayerProfile, Scopa } from './ui/Scopa'
 import { AVATARS, TitleScreen } from './ui/TitleScreen'
+import { useActiveRoom } from './ui/useActiveRoom'
 import { useAlerts } from './ui/useAlerts'
 import { useSavedGameStorage } from './ui/useLocalStorage'
 import { useMultiplayerSession } from './ui/useMultiplayerSession'
@@ -194,6 +195,8 @@ const LocalApp = () => {
   const loadingProgress = usePreloadedCards()
   const [alert, showAlert] = useAlerts(3000)
   const [session, setSession] = React.useState<LocalSession | null>(null)
+  const activeOnlineRoom = useActiveRoom()
+  const activeOnlineRoomId = activeOnlineRoom.roomId
   const { savedGameState, clearSavedGame } = useSavedGameStorage({
     game: session?.game ?? EMPTY_LOCAL_GAME,
     playerProfiles: session?.playerProfiles ?? [],
@@ -276,6 +279,7 @@ const LocalApp = () => {
           onResume={resumeLocalGame}
           onStart={startLocalGame}
           onStartMultiplayer={(avatar) => goTo({ room: crypto.randomUUID(), avatar })}
+          onResumeOnline={activeOnlineRoomId ? () => goTo({ room: activeOnlineRoomId }) : undefined}
         />
         {alert && <Alert role="alert">{alert}</Alert>}
       </>
@@ -304,8 +308,20 @@ const LocalApp = () => {
 
 const MultiplayerApp = ({ roomId, initialAvatar }: { roomId: string; initialAvatar?: string | null }) => {
   usePreloadedCards()
-  const { avatar, lobby, state, seat, error, chooseAvatar, clearSession, nextMove, start, confirm, sendMove } =
-    useMultiplayerSession({ roomId, initialAvatar })
+  const {
+    avatar,
+    lobby,
+    state,
+    seat,
+    error,
+    chooseAvatar,
+    clearSession,
+    nextMove,
+    cancelMove,
+    start,
+    confirm,
+    sendMove,
+  } = useMultiplayerSession({ roomId, initialAvatar })
 
   // A fresh identity re-runs Scopa's opponent-turn effect, orphaning the pending nextMove.
   const playerProfiles = React.useMemo(() => lobby.map(({ avatar }) => ({ avatar })), [lobby])
@@ -327,6 +343,10 @@ const MultiplayerApp = ({ roomId, initialAvatar }: { roomId: string; initialAvat
     window.location.assign(window.location.pathname)
   }, [clearSession])
 
+  const backToMenu = React.useCallback(() => {
+    window.location.assign(window.location.pathname)
+  }, [])
+
   if (avatar == null) {
     return (
       <ChooseMultiplayerAvatar onChoose={chooseAvatar} taken={lobby.map((player) => player.avatar)} error={error} />
@@ -342,9 +362,11 @@ const MultiplayerApp = ({ roomId, initialAvatar }: { roomId: string; initialAvat
       playerId={seat}
       state={state}
       onReset={leaveRoom}
+      onBack={backToMenu}
       playerProfiles={playerProfiles}
       onPlay={playAndSend}
       onOpponentTurn={nextMove}
+      onCancelOpponentTurn={cancelMove}
       onNextRound={confirm}
       awaitingConfirmations={awaitingConfirmations}
       onScore={score}

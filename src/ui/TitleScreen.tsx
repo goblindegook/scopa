@@ -226,12 +226,22 @@ interface SavedGame {
   score: readonly number[]
 }
 
+const StackedButton = ({ main, caption, onClick }: { main: string; caption: string; onClick: () => void }) => (
+  <Button onClick={onClick}>
+    <StackedButtonContent>
+      <StackedButtonMain>{main}</StackedButtonMain>
+      <StackedButtonCaption>{caption}</StackedButtonCaption>
+    </StackedButtonContent>
+  </Button>
+)
+
 interface TitleScreenProps {
   loadingProgress: number
   onStart: (avatar: string, playerCount: 2 | 3) => void
   savedGame?: SavedGame
   onResume?: () => void
   onStartMultiplayer?: (avatar: string) => void
+  onResumeOnline?: () => void
 }
 
 export const TitleScreen = ({
@@ -240,6 +250,7 @@ export const TitleScreen = ({
   savedGame,
   onResume,
   onStartMultiplayer,
+  onResumeOnline,
 }: TitleScreenProps) => {
   const { t, i18n } = useTranslation()
   const [selectedAvatar, setSelectedAvatar] = React.useState(AVATARS[0])
@@ -271,31 +282,31 @@ export const TitleScreen = ({
               </AvatarGrid>
             </AvatarSection>
             <ButtonStack>
-              {savedGame && onResume && (
+              {onResumeOnline && (
                 <ResumeSection>
-                  <Button onClick={onResume}>
-                    <StackedButtonContent>
-                      <StackedButtonMain>
-                        {savedGame.avatars.map((avatar, i) => `${avatar} ${savedGame.score[i]}`).join(' · ')}
-                      </StackedButtonMain>
-                      <StackedButtonCaption>{t('resume')}</StackedButtonCaption>
-                    </StackedButtonContent>
-                  </Button>
+                  <StackedButton main={t('onlineGame')} caption={t('resume')} onClick={onResumeOnline} />
+                </ResumeSection>
+              )}
+              {savedGame && onResume && !onResumeOnline && (
+                <ResumeSection>
+                  <StackedButton
+                    main={savedGame.avatars.map((avatar, i) => `${avatar} ${savedGame.score[i]}`).join(' \u00b7 ')}
+                    caption={t('resume')}
+                    onClick={onResume}
+                  />
                 </ResumeSection>
               )}
               <LocalGameRow>
-                <Button onClick={() => onStart(selectedAvatar, 2)}>
-                  <StackedButtonContent>
-                    <StackedButtonMain>{t('newLocalGame')}</StackedButtonMain>
-                    <StackedButtonCaption>{t('twoPlayers')}</StackedButtonCaption>
-                  </StackedButtonContent>
-                </Button>
-                <Button onClick={() => onStart(selectedAvatar, 3)}>
-                  <StackedButtonContent>
-                    <StackedButtonMain>{t('newLocalGame')}</StackedButtonMain>
-                    <StackedButtonCaption>{t('threePlayers')}</StackedButtonCaption>
-                  </StackedButtonContent>
-                </Button>
+                <StackedButton
+                  main={t('newLocalGame')}
+                  caption={t('twoPlayers')}
+                  onClick={() => onStart(selectedAvatar, 2)}
+                />
+                <StackedButton
+                  main={t('newLocalGame')}
+                  caption={t('threePlayers')}
+                  onClick={() => onStart(selectedAvatar, 3)}
+                />
               </LocalGameRow>
               {onStartMultiplayer && (
                 <OnlineGameSection>

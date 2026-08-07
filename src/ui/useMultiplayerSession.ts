@@ -2,6 +2,7 @@ import type { PartySocket } from 'partysocket'
 import { usePartySocket } from 'partysocket/react'
 import React from 'react'
 import type { Move, State } from '../engine/state'
+import { useActiveRoom } from './useActiveRoom'
 
 function isLocalHostname(hostname: string): boolean {
   if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]') return true
@@ -21,6 +22,7 @@ const PARTYKIT_HOST = (() => {
 interface MoveQueue<T> {
   readonly push: (item: T) => void
   readonly next: () => Promise<T>
+  readonly cancel: () => void
   readonly clear: () => void
 }
 
@@ -45,6 +47,12 @@ function createMoveQueue<T>(): MoveQueue<T> {
       return new Promise<T>((resolve) => {
         waiting = resolve
       })
+    },
+
+    // Releases the parked resolver so a move arriving during the consumer's animation
+    // delay is buffered for the next ask instead of handed to a cancelled consumer.
+    cancel() {
+      waiting = null
     },
 
     // A snapshot supersedes buffered moves; a live waiter still needs the next real one.
@@ -83,6 +91,7 @@ export interface MultiplayerSession {
   readonly chooseAvatar: (avatar: string) => void
   readonly clearSession: () => void
   readonly nextMove: () => Promise<Move>
+  readonly cancelMove: () => void
   readonly start: () => void
   readonly confirm: () => void
   readonly sendMove: (move: Move) => void
@@ -107,6 +116,7 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
   const [seat, setSeat] = React.useState<number | null>(null)
   const [ended, setEnded] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const activeRoom = useActiveRoom()
 
   React.useEffect(() => {
     const nextAvatar = normalizeStoredValue(initialAvatar)
@@ -147,6 +157,7 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
       switch (message.type) {
         case 'seated':
           setSeat(message.index)
+          activeRoom.remember(roomId)
           break
 
         case 'lobby':
@@ -155,6 +166,7 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
 
         case 'ended':
           setEnded(true)
+          activeRoom.forget()
           break
 
         case 'state':
@@ -178,6 +190,7 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
   })
 
   const nextMove = React.useCallback((): Promise<Move> => moves.next(), [moves])
+  const cancelMove = React.useCallback(() => moves.cancel(), [moves])
 
   const chooseAvatar = React.useCallback(
     (nextAvatar: string) => {
@@ -191,6 +204,7 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
   const clearSession = React.useCallback(() => {
     window.sessionStorage.removeItem(avatarStorageKey(roomId))
     window.sessionStorage.removeItem(sidStorageKey(roomId))
+    activeRoom.forget()
     setAvatar(null)
     setSid('')
     setLobby([])
@@ -199,7 +213,7 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
     setEnded(false)
     setError(null)
     moves.clear()
-  }, [moves, roomId])
+  }, [activeRoom, moves, roomId])
 
   const send = React.useCallback(
     (message: unknown) => {
@@ -219,6 +233,7 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
     chooseAvatar,
     clearSession,
     nextMove,
+    cancelMove,
     start: React.useCallback(() => send({ type: 'start' }), [send]),
     confirm: React.useCallback(() => send({ type: 'confirm' }), [send]),
     sendMove: React.useCallback((move: Move) => send({ type: 'move', move }), [send]),

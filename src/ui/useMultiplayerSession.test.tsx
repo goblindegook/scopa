@@ -214,4 +214,30 @@ describe('useMultiplayerSession', () => {
 
     expect(settled).toHaveBeenCalledWith(firstMove)
   })
+
+  test('remembers the room once seated, so the title screen can offer to resume it', () => {
+    renderSession()
+
+    receive({ type: 'seated', index: 0 })
+
+    expect(window.sessionStorage.getItem('scopa:mp-active-room')).toBe('room')
+  })
+
+  test('forgets the room once the server ends it', () => {
+    renderSession()
+
+    receive({ type: 'seated', index: 0 })
+    receive({ type: 'ended' })
+
+    expect(window.sessionStorage.getItem('scopa:mp-active-room')).toBeNull()
+  })
+
+  test('forgets the room when the session is explicitly cleared', () => {
+    const { result } = renderSession()
+
+    receive({ type: 'seated', index: 0 })
+    act(() => result.current.clearSession())
+
+    expect(window.sessionStorage.getItem('scopa:mp-active-room')).toBeNull()
+  })
 })

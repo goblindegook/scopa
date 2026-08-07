@@ -576,6 +576,47 @@ test('when a player reaches 11 with a unique top score, return to title through 
   expect(onReset).toHaveBeenCalled()
 })
 
+test('the header Scopa button calls onBack, not onReset, when both are provided', async () => {
+  const onReset = vitest.fn()
+  const onBack = vitest.fn()
+
+  render(
+    <Scopa
+      playerId={0}
+      state={testGame()}
+      onReset={onReset}
+      onBack={onBack}
+      onPlay={vitest.fn()}
+      onOpponentTurn={vitest.fn()}
+      onScore={vitest.fn()}
+    />,
+  )
+
+  fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
+
+  expect(onBack).toHaveBeenCalledOnce()
+  expect(onReset).not.toHaveBeenCalled()
+})
+
+test('the header Scopa button falls back to onReset when no onBack is provided', async () => {
+  const onReset = vitest.fn()
+
+  render(
+    <Scopa
+      playerId={0}
+      state={testGame()}
+      onReset={onReset}
+      onPlay={vitest.fn()}
+      onOpponentTurn={vitest.fn()}
+      onScore={vitest.fn()}
+    />,
+  )
+
+  fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
+
+  expect(onReset).toHaveBeenCalledOnce()
+})
+
 test('when all top scores are tied at 11, keep playing next round', async () => {
   const onScore = vitest.fn(() => [
     { playerId: 0, total: 2, details: [] },
