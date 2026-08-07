@@ -3,7 +3,20 @@ import { usePartySocket } from 'partysocket/react'
 import React from 'react'
 import type { Move, State } from '../engine/state'
 
-const PARTYKIT_HOST = import.meta.env.VITE_PARTYKIT_HOST ?? '127.0.0.1:1999'
+function isLocalHostname(hostname: string): boolean {
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]') return true
+  if (hostname.startsWith('10.')) return true
+  if (hostname.startsWith('192.168.')) return true
+
+  if (!hostname.startsWith('172.')) return false
+
+  const secondOctet = Number(hostname.split('.')[1])
+  return secondOctet >= 16 && secondOctet <= 31
+}
+
+const PARTYKIT_HOST = (() => {
+  return import.meta.env.PARTYKIT_HOST?.trim() || (isLocalHostname(window.location.hostname) ? '127.0.0.1:1999' : '')
+})()
 
 interface MoveQueue<T> {
   readonly push: (item: T) => void
@@ -124,7 +137,7 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
   const moves = queue.current
 
   const socket: PartySocket = usePartySocket({
-    enabled: Boolean(sid && avatar),
+    enabled: Boolean(PARTYKIT_HOST && sid && avatar),
     host: PARTYKIT_HOST,
     room: roomId,
     query: sid ? { sid } : undefined,
