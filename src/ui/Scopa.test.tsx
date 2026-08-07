@@ -12,20 +12,11 @@ function cn(value: Value, suit: Suit): string {
   return i18n.t('cardName', { value: i18n.t(`cardValues.${value}`), suit: i18n.t(`cardSuits.${SUITS[suit]}`) })
 }
 
-vi.mock('./preload', () => ({
-  preloadCardAssets: vi.fn(async (onProgress?: (progress: number) => void) => {
-    if (onProgress) {
-      onProgress(1)
-    }
-    return Promise.resolve(undefined)
-  }),
-}))
-
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
   vi.useRealTimers()
-  localStorage.clear()
+  window.localStorage.clear()
 })
 
 function testGame(overrides: Partial<State> = {}): State {
@@ -45,79 +36,36 @@ function testGame(overrides: Partial<State> = {}): State {
   }
 }
 
-test('preload card assets', async () => {
-  render(
-    <Scopa
-      playerId={0}
-      onStart={vitest.fn()}
-      onPlay={vitest.fn()}
-      onOpponentTurn={vitest.fn()}
-      onScore={vitest.fn()}
-    />,
-  )
-
-  await waitFor(() => {
-    expect(screen.getByRole('button', { name: 'New Two-Player Game' })).toBeInTheDocument()
+test('show re-deal message when starting the next round', async () => {
+  const state = testGame({
+    state: 'stop',
+    score: [2, 1],
+    players: [
+      { id: 0, hand: [], pile: [], scope: 0 },
+      { id: 1, hand: [], pile: [], scope: 0 },
+    ],
   })
-})
 
-test('deal new game on start', async () => {
-  const turn = 0
-  const onStart = vitest.fn(() => Ok(testGame({ turn })))
   render(
     <Scopa
       playerId={0}
-      onStart={onStart}
-      onPlay={vitest.fn()}
-      onOpponentTurn={async () => ({ card: denari(1), take: [] })}
-      onScore={() => []}
-    />,
-  )
-  expect(screen.queryByText(/Player \d+ Wins/)).not.toBeInTheDocument()
-
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
-
-  expect(onStart).toHaveBeenCalled()
-  expect(screen.getByLabelText('Game score')).toBeTruthy()
-  expect(screen.getByText('🐵 0')).toHaveAttribute('data-active', 'true')
-  expect(screen.getByText('🤖 0')).toHaveAttribute('data-active', 'false')
-})
-
-test('selected avatar appears in header after starting game', async () => {
-  const onStart = vitest.fn(() => Ok(testGame({ turn: 0 })))
-  render(
-    <Scopa
-      playerId={0}
-      onStart={onStart}
-      onPlay={vitest.fn()}
-      onOpponentTurn={async () => ({ card: denari(1), take: [] })}
-      onScore={() => []}
-    />,
-  )
-
-  fireEvent.click(await screen.findByRole('button', { name: 'Select avatar 🦊' }))
-  fireEvent.click(screen.getByRole('button', { name: 'New Two-Player Game' }))
-
-  expect(screen.getByText('🦊 0')).toHaveAttribute('data-active', 'true')
-})
-
-test('show re-deal message when opening table has too many kings', async () => {
-  render(
-    <Scopa
-      playerId={0}
+      state={state}
       onStart={vitest.fn().mockReturnValueOnce(Err(Error())).mockReturnValueOnce(Ok(testGame()))}
       onPlay={vitest.fn()}
       onOpponentTurn={vitest.fn()}
-      onScore={() => []}
+      onScore={() => [
+        { playerId: 0, total: 0, details: [] },
+        { playerId: 1, total: 0, details: [] },
+      ]}
     />,
   )
 
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Next Round' }))
 
   expect(screen.getByRole('alert')).toHaveTextContent('Opening table with more than two kings, re-dealing hand.')
 })
 
-test('re-deal preserves requested three-player mode', async () => {
+test('re-deal preserves requested three-player mode on the next round', async () => {
   const onStart = vitest
     .fn()
     .mockReturnValueOnce(Err(Error('re-deal')))
@@ -135,94 +83,105 @@ test('re-deal preserves requested three-player mode', async () => {
       ),
     )
 
-  render(
-    <Scopa playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
-  )
+  const state = testGame({
+    state: 'stop',
+    turn: 0,
+    firstPlayer: 0,
+    score: [1, 2, 3],
+    players: [
+      { id: 0, hand: [], pile: [], scope: 0 },
+      { id: 1, hand: [], pile: [], scope: 0 },
+      { id: 2, hand: [], pile: [], scope: 0 },
+    ],
+  })
 
-  fireEvent.click(await screen.findByRole('button', { name: 'New Three-Player Game' }))
-
-  expect(onStart).toHaveBeenCalledTimes(2)
-  expect(onStart).toHaveBeenLastCalledWith(expect.anything(), 3, undefined)
-})
-
-test('alerts auto-dismiss after 5 seconds', async () => {
   render(
     <Scopa
       playerId={0}
-      onStart={() =>
-        Ok(
-          testGame({
-            players: [
-              { id: 0, hand: [denari(1)], pile: [], scope: 0 },
-              { id: 1, hand: [], pile: [], scope: 0 },
-            ],
-          }),
-        )
-      }
+      state={state}
+      playerProfiles={[{ avatar: '🐵' }, { avatar: '🤖' }, { avatar: '👾' }]}
+      onStart={onStart}
+      onPlay={vitest.fn()}
+      onOpponentTurn={vitest.fn()}
+      onScore={() => [
+        { playerId: 0, total: 0, details: [] },
+        { playerId: 1, total: 0, details: [] },
+        { playerId: 2, total: 0, details: [] },
+      ]}
+    />,
+  )
+
+  fireEvent.click(screen.getByRole('button', { name: 'Next Round' }))
+
+  expect(onStart).toHaveBeenCalledTimes(2)
+  expect(onStart).toHaveBeenLastCalledWith([1, 2, 3], 3, 0)
+})
+
+test('alerts auto-dismiss after 5 seconds', async () => {
+  const state = testGame({
+    players: [
+      { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+      { id: 1, hand: [], pile: [], scope: 0 },
+    ],
+  })
+
+  render(
+    <Scopa
+      playerId={0}
+      state={state}
       onPlay={() => Err(Error('test error message'))}
       onOpponentTurn={vitest.fn()}
       onScore={vitest.fn()}
     />,
   )
 
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
   fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
   expect(screen.getByRole('alert')).toHaveTextContent('test error message')
 })
 
 test('renders opponent hand', async () => {
-  const onStart = () =>
-    Ok(
-      testGame({
-        players: [
-          { id: 0, hand: [denari(1)], pile: [], scope: 0 },
-          {
-            id: 1,
-            hand: [denari(2), denari(3)],
-            pile: [],
-            scope: 0,
-          },
-        ],
-        table: [],
+  const state = testGame({
+    players: [
+      { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+      {
+        id: 1,
+        hand: [denari(2), denari(3)],
         pile: [],
-      }),
-    )
+        scope: 0,
+      },
+    ],
+    table: [],
+    pile: [],
+  })
   render(
-    <Scopa playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
+    <Scopa playerId={0} state={state} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
   )
-
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
   expect(screen.getByTestId('p1-hand').children).toHaveLength(2)
 })
 
 test('card visibility', async () => {
-  const onStart = () =>
-    Ok(
-      testGame({
-        players: [
-          {
-            id: 0,
-            hand: [denari(1)],
-            pile: [denari(2)],
-            scope: 0,
-          },
-          {
-            id: 1,
-            hand: [denari(3)],
-            pile: [denari(4)],
-            scope: 0,
-          },
-        ],
-        table: [denari(5)],
-        pile: [denari(6)],
-      }),
-    )
+  const state = testGame({
+    players: [
+      {
+        id: 0,
+        hand: [denari(1)],
+        pile: [denari(2)],
+        scope: 0,
+      },
+      {
+        id: 1,
+        hand: [denari(3)],
+        pile: [denari(4)],
+        scope: 0,
+      },
+    ],
+    table: [denari(5)],
+    pile: [denari(6)],
+  })
   render(
-    <Scopa playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
+    <Scopa playerId={0} state={state} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
   )
-
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
   expect(screen.getByAltText(cn(1, Suit.DENARI))).toBeTruthy()
   expect(screen.getByAltText(cn(5, Suit.DENARI))).toBeTruthy()
@@ -233,32 +192,27 @@ test('card visibility', async () => {
 })
 
 test('player piles', async () => {
-  const onStart = () =>
-    Ok(
-      testGame({
-        players: [
-          {
-            id: 0,
-            hand: [],
-            pile: [denari(1), denari(2)],
-            scope: 0,
-          },
-          {
-            id: 1,
-            hand: [],
-            pile: [denari(3), denari(4), denari(5)],
-            scope: 0,
-          },
-        ],
-        table: [],
-        pile: [],
-      }),
-    )
+  const state = testGame({
+    players: [
+      {
+        id: 0,
+        hand: [],
+        pile: [denari(1), denari(2)],
+        scope: 0,
+      },
+      {
+        id: 1,
+        hand: [],
+        pile: [denari(3), denari(4), denari(5)],
+        scope: 0,
+      },
+    ],
+    table: [],
+    pile: [],
+  })
   render(
-    <Scopa playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
+    <Scopa playerId={0} state={state} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />,
   )
-
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
   expect(screen.getByTitle('🐵 pile: 2 cards')).toBeTruthy()
   expect(screen.getByTitle('🤖 pile: 3 cards')).toBeTruthy()
@@ -286,14 +240,13 @@ test('allow playing a card', async () => {
   render(
     <Scopa
       playerId={0}
-      onStart={() => Ok(initialState)}
+      state={initialState}
       onPlay={onPlay}
       onOpponentTurn={vitest.fn()}
       onScore={() => []}
     />,
   )
 
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
   fireEvent.click(screen.getByAltText(cn(1, Suit.DENARI)))
 
   expect(onPlay).toHaveBeenCalledWith({ card: denari(1), take: [] }, initialState)
@@ -322,14 +275,12 @@ test('allow playing a card by dragging it to the table', async () => {
   render(
     <Scopa
       playerId={0}
-      onStart={() => Ok(initialState)}
+      state={initialState}
       onPlay={onPlay}
       onOpponentTurn={vitest.fn()}
       onScore={() => []}
     />,
   )
-
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
   const card = screen.getByRole('button', { name: cn(1, Suit.DENARI) })
   const table = screen.getByTestId('table')
@@ -380,14 +331,12 @@ test(`block interaction when not a player's turn`, async () => {
   render(
     <Scopa
       playerId={0}
-      onStart={() => Ok(initialState)}
+      state={initialState}
       onOpponentTurn={() => new Promise((resolve) => setTimeout(() => resolve({ card: denari(1), take: [] }), 10))}
       onPlay={onPlay}
       onScore={() => []}
     />,
   )
-
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
   expect(screen.getByAltText(cn(7, Suit.DENARI)).previousSibling).toBeDisabled()
 
@@ -425,14 +374,13 @@ test('select cards to take', async () => {
   render(
     <Scopa
       playerId={0}
-      onStart={() => Ok(initialState)}
+      state={initialState}
       onPlay={onPlay}
       onOpponentTurn={vitest.fn()}
       onScore={() => []}
     />,
   )
 
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
   fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
   fireEvent.click(screen.getByRole('checkbox', { name: cn(1, Suit.COPPE) }))
   fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
@@ -447,41 +395,31 @@ test('invalid move handling', async () => {
   render(
     <Scopa
       playerId={0}
-      onStart={() =>
-        Ok(
-          testGame({
-            players: [
-              { id: 0, hand: [denari(1)], pile: [], scope: 0 },
-              { id: 1, hand: [], pile: [], scope: 0 },
-            ],
-          }),
-        )
-      }
+      state={testGame({
+        players: [
+          { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+          { id: 1, hand: [], pile: [], scope: 0 },
+        ],
+      })}
       onPlay={onPlay}
       onOpponentTurn={vitest.fn()}
       onScore={vitest.fn()}
     />,
   )
 
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
   fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
 
   expect(screen.getByText(message)).toBeTruthy()
 })
 
 test('computer opponent plays a card', async () => {
-  const onStart = vitest.fn(() =>
-    Ok(
-      testGame({
-        players: [
-          { id: 0, hand: [denari(1)], pile: [], scope: 0 },
-          { id: 1, hand: [denari(2)], pile: [], scope: 0 },
-        ],
-        turn: 1,
-      }),
-    ),
-  )
-
+  const state = testGame({
+    players: [
+      { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+      { id: 1, hand: [denari(2)], pile: [], scope: 0 },
+    ],
+    turn: 1,
+  })
   const onPlay = vitest.fn(() =>
     Ok(
       testGame({
@@ -500,16 +438,12 @@ test('computer opponent plays a card', async () => {
     take: [],
   })
 
-  render(<Scopa playerId={0} onStart={onStart} onPlay={onPlay} onOpponentTurn={onOpponentPlay} onScore={vitest.fn()} />)
-
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
+  render(<Scopa playerId={0} state={state} onPlay={onPlay} onOpponentTurn={onOpponentPlay} onScore={vitest.fn()} />)
 
   await screen.findByRole('button', { name: cn(1, Suit.DENARI) })
 })
 
 test('opponent turn receives configured aggression from player profile', async () => {
-  const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.75)
-
   const initialState = testGame({
     turn: 1,
     score: [0, 0],
@@ -527,14 +461,16 @@ test('opponent turn receives configured aggression from player profile', async (
   render(
     <Scopa
       playerId={0}
-      onStart={() => Ok(initialState)}
+      state={initialState}
+      playerProfiles={[
+        { avatar: '🐵' },
+        { avatar: '🤖', canCountCards: true, canLookAhead: false, aggression: 0.5 },
+      ]}
       onPlay={vitest.fn()}
       onOpponentTurn={onOpponentTurn}
       onScore={vitest.fn()}
     />,
   )
-
-  fireEvent.click(await screen.findByRole('button', { name: 'New Three-Player Game' }))
 
   await waitFor(
     () =>
@@ -546,8 +482,6 @@ test('opponent turn receives configured aggression from player profile', async (
       }),
     { timeout: 2500 },
   )
-
-  randomSpy.mockRestore()
 })
 
 test('end game and show scores', async () => {
@@ -568,14 +502,12 @@ test('end game and show scores', async () => {
   render(
     <Scopa
       playerId={0}
-      onStart={() => Ok(state)}
+      state={state}
       onPlay={vitest.fn()}
       onOpponentTurn={vitest.fn()}
       onScore={onScore}
     />,
   )
-
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
   expect(onScore).toHaveBeenCalledWith(state.players)
 
@@ -593,18 +525,6 @@ test('end game and show scores', async () => {
 test('tracks game score and carries it to next round', async () => {
   const onStart = vitest
     .fn<(score?: readonly number[]) => ReturnType<typeof Ok<State>>>()
-    .mockImplementationOnce(() =>
-      Ok(
-        testGame({
-          turn: 0,
-          players: [
-            { id: 0, hand: [denari(1)], pile: [], scope: 0 },
-            { id: 1, hand: [], pile: [], scope: 0 },
-          ],
-          table: [coppe(1)],
-        }),
-      ),
-    )
     .mockImplementationOnce((_score) =>
       Ok(
         testGame({
@@ -642,160 +562,84 @@ test('tracks game score and carries it to next round', async () => {
     ])
     .mockReturnValue([])
 
-  render(<Scopa playerId={0} onStart={onStart} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={onScore} />)
-
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
-  fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
-  fireEvent.click(await screen.findByRole('button', { name: 'Next Round' }))
-
-  expect(screen.getByText('🐵 1')).toBeTruthy()
-  expect(screen.getByText('🤖 0')).toBeTruthy()
-})
-
-test('starting a new game resets running game score', async () => {
-  const onStart = vitest
-    .fn<(score?: readonly number[]) => ReturnType<typeof Ok<State>>>()
-    .mockImplementationOnce(() =>
-      Ok(
-        testGame({
-          turn: 0,
-          players: [
-            { id: 0, hand: [denari(1)], pile: [], scope: 0 },
-            { id: 1, hand: [], pile: [], scope: 0 },
-          ],
-          table: [coppe(1)],
-        }),
-      ),
-    )
-    .mockImplementationOnce((_score) =>
-      Ok(
-        testGame({
-          turn: 0,
-          score: [1, 0],
-          players: [
-            { id: 0, hand: [bastoni(2)], pile: [], scope: 0 },
-            { id: 1, hand: [denari(3)], pile: [], scope: 0 },
-          ],
-        }),
-      ),
-    )
-    .mockImplementationOnce(() =>
-      Ok(
-        testGame({
-          turn: 0,
-          score: [0, 0],
-          players: [
-            { id: 0, hand: [spade(2)], pile: [], scope: 0 },
-            { id: 1, hand: [coppe(3)], pile: [], scope: 0 },
-          ],
-        }),
-      ),
-    )
-
-  const onPlay = vitest.fn(() =>
-    Ok(
-      testGame({
-        state: 'stop',
-        turn: 1,
-        score: [1, 0],
+  render(
+    <Scopa
+      playerId={0}
+      state={testGame({
+        turn: 0,
         players: [
-          { id: 0, hand: [], pile: [coppe(1), denari(1)], scope: 0 },
+          { id: 0, hand: [denari(1)], pile: [], scope: 0 },
           { id: 1, hand: [], pile: [], scope: 0 },
         ],
-        table: [],
-        lastTaken: [coppe(1)],
-      }),
-    ),
+        table: [coppe(1)],
+      })}
+      onStart={onStart}
+      onPlay={onPlay}
+      onOpponentTurn={vitest.fn()}
+      onScore={onScore}
+    />,
   )
 
-  const onScore = vitest
-    .fn()
-    .mockReturnValueOnce([
-      { playerId: 0, total: 2, details: [] },
-      { playerId: 1, total: 0, details: [] },
-    ])
-    .mockReturnValue([])
-
-  render(<Scopa playerId={0} onStart={onStart} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={onScore} />)
-
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
   fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
   fireEvent.click(await screen.findByRole('button', { name: 'Next Round' }))
+
   expect(screen.getByText('🐵 1')).toBeTruthy()
-
-  fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
-
-  expect(screen.getByText('🐵 0')).toBeTruthy()
   expect(screen.getByText('🤖 0')).toBeTruthy()
 })
 
-test('when a player reaches 11 with a unique top score, show game winner and switch to New Game', async () => {
-  const onStart = vitest
-    .fn()
-    .mockImplementationOnce(() =>
-      Ok(
-        testGame({
-          state: 'stop',
-          score: [11, 10],
-          players: [
-            { id: 0, hand: [], pile: [], scope: 0 },
-            { id: 1, hand: [], pile: [], scope: 0 },
-          ],
-        }),
-      ),
-    )
-    .mockImplementationOnce(() =>
-      Ok(
-        testGame({
-          turn: 0,
-          score: [0, 0],
-          players: [
-            { id: 0, hand: [denari(1)], pile: [], scope: 0 },
-            { id: 1, hand: [denari(2)], pile: [], scope: 0 },
-          ],
-        }),
-      ),
-    )
-
+test('when a player reaches 11 with a unique top score, return to title through onReset', async () => {
   const onScore = vitest.fn(() => [
     { playerId: 0, total: 2, details: [] },
     { playerId: 1, total: 0, details: [] },
   ])
+  const onReset = vitest.fn()
 
-  render(<Scopa playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={onScore} />)
-
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
+  render(
+    <Scopa
+      playerId={0}
+      state={testGame({
+        state: 'stop',
+        score: [11, 10],
+        players: [
+          { id: 0, hand: [], pile: [], scope: 0 },
+          { id: 1, hand: [], pile: [], scope: 0 },
+        ],
+      })}
+      onReset={onReset}
+      onPlay={vitest.fn()}
+      onOpponentTurn={vitest.fn()}
+      onScore={onScore}
+    />,
+  )
 
   fireEvent.click(screen.getByRole('button', { name: 'Back to Title Screen' }))
-  fireEvent.click(screen.getByRole('button', { name: 'New Two-Player Game' }))
 
-  expect(screen.getByText('🐵 0')).toBeTruthy()
-  expect(screen.getByText('🤖 0')).toBeTruthy()
+  expect(onReset).toHaveBeenCalled()
 })
 
 test('when all top scores are tied at 11, keep playing next round', async () => {
-  const onStart = vitest.fn(() =>
-    Ok(
-      testGame({
+  const onScore = vitest.fn(() => [
+    { playerId: 0, total: 2, details: [] },
+    { playerId: 1, total: 2, details: [] },
+  ])
+
+  render(
+    <Scopa
+      playerId={0}
+      state={testGame({
         state: 'stop',
         score: [11, 11],
         players: [
           { id: 0, hand: [], pile: [], scope: 0 },
           { id: 1, hand: [], pile: [], scope: 0 },
         ],
-      }),
-    ),
+      })}
+      onStart={vitest.fn()}
+      onPlay={vitest.fn()}
+      onOpponentTurn={vitest.fn()}
+      onScore={onScore}
+    />,
   )
-
-  const onScore = vitest.fn(() => [
-    { playerId: 0, total: 2, details: [] },
-    { playerId: 1, total: 2, details: [] },
-  ])
-
-  render(<Scopa playerId={0} onStart={onStart} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={onScore} />)
-
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
   expect(screen.getByRole('button', { name: 'Next Round' })).toBeTruthy()
   expect(screen.getByText('End of Round')).toBeTruthy()
@@ -805,21 +649,19 @@ test('renders "Scopa!" when a player takes all cards on the table', async () => 
   render(
     <Scopa
       playerId={0}
-      onStart={() =>
-        Ok({
-          state: 'play',
-          turn: 0,
-          firstPlayer: 0,
-          score: [0, 0],
-          players: [
-            { id: 0, hand: [denari(5)], pile: [], scope: 0 },
-            { id: 1, hand: [denari(1)], pile: [], scope: 0 },
-          ],
-          pile: [],
-          table: [denari(2), denari(3)],
-          lastTaken: [],
-        })
-      }
+      state={{
+        state: 'play',
+        turn: 0,
+        firstPlayer: 0,
+        score: [0, 0],
+        players: [
+          { id: 0, hand: [denari(5)], pile: [], scope: 0 },
+          { id: 1, hand: [denari(1)], pile: [], scope: 0 },
+        ],
+        pile: [],
+        table: [denari(2), denari(3)],
+        lastTaken: [],
+      }}
       onPlay={() =>
         Ok({
           state: 'play',
@@ -839,7 +681,6 @@ test('renders "Scopa!" when a player takes all cards on the table', async () => 
       onScore={vitest.fn()}
     />,
   )
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
   fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
 
@@ -859,13 +700,12 @@ test('tapping a hand card with multiple valid combos enters aim mode without pla
   render(
     <Scopa
       playerId={0}
-      onStart={() => Ok(initialState)}
+      state={initialState}
       onPlay={onPlay}
       onOpponentTurn={vitest.fn()}
       onScore={() => []}
     />,
   )
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
   fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
 
@@ -885,13 +725,12 @@ test('second tap on aimed card with a valid selection plays the card', async () 
   render(
     <Scopa
       playerId={0}
-      onStart={() => Ok(initialState)}
+      state={initialState}
       onPlay={onPlay}
       onOpponentTurn={vitest.fn()}
       onScore={() => []}
     />,
   )
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
   fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
   fireEvent.click(screen.getByRole('checkbox', { name: cn(2, Suit.COPPE) }))
@@ -914,13 +753,12 @@ test('second tap on aimed card with empty selection cancels aim mode', async () 
   render(
     <Scopa
       playerId={0}
-      onStart={() => Ok(initialState)}
+      state={initialState}
       onPlay={onPlay}
       onOpponentTurn={vitest.fn()}
       onScore={() => []}
     />,
   )
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
   fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
   fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
@@ -941,13 +779,12 @@ test('tapping a different hand card while in aim mode switches to that card', as
   render(
     <Scopa
       playerId={0}
-      onStart={() => Ok(initialState)}
+      state={initialState}
       onPlay={onPlay}
       onOpponentTurn={vitest.fn()}
       onScore={() => []}
     />,
   )
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
   fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
   fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
@@ -959,21 +796,19 @@ test('does not render "Scopa!" when a player does not take all cards on the tabl
   render(
     <Scopa
       playerId={0}
-      onStart={() =>
-        Ok({
-          state: 'play',
-          turn: 0,
-          firstPlayer: 0,
-          score: [0, 0],
-          players: [
-            { id: 0, hand: [bastoni(2)], pile: [], scope: 0 },
-            { id: 1, hand: [denari(1)], pile: [], scope: 0 },
-          ],
-          pile: [],
-          table: [denari(2), denari(3)],
-          lastTaken: [],
-        })
-      }
+      state={{
+        state: 'play',
+        turn: 0,
+        firstPlayer: 0,
+        score: [0, 0],
+        players: [
+          { id: 0, hand: [bastoni(2)], pile: [], scope: 0 },
+          { id: 1, hand: [denari(1)], pile: [], scope: 0 },
+        ],
+        pile: [],
+        table: [denari(2), denari(3)],
+        lastTaken: [],
+      }}
       onPlay={() =>
         Ok({
           state: 'play',
@@ -993,7 +828,6 @@ test('does not render "Scopa!" when a player does not take all cards on the tabl
       onScore={vitest.fn()}
     />,
   )
-  fireEvent.click(await screen.findByRole('button', { name: 'New Two-Player Game' }))
 
   fireEvent.click(screen.getByRole('button', { name: cn(2, Suit.BASTONI) }))
 

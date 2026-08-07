@@ -15,7 +15,8 @@ const TitleScreenContainer = styled('main')`
   justify-content: center;
   align-items: center;
   background-color: rgba(0, 0, 0, 0.25);
-  flex: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
 `
 
 const TitleScreenContent = styled('div')`
@@ -193,9 +194,16 @@ interface TitleScreenProps {
   onStart: (avatar: string, playerCount: 2 | 3) => void
   savedGame?: SavedGame
   onResume?: () => void
+  onStartMultiplayer?: (avatar: string) => void
 }
 
-export const TitleScreen = ({ loadingProgress, onStart, savedGame, onResume }: TitleScreenProps) => {
+export const TitleScreen = ({
+  loadingProgress,
+  onStart,
+  savedGame,
+  onResume,
+  onStartMultiplayer,
+}: TitleScreenProps) => {
   const { t, i18n } = useTranslation()
   const [selectedAvatar, setSelectedAvatar] = React.useState(AVATARS[0])
 
@@ -238,6 +246,9 @@ export const TitleScreen = ({ loadingProgress, onStart, savedGame, onResume }: T
               )}
               <Button onClick={() => onStart(selectedAvatar, 2)}>{t('newTwoPlayerGame')}</Button>
               <Button onClick={() => onStart(selectedAvatar, 3)}>{t('newThreePlayerGame')}</Button>
+              {onStartMultiplayer && (
+                <Button onClick={() => onStartMultiplayer(selectedAvatar)}>{t('vsFriends')}</Button>
+              )}
             </ButtonStack>
             <LangRow>
               {LANGUAGES.filter(({ code }) => code !== i18n.language).map(({ code, flag, label }) => (

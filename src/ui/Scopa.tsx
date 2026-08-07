@@ -12,16 +12,13 @@ import { Button } from './Button'
 import { AnimatedCard, DealtCard, Card as DisplayCard, Duration } from './Card'
 import { OPPONENT_SCALE, Opponent, OpponentCard, Opponents } from './Opponent'
 import { FanCard, Player, PlayerCard } from './Player'
-import { preloadCardAssets } from './preload'
 import { GameOver } from './ScoreBoard'
 import { Table, TableCard, TableCardLabel, TableCardSelector } from './Table'
-import { TitleScreen } from './TitleScreen'
 import { useAlerts } from './useAlerts'
 import { type DragState, useDragState } from './useDragState'
-import { useSavedGameStorage } from './useLocalStorage'
 import { useRefMap } from './useRefMap'
 
-interface PlayerProfile {
+export interface PlayerProfile {
   avatar: string
   canCountCards?: boolean
   canLookAhead?: boolean
@@ -107,10 +104,15 @@ interface Position {
 
 interface ScopaProps {
   playerId: number
-  onStart: (score?: readonly number[], players?: 2 | 3, previousFirstPlayer?: number) => Result<State, Error>
+  initialState?: State
+  state?: State
+  onReset?: () => void
+  onStart?: (score?: readonly number[], players?: 2 | 3, previousFirstPlayer?: number) => Result<State, Error>
   onPlay: (move: Move, game: State) => Result<State, Error>
   onOpponentTurn: (game: State, options: OpponentOptions) => Promise<Move>
   onScore: (game: State['players']) => readonly Score[]
+  playerProfiles?: readonly PlayerProfile[]
+  onNextRound?: () => void
 }
 
 interface TakingAnimationState {
@@ -138,25 +140,56 @@ type AnimationController =
     }
   | { phase: 'taking'; takes: readonly TakingAnimationState[] }
 
-export function Scopa({ playerId, onStart, onPlay, onOpponentTurn, onScore }: ScopaProps) {
+export function Scopa({
+  playerId,
+  initialState,
+  state,
+  onReset = () => undefined,
+  onStart,
+  onPlay,
+  onOpponentTurn,
+  onScore,
+  playerProfiles: providedPlayerProfiles,
+  onNextRound,
+}: ScopaProps) {
   const { t } = useTranslation()
-  const [loadingProgress, setLoadingProgress] = React.useState(0)
   const [alert, showAlert] = useAlerts(3000)
-  const [playerProfiles, setPlayerProfiles] = React.useState<readonly PlayerProfile[]>([
-    { avatar: '🐵' },
-    { avatar: '🤖' },
-  ])
+  const playerProfiles = providedPlayerProfiles ?? [{ avatar: '🐵' }, { avatar: '🤖' }, { avatar: '👾' }]
   const [take, setTake] = React.useState<readonly Card[]>([])
   const [aimed, setAimed] = React.useState<Card | null>(null)
-  const [game, setGame] = React.useState<State>({
-    state: 'initial',
-    turn: 0,
-    firstPlayer: 0,
-    table: [],
-    pile: [],
-    players: [],
-    lastTaken: [],
-    score: [0, 0],
+  const [game, setGame] = React.useState<State>(() => {
+    if (initialState) return initialState
+    if (state) return state
+    if (onStart) {
+      let startResult = onStart([0, 0], 2, undefined)
+      while (isErr(startResult)) {
+        startResult = onStart([0, 0], 2, undefined)
+      }
+
+      let nextState: State | null = null
+      fold(
+        (state) => {
+          nextState = state
+        },
+        () => undefined,
+        startResult,
+      )
+      if (nextState) return nextState
+    }
+
+    return {
+      state: 'play',
+      turn: 0,
+      firstPlayer: 0,
+      players: [
+        { id: 0, hand: [], pile: [], scope: 0 },
+        { id: 1, hand: [], pile: [], scope: 0 },
+      ],
+      pile: [],
+      table: [],
+      lastTaken: [],
+      score: [0, 0],
+    }
   })
 
   const validCombos = React.useMemo(() => (aimed ? findCardsToTake(aimed[0], game.table) : []), [aimed, game.table])
@@ -167,7 +200,7 @@ export function Scopa({ playerId, onStart, onPlay, onOpponentTurn, onScore }: Sc
   )
 
   const tableRef = React.useRef<HTMLElement | null>(null)
-  const roundScoresRef = React.useRef<readonly Score[]>([])
+  const roundScoresRef = React.useRef<readonly Score[]>(game.state === 'stop' ? onScore(game.players) : [])
   const [cardRefs, getCardRef] = useRefMap<string>()
   const [playerPileRefs, getPlayerPileRef] = useRefMap<number>()
   const [animation, setAnimation] = React.useState<AnimationController>({ phase: 'idle' })
@@ -175,10 +208,17 @@ export function Scopa({ playerId, onStart, onPlay, onOpponentTurn, onScore }: Sc
   const previousPlayersHandsRef = React.useRef<readonly (readonly Card[])[]>([])
   const [tableDealOrder, setTableDealOrder] = React.useState(new Map<string, number>())
   const playCardFromRef = React.useRef<{ card: Card; position: Position } | null>(null)
+  const previousStateRef = React.useRef<State | undefined>(state)
 
   React.useEffect(() => {
-    preloadCardAssets((progress) => setLoadingProgress(progress))
-  }, [])
+    if (state && state !== previousStateRef.current) {
+      previousStateRef.current = state
+      setGame(state)
+      setAnimation({ phase: 'idle' })
+      setTableDealOrder(toOrder(state.table))
+      if (state.state === 'stop') roundScoresRef.current = onScore(state.players)
+    }
+  }, [state, onScore])
 
   const getWinner = (totals: readonly number[]): number | null => {
     const maxTotal = Math.max(...totals)
@@ -190,7 +230,6 @@ export function Scopa({ playerId, onStart, onPlay, onOpponentTurn, onScore }: Sc
   }
 
   const winner = getWinner(game.score)
-  const { savedGameState, clearSavedGame } = useSavedGameStorage({ game, playerProfiles, winner })
 
   const invalidMove = React.useCallback((error: Error) => showAlert(error.message), [showAlert])
 
@@ -199,6 +238,7 @@ export function Scopa({ playerId, onStart, onPlay, onOpponentTurn, onScore }: Sc
 
   const start = React.useCallback(
     (resetScore = false, count = playerProfiles.length) => {
+      if (!onStart) return
       const runningScore = resetScore ? Array<number>(count).fill(0) : game.score
       const previousFirstPlayer = resetScore ? undefined : game.firstPlayer
       let hasRedealt = false
@@ -229,27 +269,6 @@ export function Scopa({ playerId, onStart, onPlay, onOpponentTurn, onScore }: Sc
     },
     [invalidMove, onScore, onStart, showAlert, game.score, game.firstPlayer, playerProfiles, t],
   )
-
-  const resume = React.useCallback(() => {
-    if (!savedGameState) return
-    setPlayerProfiles(savedGameState.playerProfiles)
-    setGame(savedGameState.game)
-    setTake([])
-    setAimed(null)
-  }, [savedGameState])
-
-  const resetToTitle = React.useCallback(() => {
-    setGame({
-      state: 'initial',
-      turn: 0,
-      firstPlayer: 0,
-      table: [],
-      pile: [],
-      players: [],
-      lastTaken: [],
-      score: [0, 0],
-    })
-  }, [])
 
   const play = React.useCallback(
     (move: Move) => {
@@ -390,12 +409,21 @@ export function Scopa({ playerId, onStart, onPlay, onOpponentTurn, onScore }: Sc
 
   React.useEffect(() => {
     if (game.state === 'play' && game.turn !== playerId && !tableDealOrder.size) {
+      let cancelled = false
       const animationDelay = Duration.TURN + Duration.PLAY
       const timeoutId = setTimeout(
-        () => onOpponentTurn(game, playerProfiles[game.turn]).then(play).catch(invalidMove),
+        () =>
+          onOpponentTurn(game, playerProfiles[game.turn])
+            .then((move) => {
+              if (!cancelled) play(move)
+            })
+            .catch(invalidMove),
         1000 * animationDelay,
       )
-      return () => clearTimeout(timeoutId)
+      return () => {
+        cancelled = true
+        clearTimeout(timeoutId)
+      }
     }
   }, [game, invalidMove, onOpponentTurn, play, playerProfiles, tableDealOrder, playerId])
 
@@ -431,78 +459,51 @@ export function Scopa({ playerId, onStart, onPlay, onOpponentTurn, onScore }: Sc
 
   return (
     <Container>
-      {game.state === 'initial' && (
-        <TitleScreen
-          loadingProgress={loadingProgress}
-          savedGame={
-            savedGameState
-              ? {
-                  avatars: savedGameState.playerProfiles.map((profile) => profile.avatar),
-                  score: savedGameState.game.score,
-                }
-              : undefined
-          }
-          onResume={resume}
-          onStart={(playerOneAvatar, count) => {
-            setPlayerProfiles(
-              [playerOneAvatar, '🤖', '👾'].slice(0, count).map((avatar) => ({
-                avatar,
-                canCountCards: Math.random() >= 0.5,
-                canLookAhead: false, // FIXME: negative lift
-                aggression: Math.random() >= 0.5 ? Math.random() * 2 - 1 : undefined,
-              })),
-            )
-            clearSavedGame()
-            start(true, count)
-          }}
-        />
-      )}
-      {game.state !== 'initial' && (
-        <Main>
-          {game.state === 'play' && (
-            <Header>
-              <Button onClick={resetToTitle}>Scopa</Button>
-              <Turn aria-label={t('gameScore')}>
-                {game.players.map((_, playerId) => (
-                  <TurnScore
-                    // biome-ignore lint/suspicious/noArrayIndexKey: player ID is the index
-                    key={`player-score-${playerId}`}
-                    active={game.turn === playerId}
-                    data-active={game.turn === playerId}
-                  >
-                    {playerProfiles[playerId].avatar} {game.score[playerId] ?? 0}
-                  </TurnScore>
-                ))}
-              </Turn>
-            </Header>
-          )}
-          <Opponents>
-            {game.players
-              .filter(({ id }) => id !== playerId)
-              .map(({ id, hand }) => (
-                <Opponent
-                  key={`opponent-${id}`}
-                  ref={getPlayerPileRef(id)}
-                  index={id}
-                  avatar={playerProfiles[id].avatar}
-                  pile={getFilteredPile(id)}
+      <Main>
+        {game.state === 'play' && (
+          <Header>
+            <Button onClick={onReset}>Scopa</Button>
+            <Turn aria-label={t('gameScore')}>
+              {game.players.map((_, playerId) => (
+                <TurnScore
+                  // biome-ignore lint/suspicious/noArrayIndexKey: player ID is the index
+                  key={`player-score-${playerId}`}
+                  active={game.turn === playerId}
+                  data-active={game.turn === playerId}
                 >
-                  <HandCards
-                    hand={hand}
-                    previousHand={previousPlayersHandsRef.current[id] ?? []}
-                    keyPrefix={`${id}-`}
-                    renderCard={(card) => (
-                      <OpponentCard
-                        ref={getCardRef(getCardId(card))}
-                        card={card}
-                        faceDown
-                        opacity={animation.phase === 'play' && isSame(animation.playCard, card) ? 0 : 1}
-                      />
-                    )}
-                  />
-                </Opponent>
+                  {playerProfiles[playerId].avatar} {game.score[playerId] ?? 0}
+                </TurnScore>
               ))}
-          </Opponents>
+            </Turn>
+          </Header>
+        )}
+        <Opponents>
+          {game.players
+            .filter(({ id }) => id !== playerId)
+            .map(({ id, hand }) => (
+              <Opponent
+                key={`opponent-${id}`}
+                ref={getPlayerPileRef(id)}
+                index={id}
+                avatar={playerProfiles[id].avatar}
+                pile={getFilteredPile(id)}
+              >
+                <HandCards
+                  hand={hand}
+                  previousHand={previousPlayersHandsRef.current[id] ?? []}
+                  keyPrefix={`${id}-`}
+                  renderCard={(card) => (
+                    <OpponentCard
+                      ref={getCardRef(getCardId(card))}
+                      card={card}
+                      faceDown
+                      opacity={animation.phase === 'play' && isSame(animation.playCard, card) ? 0 : 1}
+                    />
+                  )}
+                />
+              </Opponent>
+            ))}
+        </Opponents>
           <Table data-testid="table" ref={tableRef}>
             <AnimatePresence mode="popLayout">
               {/* Table cards */}
@@ -618,67 +619,66 @@ export function Scopa({ playerId, onStart, onPlay, onOpponentTurn, onScore }: Sc
                   />
                 ))}
           </AnimatePresence>
-          <Player
-            ref={getPlayerPileRef(playerId)}
-            avatar={playerProfiles[playerId].avatar}
-            pile={getFilteredPile(playerId)}
-          >
-            <HandCards
-              hand={game.players[playerId].hand}
-              previousHand={previousPlayersHandsRef.current[playerId] ?? []}
-              renderCard={(card) => (
-                <PlayerCard
-                  ref={getCardRef(getCardId(card))}
-                  disabled={game.turn !== playerId || animation.phase !== 'idle'}
-                  draggable={false}
-                  $aimed={aimed != null && isSame(aimed, card)}
-                  onPointerDown={(event) => {
-                    if (event.button !== 0) return
-                    startDragging(card, event.currentTarget, { x: event.clientX, y: event.clientY }, event.pointerId)
-                  }}
-                  onClick={() => {
-                    if (isClickSuppressed()) return
-                    const combos = findCardsToTake(card[0], game.table)
-                    if (aimed != null && isSame(aimed, card)) {
-                      if (take.length > 0) {
-                        play({ card, take })
-                      } else {
-                        setAimed(null)
-                        setTake([])
-                      }
-                    } else if (combos.length > 1) {
-                      setAimed(card)
-                      setTake([])
+        <Player
+          ref={getPlayerPileRef(playerId)}
+          avatar={playerProfiles[playerId].avatar}
+          pile={getFilteredPile(playerId)}
+        >
+          <HandCards
+            hand={game.players[playerId].hand}
+            previousHand={previousPlayersHandsRef.current[playerId] ?? []}
+            renderCard={(card) => (
+              <PlayerCard
+                ref={getCardRef(getCardId(card))}
+                disabled={game.turn !== playerId || animation.phase !== 'idle'}
+                draggable={false}
+                $aimed={aimed != null && isSame(aimed, card)}
+                onPointerDown={(event) => {
+                  if (event.button !== 0) return
+                  startDragging(card, event.currentTarget, { x: event.clientX, y: event.clientY }, event.pointerId)
+                }}
+                onClick={() => {
+                  if (isClickSuppressed()) return
+                  const combos = findCardsToTake(card[0], game.table)
+                  if (aimed != null && isSame(aimed, card)) {
+                    if (take.length > 0) {
+                      play({ card, take })
                     } else {
                       setAimed(null)
-                      play({ card, take: combos.length === 1 ? combos[0] : [] })
+                      setTake([])
                     }
-                  }}
-                  style={
-                    isSame(dragState?.card, card) &&
-                    (dragState?.type === 'returning' || (dragState?.type === 'pointer' && dragState.active))
-                      ? { opacity: 0, visibility: 'hidden' }
-                      : {
-                          opacity: animation.phase === 'play' && isSame(animation.playCard, card) ? 0 : 1,
-                        }
+                  } else if (combos.length > 1) {
+                    setAimed(card)
+                    setTake([])
+                  } else {
+                    setAimed(null)
+                    play({ card, take: combos.length === 1 ? combos[0] : [] })
                   }
-                >
-                  <DisplayCard card={card} />
-                </PlayerCard>
-              )}
-            />
-          </Player>
-          <DragOverlay dragState={dragState} onSpringBackComplete={clearDragging} />
-        </Main>
-      )}
+                }}
+                style={
+                  isSame(dragState?.card, card) &&
+                  (dragState?.type === 'returning' || (dragState?.type === 'pointer' && dragState.active))
+                    ? { opacity: 0, visibility: 'hidden' }
+                    : {
+                        opacity: animation.phase === 'play' && isSame(animation.playCard, card) ? 0 : 1,
+                      }
+                }
+              >
+                <DisplayCard card={card} />
+              </PlayerCard>
+            )}
+          />
+        </Player>
+        <DragOverlay dragState={dragState} onSpringBackComplete={clearDragging} />
+      </Main>
       {game.state === 'stop' && (
         <GameOver
           playerAvatars={playerProfiles.map((profile) => profile.avatar)}
           scores={roundScoresRef.current}
           runningScore={game.score}
           winner={winner}
-          onNextRound={() => start()}
-          onReset={resetToTitle}
+          onNextRound={onNextRound ?? (() => start())}
+          onReset={onReset}
         />
       )}
     </Container>

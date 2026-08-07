@@ -1,0 +1,9 @@
+{
+  "$schema": "https://www.partykit.io/schema.json",
+  "name": "scopa-party",
+  "main": "src/party/scopa.ts",
+  "compatibilityDate": "2026-05-05",
+  "vars": {
+    "ALLOWED_ORIGINS": "https://scopa.netlify.app,http://localhost:4000,http://localhost:5174"
+  }
+}

@@ -8,6 +8,6 @@
     "editor.defaultFormatter": "biomejs.biome"
   },
   "vite.browserType": "system",
-  "vite.autoStart": true,
+  "vite.autoStart": false,
   "vite.port": 4000
 }
