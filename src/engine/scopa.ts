@@ -8,6 +8,7 @@ import type { Move, Player, State } from './state.ts'
 interface Options {
   players?: 2 | 3 | 4 | 6
   score?: readonly number[]
+  previousFirstPlayer?: number
 }
 
 const DEFAULT_PLAYERS = 2
@@ -41,10 +42,17 @@ export function deal(cards: Pile, options?: Options): Result<State, Error> {
 
   const [playerCards, pile] = splitAt(players * 3, rest)
 
+  const previousFirstPlayer = options?.previousFirstPlayer
+  const turn =
+    previousFirstPlayer === undefined
+      ? Math.floor(Math.random() * players)
+      : (previousFirstPlayer + players - 1) % players
+
   return dealtKings <= 2
     ? Ok({
         state: 'play',
-        turn: Math.floor(Math.random() * players),
+        turn,
+        firstPlayer: turn,
         players: createPlayers(playerCards),
         pile,
         table,
@@ -113,6 +121,7 @@ function next({ card, take }: Move, game: State): State {
       table: finalTable,
       players: finalPlayers,
       turn: nextTurn,
+      firstPlayer: game.firstPlayer,
       lastTaken: take,
       lastTaker,
       score: game.score.map((total, playerId) => total + (handTotals.get(playerId) ?? 0)),
@@ -125,6 +134,7 @@ function next({ card, take }: Move, game: State): State {
     table: finalTable,
     players: finalPlayers,
     turn: nextTurn,
+    firstPlayer: game.firstPlayer,
     lastTaken: take,
     lastTaker,
     score: game.score,

@@ -88,6 +88,25 @@ describe('deal', () => {
     const game = getGameState(deal(deck()))
     expect(game.players[game.turn]).toBeDefined()
   })
+
+  test('deal records the first player of the round', () => {
+    const game = getGameState(deal(deck()))
+    expect(game.firstPlayer).toEqual(game.turn)
+  })
+
+  test('the next round begins with the player counterclockwise from the previous first player', () => {
+    fc.assert(
+      fc.property(fc.constantFrom(2, 3, 4, 6), (players) => {
+        const first = getGameState(deal(deck(), { players }))
+        const second = getGameState(deal(deck(), { players, previousFirstPlayer: first.firstPlayer }))
+        return second.turn === (first.firstPlayer + players - 1) % players
+      }),
+    )
+  })
+
+  test('the first player wraps around to the last player', () => {
+    expect(getGameState(deal(deck(), { players: 3, previousFirstPlayer: 0 })).turn).toEqual(2)
+  })
 })
 
 describe('play', () => {
@@ -95,6 +114,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       players: [
         { id: 0, hand: [denari(1), denari(2)], pile: [], scope: 0 },
@@ -126,6 +146,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 1,
+      firstPlayer: 1,
       score: [0, 0],
       players: [
         { id: 0, hand: [denari(1)], pile: [], scope: 0 },
@@ -153,11 +174,30 @@ describe('play', () => {
     )
   })
 
+  test('the first player of the round is preserved', () => {
+    const game: State = {
+      state: 'play',
+      turn: 0,
+      firstPlayer: 1,
+      score: [0, 0],
+      players: [
+        { id: 0, hand: [denari(1), denari(2)], pile: [], scope: 0 },
+        { id: 1, hand: [denari(3)], pile: [], scope: 0 },
+      ],
+      pile: [],
+      table: [denari(4)],
+      lastTaken: [],
+    }
+
+    expect(play({ card: denari(1), take: [] }, game)).toMatchObject(Ok({ firstPlayer: 1 }))
+  })
+
   describe('turn order in 3-player game is descending', () => {
     test('turn advances from player 2 to player 1', () => {
       const game: State = {
         state: 'play',
         turn: 2,
+        firstPlayer: 2,
         score: [0, 0, 0],
         players: [
           { id: 0, hand: [denari(1)], pile: [], scope: 0 },
@@ -176,6 +216,7 @@ describe('play', () => {
       const game: State = {
         state: 'play',
         turn: 1,
+        firstPlayer: 1,
         score: [0, 0, 0],
         players: [
           { id: 0, hand: [denari(1)], pile: [], scope: 0 },
@@ -194,6 +235,7 @@ describe('play', () => {
       const game: State = {
         state: 'play',
         turn: 0,
+        firstPlayer: 0,
         score: [0, 0, 0],
         players: [
           { id: 0, hand: [denari(1), denari(2)], pile: [], scope: 0 },
@@ -214,6 +256,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       players: [
         { id: 0, hand: [denari(2)], pile: [], scope: 0 },
@@ -235,6 +278,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       players: [
         { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
@@ -260,6 +304,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       players: [
         { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
@@ -279,6 +324,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       players: [
         { id: 0, hand: [denari(4), denari(2)], pile: [], scope: 0 },
@@ -304,6 +350,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       players: [
         { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
@@ -329,6 +376,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       players: [
         { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
@@ -359,6 +407,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       players: [
         { id: 0, hand: [card], pile: [], scope: 0 },
@@ -378,6 +427,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       players: [
         { id: 0, hand: [card], pile: [], scope: 0 },
@@ -397,6 +447,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       players: [
         { id: 0, hand: [card], pile: [], scope: 0 },
@@ -419,6 +470,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       players: [
         { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
@@ -441,6 +493,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       players: [
         { id: 0, hand: [card, denari(2)], pile: [], scope: 0 },
@@ -467,6 +520,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       players: [
         { id: 0, hand: [card], pile: [], scope: 0 },
@@ -494,6 +548,7 @@ describe('play', () => {
         {
           state: 'play',
           turn: 0,
+          firstPlayer: 0,
           score: [0, 0],
           players: [
             { id: 0, hand: [player0Card], pile: [], scope: 0 },
@@ -523,6 +578,7 @@ describe('play', () => {
         {
           state: 'play',
           turn: 0,
+          firstPlayer: 0,
           score: [0, 0],
           players: [
             { id: 0, hand: [player0Card], pile: [], scope: 0 },
@@ -547,6 +603,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 1,
+      firstPlayer: 1,
       score: [0, 0],
       players: [
         { id: 0, hand: [], pile: [], scope: 0 },
@@ -568,6 +625,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 1,
+      firstPlayer: 1,
       score: [0, 0],
       players: [
         { id: 0, hand: [], pile: [denari(7)], scope: 0 },
@@ -590,6 +648,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       players: [
         { id: 0, hand: [denari(1)], pile: [], scope: 0 },
@@ -612,6 +671,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 1,
+      firstPlayer: 1,
       score: [2, 1],
       players: [
         {
@@ -638,6 +698,7 @@ describe('play', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [1, 2],
       players: [
         { id: 0, hand: [denari(1)], pile: [], scope: 0 },

@@ -107,7 +107,7 @@ interface Position {
 
 interface ScopaProps {
   playerId: number
-  onStart: (score?: readonly number[], players?: 2 | 3) => Result<State, Error>
+  onStart: (score?: readonly number[], players?: 2 | 3, previousFirstPlayer?: number) => Result<State, Error>
   onPlay: (move: Move, game: State) => Result<State, Error>
   onOpponentTurn: (game: State, options: OpponentOptions) => Promise<Move>
   onScore: (game: State['players']) => readonly Score[]
@@ -151,6 +151,7 @@ export function Scopa({ playerId, onStart, onPlay, onOpponentTurn, onScore }: Sc
   const [game, setGame] = React.useState<State>({
     state: 'initial',
     turn: 0,
+    firstPlayer: 0,
     table: [],
     pile: [],
     players: [],
@@ -199,12 +200,13 @@ export function Scopa({ playerId, onStart, onPlay, onOpponentTurn, onScore }: Sc
   const start = React.useCallback(
     (resetScore = false, count = playerProfiles.length) => {
       const runningScore = resetScore ? Array<number>(count).fill(0) : game.score
+      const previousFirstPlayer = resetScore ? undefined : game.firstPlayer
       let hasRedealt = false
-      let startResult = onStart(runningScore, count as 2 | 3)
+      let startResult = onStart(runningScore, count as 2 | 3, previousFirstPlayer)
 
       while (isErr(startResult)) {
         hasRedealt = true
-        startResult = onStart(runningScore, count as 2 | 3)
+        startResult = onStart(runningScore, count as 2 | 3, previousFirstPlayer)
       }
 
       return fold(
@@ -225,7 +227,7 @@ export function Scopa({ playerId, onStart, onPlay, onOpponentTurn, onScore }: Sc
         startResult,
       )
     },
-    [invalidMove, onScore, onStart, showAlert, game.score, playerProfiles, t],
+    [invalidMove, onScore, onStart, showAlert, game.score, game.firstPlayer, playerProfiles, t],
   )
 
   const resume = React.useCallback(() => {
@@ -237,7 +239,16 @@ export function Scopa({ playerId, onStart, onPlay, onOpponentTurn, onScore }: Sc
   }, [savedGameState])
 
   const resetToTitle = React.useCallback(() => {
-    setGame({ state: 'initial', turn: 0, table: [], pile: [], players: [], lastTaken: [], score: [0, 0] })
+    setGame({
+      state: 'initial',
+      turn: 0,
+      firstPlayer: 0,
+      table: [],
+      pile: [],
+      players: [],
+      lastTaken: [],
+      score: [0, 0],
+    })
   }, [])
 
   const play = React.useCallback(

@@ -29,9 +29,10 @@ export function useLocalStorage<T>(key: string, fallback: T): [T, (updater: Upda
 }
 
 interface PersistedGameState {
-  game: Omit<State, 'score'> & {
+  game: Omit<State, 'score' | 'firstPlayer'> & {
     score?: readonly number[]
     wins?: readonly number[]
+    firstPlayer?: number
   }
   playerAvatars: string[]
 }
@@ -85,7 +86,7 @@ function normalizeSavedGameState(savedGameState: PersistedGameState | null): Sav
   if (!savedGameState) return null
 
   const { game, playerAvatars } = savedGameState
-  const { wins, score, ...rest } = game
+  const { wins, score, firstPlayer, ...rest } = game
 
   return {
     playerProfiles: playerAvatars.map((avatar, _i) => ({
@@ -94,6 +95,7 @@ function normalizeSavedGameState(savedGameState: PersistedGameState | null): Sav
     game: {
       ...rest,
       score: score ?? wins ?? Array<number>(playerAvatars.length).fill(0),
+      firstPlayer: firstPlayer ?? rest.turn,
     },
   }
 }

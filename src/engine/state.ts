@@ -10,6 +10,7 @@ export interface Player {
 export interface State {
   readonly state: 'initial' | 'play' | 'stop'
   readonly turn: number
+  readonly firstPlayer: number
   readonly pile: Pile
   readonly players: readonly Player[]
   readonly table: Pile

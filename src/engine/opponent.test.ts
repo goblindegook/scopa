@@ -11,6 +11,7 @@ function setupGame(table: Pile, hand: Pile, pile: Pile = [], score: readonly num
   return {
     state: 'play',
     turn: 0,
+    firstPlayer: 0,
     score,
     table,
     players: [
@@ -83,6 +84,7 @@ describe('taking moves', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       table: [denari(2), denari(3), denari(4), denari(7)],
       players: [
@@ -183,6 +185,7 @@ describe('taking moves', () => {
     const game: State = {
       state: 'play',
       turn: 1,
+      firstPlayer: 1,
       table: [coppe(3), spade(2), denari(3), bastoni(3)],
       players: [
         { id: 0, hand: [denari(4)], pile: [], scope: 0 },
@@ -200,6 +203,7 @@ describe('taking moves', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       table: [denari(1), denari(2), denari(3), bastoni(7), coppe(2)],
       players: [
@@ -281,6 +285,7 @@ describe('next-player pressure', () => {
     const base: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0, 0],
       table: [bastoni(2), denari(9)],
       players: [
@@ -312,6 +317,7 @@ describe('next-player pressure', () => {
     const base: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0, 0],
       table: [bastoni(6), coppe(6)],
       players: [
@@ -344,6 +350,7 @@ describe('last table', () => {
     const state: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       table: [coppe(3), bastoni(3)],
       players: [
@@ -366,6 +373,7 @@ describe('last table', () => {
     const state: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       table: [denari(1), coppe(2), bastoni(3), spade(2), coppe(9), spade(8)],
       players: [
@@ -391,6 +399,7 @@ describe('card counting', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       table: [bastoni(6), coppe(6)],
       players: [
@@ -414,6 +423,7 @@ describe('card counting', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       table: [bastoni(2), denari(9)],
       players: [
@@ -443,6 +453,7 @@ describe('card counting', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       table: [bastoni(6), coppe(5), coppe(2), coppe(3)],
       players: [
@@ -470,6 +481,7 @@ describe('canLookAhead', () => {
     const game: State = {
       state: 'play',
       turn: 0,
+      firstPlayer: 0,
       score: [0, 0],
       table,
       players: [

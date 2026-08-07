@@ -32,6 +32,7 @@ function testGame(overrides: Partial<State> = {}): State {
   return {
     state: 'play',
     turn: 0,
+    firstPlayer: 0,
     score: [0, 0],
     players: [
       { id: 0, hand: [], pile: [], scope: 0 },
@@ -141,7 +142,7 @@ test('re-deal preserves requested three-player mode', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'New Three-Player Game' }))
 
   expect(onStart).toHaveBeenCalledTimes(2)
-  expect(onStart).toHaveBeenLastCalledWith(expect.anything(), 3)
+  expect(onStart).toHaveBeenLastCalledWith(expect.anything(), 3, undefined)
 })
 
 test('alerts auto-dismiss after 5 seconds', async () => {
@@ -808,6 +809,7 @@ test('renders "Scopa!" when a player takes all cards on the table', async () => 
         Ok({
           state: 'play',
           turn: 0,
+          firstPlayer: 0,
           score: [0, 0],
           players: [
             { id: 0, hand: [denari(5)], pile: [], scope: 0 },
@@ -822,6 +824,7 @@ test('renders "Scopa!" when a player takes all cards on the table', async () => 
         Ok({
           state: 'play',
           turn: 1,
+          firstPlayer: 1,
           score: [0, 0],
           players: [
             { id: 0, hand: [], pile: [denari(2), denari(3), denari(5)], scope: 1 },
@@ -960,6 +963,7 @@ test('does not render "Scopa!" when a player does not take all cards on the tabl
         Ok({
           state: 'play',
           turn: 0,
+          firstPlayer: 0,
           score: [0, 0],
           players: [
             { id: 0, hand: [bastoni(2)], pile: [], scope: 0 },
@@ -974,6 +978,7 @@ test('does not render "Scopa!" when a player does not take all cards on the tabl
         Ok({
           state: 'play',
           turn: 1,
+          firstPlayer: 1,
           score: [0, 0],
           players: [
             { id: 0, hand: [], pile: [denari(2), bastoni(5)], scope: 0 },
