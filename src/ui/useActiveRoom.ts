@@ -5,23 +5,34 @@ import React from 'react'
 // honour — a new tab rejoins with a fresh sid and is refused once play started.
 const storageKey = 'scopa:mp-active-room'
 
-const read = (): string | null => {
+export interface ActiveRoomGame {
+  readonly roomId: string
+  readonly avatars: readonly string[]
+  readonly score: readonly number[]
+}
+
+const read = (): ActiveRoomGame | null => {
   const stored = window.sessionStorage.getItem(storageKey)
-  return stored && stored.length > 0 ? stored : null
+  if (!stored) return null
+  try {
+    return JSON.parse(stored)
+  } catch {
+    return null
+  }
 }
 
 interface ActiveRoom {
-  readonly roomId: string | undefined
-  readonly remember: (roomId: string) => void
+  readonly game: ActiveRoomGame | null
+  readonly remember: (game: ActiveRoomGame) => void
   readonly forget: () => void
 }
 
 export function useActiveRoom(): ActiveRoom {
-  const [roomId] = React.useState(read)
-
   return {
-    roomId: roomId ?? undefined,
-    remember: React.useCallback((id: string) => window.sessionStorage.setItem(storageKey, id), []),
+    game: read(),
+    remember: React.useCallback((game: ActiveRoomGame) => {
+      window.sessionStorage.setItem(storageKey, JSON.stringify(game))
+    }, []),
     forget: React.useCallback(() => window.sessionStorage.removeItem(storageKey), []),
   }
 }

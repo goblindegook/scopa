@@ -218,9 +218,21 @@ describe('useMultiplayerSession', () => {
   test('remembers the room once seated, so the title screen can offer to resume it', () => {
     renderSession()
 
+    receive({
+      type: 'lobby',
+      players: [
+        { avatar: '🦊', connected: true, confirmed: false },
+        { avatar: '🐵', connected: true, confirmed: false },
+      ],
+    })
     receive({ type: 'seated', index: 0 })
+    receive({ type: 'state', state: { ...baseState, score: [3, 1] } })
 
-    expect(window.sessionStorage.getItem('scopa:mp-active-room')).toBe('room')
+    expect(JSON.parse(window.sessionStorage.getItem('scopa:mp-active-room') ?? 'null')).toEqual({
+      roomId: 'room',
+      avatars: ['🦊', '🐵'],
+      score: [3, 1],
+    })
   })
 
   test('forgets the room once the server ends it', () => {

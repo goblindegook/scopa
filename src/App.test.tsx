@@ -1,8 +1,64 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { afterAll, afterEach, beforeAll, expect, test } from 'vitest'
+import { afterAll, afterEach, beforeAll, expect, test, vi } from 'vitest'
 import App from './App'
+import { coppe, denari, spade } from './engine/cards'
+import type { State } from './engine/state'
+
+type SocketOptions = {
+  readonly onMessage?: (event: MessageEvent<string>) => void
+}
+
+const mockedSocket = vi.hoisted(() => ({
+  options: null as SocketOptions | null,
+  send: vi.fn(),
+}))
+
+vi.mock('partysocket/react', () => ({
+  usePartySocket: vi.fn((options: SocketOptions) => {
+    mockedSocket.options = options
+    return { send: mockedSocket.send }
+  }),
+}))
+
+const onlineState: State = {
+  state: 'play',
+  turn: 0,
+  firstPlayer: 0,
+  pile: [],
+  players: [
+    { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+    { id: 1, hand: [coppe(2)], pile: [], scope: 0 },
+  ],
+  table: [spade(3)],
+  lastTaken: [],
+  score: [0, 0],
+}
+
+function receive(message: unknown) {
+  act(() => {
+    mockedSocket.options?.onMessage?.(new MessageEvent('message', { data: JSON.stringify(message) }))
+  })
+}
+
+function joinOnlineGame() {
+  window.sessionStorage.setItem('scopa:mp-sid-room', 'sid')
+  window.sessionStorage.setItem('scopa:mp-avatar-room', '🦊')
+  window.history.replaceState({}, '', '/?room=room')
+
+  render(<App />)
+
+  receive({
+    type: 'lobby',
+    players: [
+      { avatar: '🦊', connected: true, confirmed: false },
+      { avatar: '🐵', connected: true, confirmed: false },
+    ],
+  })
+  receive({ type: 'seated', index: 0 })
+  receive({ type: 'state', state: onlineState })
+}
 
 const OriginalImage = window.Image
 
@@ -26,6 +82,10 @@ afterAll(() => {
 afterEach(() => {
   cleanup()
   window.localStorage.clear()
+  window.sessionStorage.clear()
+  window.history.replaceState({}, '', '/')
+  mockedSocket.options = null
+  mockedSocket.send.mockReset()
 })
 
 test('render without crashing', () => {
@@ -90,6 +150,60 @@ test('resumes a saved local game from the title screen', async () => {
 
   expect(await screen.findByText('🦊 4')).toBeInTheDocument()
   expect(screen.getByText('🤖 2')).toBeInTheDocument()
+})
+
+test('opens the title screen over a local game and resumes it in place', async () => {
+  render(<App />)
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Select avatar 🦊' }))
+  fireEvent.click(screen.getByRole('button', { name: /new local game\s*2 players/i }))
+  expect(await screen.findByText('🦊 0')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
+  expect(await screen.findByRole('button', { name: /new local game\s*2 players/i })).toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('button', { name: /🦊 0 · 🤖 0\s*resume/i }))
+
+  expect(screen.getByText('🦊 0')).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /new local game\s*2 players/i })).not.toBeInTheDocument()
+})
+
+test('opens the title screen over an online game without touching the URL', async () => {
+  joinOnlineGame()
+
+  expect(await screen.findByLabelText('Game score')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
+
+  expect(await screen.findByRole('button', { name: /new local game\s*2 players/i })).toBeInTheDocument()
+  expect(window.location.search).toBe('?room=room')
+})
+
+test('resumes the online game from the overlay with its state intact', async () => {
+  joinOnlineGame()
+
+  expect(await screen.findByLabelText('Game score')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
+  fireEvent.click(await screen.findByRole('button', { name: /🦊 0 · 🐵 0\s*online game · resume/i }))
+
+  expect(screen.getByLabelText('Game score')).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /new local game\s*2 players/i })).not.toBeInTheDocument()
+})
+
+test('starting a local game from the overlay leaves the online game behind', async () => {
+  joinOnlineGame()
+
+  expect(await screen.findByLabelText('Game score')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
+  fireEvent.click(await screen.findByRole('button', { name: /new local game\s*2 players/i }))
+
+  expect(await screen.findAllByLabelText('Game score')).toHaveLength(1)
+  expect(window.location.search).toBe('')
+  expect(window.sessionStorage.getItem('scopa:mp-sid-room')).toBeNull()
+  expect(window.sessionStorage.getItem('scopa:mp-avatar-room')).toBeNull()
+  expect(window.sessionStorage.getItem('scopa:mp-active-room')).toBeNull()
 })
 
 test('starting a new local game ignores the saved running score', async () => {

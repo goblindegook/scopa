@@ -9,7 +9,7 @@ const LobbyContainer = styled('main')`
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: rgba(0, 0, 0, 0.25);
+  background-color: rgba(0, 0, 0, 0.6);
   min-height: 100dvh;
   padding: 1rem;
   box-sizing: border-box;

@@ -12,26 +12,29 @@ const renderTitleScreen = (props: Partial<React.ComponentProps<typeof TitleScree
   render(<TitleScreen loadingProgress={1} onStart={vi.fn()} {...props} />)
 
 describe('TitleScreen', () => {
-  test('offers no resume options when there is nothing to resume', () => {
+  test('offers no resume option when there is nothing to resume', () => {
     renderTitleScreen()
 
     expect(screen.queryByText(/resume/i)).not.toBeInTheDocument()
   })
 
-  test('offers only the online resume when both online and local games are resumable', () => {
+  test('resumes a local game from its running score', () => {
     const onResume = vi.fn()
-    const onResumeOnline = vi.fn()
 
-    renderTitleScreen({
-      savedGame: { avatars: ['🐵', '🤖'], score: [4, 2] },
-      onResume,
-      onResumeOnline,
-    })
+    renderTitleScreen({ resume: { kind: 'local', avatars: ['🐵', '🤖'], score: [4, 2], onResume } })
 
-    expect(screen.queryByText('🐵 4 · 🤖 2')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByText('🐵 4 · 🤖 2'))
+    expect(onResume).toHaveBeenCalledOnce()
+  })
 
-    fireEvent.click(screen.getByText('Online Game'))
-    expect(onResumeOnline).toHaveBeenCalledOnce()
-    expect(onResume).not.toHaveBeenCalled()
+  test('shows the running score of an online game too, labelled as one', () => {
+    const onResume = vi.fn()
+
+    renderTitleScreen({ resume: { kind: 'online', avatars: ['🦊', '🐵'], score: [3, 1], onResume } })
+
+    expect(screen.getByText(/online game/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('🦊 3 · 🐵 1'))
+    expect(onResume).toHaveBeenCalledOnce()
   })
 })

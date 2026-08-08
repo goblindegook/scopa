@@ -18,7 +18,10 @@ export function useLocalStorage<T>(key: string, fallback: T): [T, (updater: Upda
     (updater: Updater<T>) => {
       setValue((current) => {
         const next = typeof updater === 'function' ? (updater as (current: T) => T)(current) : updater
-        window?.localStorage?.setItem?.(`scopa:${key}`, JSON.stringify(next))
+        const serialized = JSON.stringify(next)
+        // Bailing out keeps a caller that rebuilds its session each render from looping.
+        if (serialized === JSON.stringify(current)) return current
+        window?.localStorage?.setItem?.(`scopa:${key}`, serialized)
         return next
       })
     },
@@ -46,27 +49,17 @@ interface SavedGameState {
   playerProfiles: readonly SavedPlayerProfile[]
 }
 
-interface UseSavedGameStorageOptions {
-  game: State
-  playerProfiles: readonly SavedPlayerProfile[]
-  winner: number | null
-}
-
-export function useSavedGameStorage({ game, playerProfiles, winner }: UseSavedGameStorageOptions) {
+export function useSavedGameStorage(session: SavedGameState | null) {
   const [persistedGameState, setPersistedGameState] = useLocalStorage<PersistedGameState | null>('saved-game', null)
   const savedGameState = useMemo(() => normalizeSavedGameState(persistedGameState), [persistedGameState])
 
   useEffect(() => {
-    if (game.state === 'initial') return
-    if (winner !== null) {
-      setPersistedGameState(null)
-      return
-    }
+    if (!session || session.game.state === 'initial') return
     setPersistedGameState({
-      game,
-      playerAvatars: playerProfiles.map((profile) => profile.avatar),
+      game: session.game,
+      playerAvatars: session.playerProfiles.map((profile) => profile.avatar),
     })
-  }, [game, playerProfiles, winner, setPersistedGameState])
+  }, [session, setPersistedGameState])
 
   useEffect(() => {
     if (!hasLegacyGameState(persistedGameState) || !savedGameState) return

@@ -1,9 +1,8 @@
 import styled from '@emotion/styled'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
+import { AVATARS, AvatarPicker } from './AvatarPicker'
 import { Button } from './Button'
-
-export const AVATARS = ['🐵', '🐶', '🦊', '🐱', '🦁', '🐷', '🐭', '🐼', '🐸', '🐙']
 
 const LANGUAGES = [
   { code: 'en', flag: '🇬🇧', label: 'EN' },
@@ -11,10 +10,14 @@ const LANGUAGES = [
 ] as const
 
 const TitleScreenContainer = styled('main')`
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  overflow-y: auto;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: rgba(0, 0, 0, 0.25);
+  background-color: rgba(0, 0, 0, 0.6);
   min-height: 100vh;
   min-height: 100dvh;
 `
@@ -68,54 +71,6 @@ const ProgressBarFill = styled('div')<{ progress: number }>`
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 0.25rem;
   transition: width 0.3s ease;
-`
-
-const SectionLabel = styled('p')`
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.875rem;
-  margin: 0;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-`
-
-const AvatarGrid = styled('div')`
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0.5rem;
-  width: 100%;
-`
-
-const AvatarButton = styled('button')<{ selected: boolean }>`
-  font-size: 2.25rem;
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: 0.5rem;
-  border: 2px solid ${({ selected }) => (selected ? 'rgba(74, 222, 128, 0.9)' : 'rgba(255, 255, 255, 0.2)')};
-  background-color: ${({ selected }) => (selected ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.05)')};
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: border-color 0.15s, background-color 0.15s, transform 0.1s;
-  line-height: 1;
-
-  &:hover {
-    border-color: rgba(255, 255, 255, 0.5);
-    background-color: rgba(255, 255, 255, 0.15);
-    transform: scale(1.1);
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
-`
-
-const AvatarSection = styled('div')`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  width: 100%;
 `
 
 const ButtonStack = styled('div')`
@@ -221,9 +176,11 @@ const LangButtonText = styled('span')`
   letter-spacing: 0.05em;
 `
 
-interface SavedGame {
-  avatars: string[]
-  score: readonly number[]
+export interface ResumableGame {
+  readonly kind: 'local' | 'online'
+  readonly avatars: readonly string[]
+  readonly score: readonly number[]
+  readonly onResume: () => void
 }
 
 const StackedButton = ({ main, caption, onClick }: { main: string; caption: string; onClick: () => void }) => (
@@ -238,20 +195,11 @@ const StackedButton = ({ main, caption, onClick }: { main: string; caption: stri
 interface TitleScreenProps {
   loadingProgress: number
   onStart: (avatar: string, playerCount: 2 | 3) => void
-  savedGame?: SavedGame
-  onResume?: () => void
+  resume?: ResumableGame
   onStartMultiplayer?: (avatar: string) => void
-  onResumeOnline?: () => void
 }
 
-export const TitleScreen = ({
-  loadingProgress,
-  onStart,
-  savedGame,
-  onResume,
-  onStartMultiplayer,
-  onResumeOnline,
-}: TitleScreenProps) => {
+export const TitleScreen = ({ loadingProgress, onStart, resume, onStartMultiplayer }: TitleScreenProps) => {
   const { t, i18n } = useTranslation()
   const [selectedAvatar, setSelectedAvatar] = React.useState(AVATARS[0])
 
@@ -265,34 +213,14 @@ export const TitleScreen = ({
           </ProgressBarContainer>
         ) : (
           <>
-            <AvatarSection>
-              <SectionLabel>{t('chooseAvatar')}</SectionLabel>
-              <AvatarGrid>
-                {AVATARS.map((emoji) => (
-                  <AvatarButton
-                    key={emoji}
-                    selected={selectedAvatar === emoji}
-                    onClick={() => setSelectedAvatar(emoji)}
-                    aria-label={t('selectAvatar', { emoji })}
-                    aria-pressed={selectedAvatar === emoji}
-                  >
-                    {emoji}
-                  </AvatarButton>
-                ))}
-              </AvatarGrid>
-            </AvatarSection>
+            <AvatarPicker selected={selectedAvatar} onSelect={setSelectedAvatar} />
             <ButtonStack>
-              {onResumeOnline && (
-                <ResumeSection>
-                  <StackedButton main={t('onlineGame')} caption={t('resume')} onClick={onResumeOnline} />
-                </ResumeSection>
-              )}
-              {savedGame && onResume && !onResumeOnline && (
+              {resume && (
                 <ResumeSection>
                   <StackedButton
-                    main={savedGame.avatars.map((avatar, i) => `${avatar} ${savedGame.score[i]}`).join(' \u00b7 ')}
-                    caption={t('resume')}
-                    onClick={onResume}
+                    main={resume.avatars.map((avatar, i) => `${avatar} ${resume.score[i] ?? 0}`).join(' \u00b7 ')}
+                    caption={resume.kind === 'online' ? `${t('onlineGame')} \u00b7 ${t('resume')}` : t('resume')}
+                    onClick={resume.onResume}
                   />
                 </ResumeSection>
               )}

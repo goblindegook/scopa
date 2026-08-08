@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { bastoni, coppe, denari, spade } from './cards'
-import { score } from './scores'
+import { score, winner } from './scores'
 
 describe('prime', () => {
   test.each([
@@ -260,5 +260,21 @@ describe('ties', () => {
     const scores = score(players)
     expect(scores[0].total).toBe(0)
     expect(scores[1].total).toBe(0)
+  })
+})
+
+describe('winner', () => {
+  test('nobody wins before eleven points', () => {
+    expect(winner([10, 9])).toBeNull()
+  })
+
+  test('the highest total from eleven points wins', () => {
+    expect(winner([11, 9])).toBe(0)
+    expect(winner([4, 12])).toBe(1)
+    expect(winner([11, 9, 13])).toBe(2)
+  })
+
+  test('a tie at the top is played on', () => {
+    expect(winner([11, 11])).toBeNull()
   })
 })

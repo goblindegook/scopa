@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { type Card, hasCard, isSame, type Pile } from '../engine/cards'
 import { findCardsToTake } from '../engine/move'
 import type { OpponentOptions } from '../engine/opponent'
-import type { Score } from '../engine/scores'
+import { type Score, winner } from '../engine/scores'
 import type { Move, State } from '../engine/state'
 import { Button } from './Button'
 import { AnimatedCard, DealtCard, Card as DisplayCard, Duration } from './Card'
@@ -209,17 +209,6 @@ export function Scopa({
       if (state.state === 'stop') roundScoresRef.current = onScore(state.players)
     }
   }, [state, onScore])
-
-  const getWinner = (totals: readonly number[]): number | null => {
-    const maxTotal = Math.max(...totals)
-    if (maxTotal < 11) return null
-    const winners = totals
-      .map((total, playerId) => (total === maxTotal ? playerId : -1))
-      .filter((playerId) => playerId !== -1)
-    return winners.length === 1 ? winners[0] : null
-  }
-
-  const winner = getWinner(game.score)
 
   const invalidMove = React.useCallback((error: Error) => showAlert(error.message), [showAlert])
 
@@ -665,7 +654,7 @@ export function Scopa({
           playerAvatars={playerProfiles.map((profile) => profile.avatar)}
           scores={roundScoresRef.current}
           runningScore={game.score}
-          winner={winner}
+          winner={winner(game.score)}
           awaitingConfirmations={awaitingConfirmations}
           onNextRound={onNextRound ?? (() => start())}
           onReset={onReset}

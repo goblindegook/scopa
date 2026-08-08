@@ -208,7 +208,7 @@ const GameOverContainer = styled('main')`
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: rgba(0, 0, 0, 0.25);
+  background-color: rgba(0, 0, 0, 0.6);
 `
 
 const GameOverContent = styled('div')`

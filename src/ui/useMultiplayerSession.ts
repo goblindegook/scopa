@@ -157,7 +157,6 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
       switch (message.type) {
         case 'seated':
           setSeat(message.index)
-          activeRoom.remember(roomId)
           break
 
         case 'lobby':
@@ -188,6 +187,11 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
       }
     },
   })
+
+  React.useEffect(() => {
+    if (seat === null || ended) return
+    activeRoom.remember({ roomId, avatars: lobby.map((player) => player.avatar), score: state?.score ?? [] })
+  }, [ended, lobby, activeRoom.remember, roomId, seat, state])
 
   const nextMove = React.useCallback((): Promise<Move> => moves.next(), [moves])
   const cancelMove = React.useCallback(() => moves.cancel(), [moves])

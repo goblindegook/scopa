@@ -100,3 +100,10 @@ export function score(players: readonly Player[]): readonly Score[] {
     }
   })
 }
+
+export function winner(totals: readonly number[]): number | null {
+  const best = Math.max(...totals)
+  if (best < 11) return null
+  const leaders = totals.map((total, playerId) => (total === best ? playerId : -1)).filter((playerId) => playerId >= 0)
+  return leaders.length === 1 ? leaders[0] : null
+}

@@ -4,6 +4,6 @@
   "main": "src/party/scopa.ts",
   "compatibilityDate": "2026-05-05",
   "vars": {
-    "ALLOWED_ORIGINS": "https://scopa.netlify.app,http://localhost:4000,http://localhost:5174"
+    "ALLOWED_ORIGINS": "https://scopa.netlify.app,http://localhost:4000,http://localhost:5173,http://localhost:5174"
   }
 }
