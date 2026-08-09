@@ -4,7 +4,7 @@ import './ui/i18n'
 import { winner } from './engine/scores'
 import type { State } from './engine/state'
 import { Alert } from './ui/Alert'
-import { OfflineMode, type OfflineSession, startOfflineSession } from './ui/OfflineMode'
+import { type Difficulty, OfflineMode, type OfflineSession, startOfflineSession } from './ui/OfflineMode'
 import { OnlineMode } from './ui/OnlineMode'
 import { preloadCardAssets } from './ui/preload'
 import { TitleScreen } from './ui/TitleScreen'
@@ -60,9 +60,9 @@ const App = () => {
   }, [onlineRoom])
 
   const startLocalGame = React.useCallback(
-    (playerOneAvatar: string, count: 2 | 3) => {
+    (playerOneAvatar: string, count: 2 | 3, difficulty: Difficulty) => {
       leaveRoom()
-      const { session: started, redealt } = startOfflineSession(playerOneAvatar, count)
+      const { session: started, redealt } = startOfflineSession(playerOneAvatar, count, difficulty)
       setSession(started)
       setIsTitleMenuVisible(false)
       if (redealt) showAlert(t('redeal'))
@@ -76,6 +76,7 @@ const App = () => {
     setSession({
       game: savedGameState.game,
       playerProfiles: savedGameState.playerProfiles,
+      difficulty: savedGameState.difficulty,
     })
   }, [savedGameState, session])
 

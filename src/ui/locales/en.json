@@ -55,5 +55,11 @@
     "Sette Bello": "Sette Bello",
     "Primiera": "Prime",
     "Total": "Total"
-  }
+  },
+  "difficulty": "Difficulty",
+  "easy": "Easy",
+  "normal": "Normal",
+  "hard": "Hard",
+  "expert": "Expert",
+  "selectDifficulty": "Select difficulty {level}"
 }

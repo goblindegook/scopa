@@ -55,5 +55,11 @@
     "Sette Bello": "Sette Bello",
     "Primiera": "Primiera",
     "Total": "Totale"
-  }
+  },
+  "difficulty": "Difficoltà",
+  "easy": "Facile",
+  "normal": "Normale",
+  "hard": "Difficile",
+  "expert": "Esperto",
+  "selectDifficulty": "Seleziona difficoltà {level}"
 }

@@ -1,11 +1,18 @@
-import { type Card, isDenari, isSame, isSettebello, type Pile, type Suit } from './cards.ts'
+import { isOk } from '@pacote/result'
+import { type Card, deck, isDenari, isSame, isSettebello, type Pile, type Suit } from './cards.ts'
 import { findCardsToTake } from './move.ts'
+import { play } from './scopa.ts'
 import { primePoints, score } from './scores.ts'
 import type { Move, Player, State } from './state.ts'
 
 export interface OpponentOptions {
   canCountCards?: boolean
   aggression?: number
+  search?: boolean
+  /** Sampled worlds the search averages the opponent's reply over. One measured worse than not searching. */
+  worlds?: number
+  /** Benchmark instrument: the search reads real hands. Never ship true; a test enforces it. */
+  cheats?: boolean
 }
 
 interface Temperament {
@@ -26,55 +33,63 @@ interface CardCountContext {
   nextOpponent: OpponentProfile
 }
 
-export function move(game: State, { canCountCards = false, aggression }: OpponentOptions = {}): Move {
+interface Evaluation {
+  temperament: Temperament
+  currentBestPrimes: Map<Suit, number>
+  ownDenariCount: number
+  ctx: CardCountContext | null
+  isLastTable: boolean
+}
+
+function evaluationContext(game: State, { canCountCards = false, aggression }: OpponentOptions): Evaluation {
   const effectiveAggression = aggression ?? dynamicAggression(game, canCountCards)
   const aggressiveBias = Math.max(effectiveAggression, 0)
   const defensiveBias = Math.max(-effectiveAggression, 0)
-  const temperament: Temperament = {
-    eagerness: 1 + aggressiveBias * 0.8 - defensiveBias * 0.4,
-    caution: 1 - aggressiveBias * 0.4 + defensiveBias * 1.2,
-    defensiveBias,
+  const { pile } = game.players[game.turn]
+
+  return {
+    temperament: {
+      eagerness: 1 + aggressiveBias * 0.8 - defensiveBias * 0.4,
+      caution: 1 - aggressiveBias * 0.4 + defensiveBias * 1.2,
+      defensiveBias,
+    },
+    currentBestPrimes: bestPrimes(pile),
+    ownDenariCount: pile.filter(isDenari).length,
+    ctx: canCountCards ? buildContext(game) : null,
+    isLastTable: game.pile.length === 0,
   }
+}
 
-  const { hand, pile } = game.players[game.turn]
-  const table = game.table
-  const currentBestPrimes = bestPrimes(pile)
-  const ownDenariCount = pile.filter(isDenari).length
-  const ctx = canCountCards ? buildContext(game) : null
-  const isLastTable = game.pile.length === 0
+function scoreMove({ card, take }: Move, game: State, evaluation: Evaluation): number {
+  const { temperament, currentBestPrimes, ownDenariCount, ctx, isLastTable } = evaluation
+  return take.length === 0
+    ? evaluateDiscard(card, game.table, temperament)
+    : evaluateTake([card, ...take], game.table, currentBestPrimes, ownDenariCount, temperament, ctx, isLastTable)
+}
 
-  let bestMove: Move | null = null
-  let bestScore = -Infinity
+function legalMoves(game: State): readonly Move[] {
+  return game.players[game.turn].hand.flatMap((card) => {
+    const takes = findCardsToTake(card[0], game.table)
+    return takes.length === 0 ? [{ card, take: [] }] : takes.map((take) => ({ card, take }))
+  })
+}
 
-  for (const card of hand) {
-    const availableTakes = findCardsToTake(card[0], table)
+// The best immediately-scoring move and its score. Search needs the score, `move` needs only the move.
+function bestScoredMove(game: State, options: OpponentOptions): { move: Move; score: number } {
+  const evaluation = evaluationContext(game, options)
+  const candidates = legalMoves(game)
 
-    if (availableTakes.length === 0) {
-      const discardScore = evaluateDiscard(card, table, temperament)
-      if (discardScore > bestScore) {
-        bestScore = discardScore
-        bestMove = { card, take: [] }
-      }
-    }
+  return candidates.reduce<{ move: Move; score: number }>(
+    (best, candidate) => {
+      const score = scoreMove(candidate, game, evaluation)
+      return score > best.score ? { move: candidate, score } : best
+    },
+    { move: candidates[0] ?? { card: game.players[game.turn].hand[0], take: [] }, score: -Infinity },
+  )
+}
 
-    for (const takenCards of availableTakes) {
-      const takeScore = evaluateTake(
-        [card, ...takenCards],
-        table,
-        currentBestPrimes,
-        ownDenariCount,
-        temperament,
-        ctx,
-        isLastTable,
-      )
-      if (takeScore > bestScore) {
-        bestScore = takeScore
-        bestMove = { card, take: takenCards }
-      }
-    }
-  }
-
-  return bestMove ?? { card: hand[0], take: [] }
+export function move(game: State, options: OpponentOptions = {}): Move {
+  return options.search ? searchMove(game, options) : bestScoredMove(game, options).move
 }
 
 const clamp = (value: number, min: number, max: number): number => Math.max(min, Math.min(max, value))
@@ -84,10 +99,8 @@ const HALF_DECK = 20
 const HALF_DENARI = 5
 const MAX_PRIMIERA = 84
 
-// Cost per capture combination left available to the next player. Shaping what you leave behind is table control,
-// not a mood, so a base cost applies at every posture; the defensive coefficient is what the old gated term used and
-// now stacks on top. The base is deliberately well below the defensive weight: `tableCapturePotential` counts
-// combinations, which grows fast with table size, so a full-strength always-on term drowns the objective weights.
+// The base sits well below the defensive weight on purpose: `tableCapturePotential` counts combinations, so a
+// full-strength always-on term drowns the objective weights and flattens the posture axis I0 depends on.
 const TABLE_CONTROL_BASE = 0.5
 const TABLE_CONTROL_DEFENSIVE = 6
 
@@ -231,4 +244,78 @@ function evaluateDiscard(card: Card, table: Pile, temperament: Temperament): num
     (TABLE_CONTROL_BASE + TABLE_CONTROL_DEFENSIVE * temperament.defensiveBias)
 
   return scopaPreventionWeight + settebelloWeight + primeWeight + denariWeight + blockOpponentWeight
+}
+
+// Without counting, captured piles are forgotten.
+function unseenFrom(game: State, canCountCards: boolean): Pile {
+  const me = game.players[game.turn]
+  const seen = canCountCards
+    ? [...me.hand, ...game.table, ...game.players.flatMap((player) => player.pile)]
+    : [...me.hand, ...game.table]
+  return deck().filter((card) => !seen.some((known) => isSame(known, card)))
+}
+
+// Seeded from the position: the benchmark's zero-noise property needs the policy to be a pure function of state.
+function positionSeed(game: State): number {
+  const me = game.players[game.turn]
+  return [...game.table, ...me.hand, ...me.pile].reduce(
+    (hash, [value, suit]) => Math.imul(hash ^ (value * 4 + suit), 16777619) >>> 0,
+    Math.imul(2166136261 ^ game.turn, 16777619) >>> 0,
+  )
+}
+
+function seededShuffle(cards: Pile, seed: number): Pile {
+  let state = seed >>> 0
+  const random = () => {
+    state = (state + 0x6d2b79f5) >>> 0
+    let x = Math.imul(state ^ (state >>> 15), 1 | state)
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296
+  }
+  const shuffled = [...cards]
+  for (let i = 0; i < shuffled.length - 1; i += 1) {
+    const j = i + Math.floor(random() * (shuffled.length - i))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
+
+// Opponents' hands redealt from the unseen pool at their known sizes, deck size preserved.
+function determinize(game: State, canCountCards: boolean, index: number): State {
+  const pool = seededShuffle(unseenFrom(game, canCountCards), positionSeed(game) ^ Math.imul(index + 1, 0x9e3779b9))
+  let taken = 0
+  const players = game.players.map((player, playerIndex) => {
+    if (playerIndex === game.turn) return player
+    const hand = pool.slice(taken, taken + player.hand.length)
+    taken += player.hand.length
+    return { ...player, hand }
+  })
+  return { ...game, players, pile: pool.slice(taken, taken + game.pile.length) }
+}
+
+// `own immediate − opponent's best reply`. The deleted lookahead layer added its own best follow-up instead, which
+// ignored the opponent and turned the policy into a sweep-maximizer.
+function searchMove(game: State, options: OpponentOptions): Move {
+  const evaluation = evaluationContext(game, options)
+  const candidates = legalMoves(game)
+  const worlds = options.cheats
+    ? [game]
+    : Array.from({ length: Math.max(1, options.worlds ?? 1) }, (_, index) =>
+        determinize(game, options.canCountCards ?? false, index),
+      )
+
+  // A reply of zero when the round ends is correct: there is no opponent turn left to punish us.
+  const replyIn = (candidate: Move, world: State): number => {
+    const next = play(candidate, world)
+    return isOk(next) && next.value.state !== 'stop' ? bestScoredMove(next.value, options).score : 0
+  }
+
+  return candidates.reduce<{ move: Move; value: number }>(
+    (best, candidate) => {
+      const reply = worlds.reduce((total, world) => total + replyIn(candidate, world), 0) / worlds.length
+      const value = scoreMove(candidate, game, evaluation) - reply
+      return value > best.value ? { move: candidate, value } : best
+    },
+    { move: candidates[0] ?? { card: game.players[game.turn].hand[0], take: [] }, value: -Infinity },
+  ).move
 }

@@ -38,3 +38,33 @@ describe('TitleScreen', () => {
     expect(onResume).toHaveBeenCalledOnce()
   })
 })
+
+describe('difficulty', () => {
+  test('starts a game at normal without the player choosing', () => {
+    const onStart = vi.fn()
+    render(<TitleScreen loadingProgress={1} onStart={onStart} />)
+
+    fireEvent.click(screen.getAllByText('2 Players')[0])
+
+    expect(onStart).toHaveBeenCalledWith(expect.any(String), 2, 'normal')
+  })
+
+  test('starts a game at the difficulty the player picked', () => {
+    const onStart = vi.fn()
+    render(<TitleScreen loadingProgress={1} onStart={onStart} />)
+
+    fireEvent.click(screen.getByLabelText('Select difficulty Expert'))
+    fireEvent.click(screen.getAllByText('3 Players')[0])
+
+    expect(onStart).toHaveBeenCalledWith(expect.any(String), 3, 'expert')
+  })
+
+  test('shows the picked difficulty as the pressed one', () => {
+    render(<TitleScreen loadingProgress={1} onStart={vi.fn()} />)
+
+    fireEvent.click(screen.getByLabelText('Select difficulty Hard'))
+
+    expect(screen.getByLabelText('Select difficulty Hard')).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByLabelText('Select difficulty Normal')).toHaveAttribute('aria-pressed', 'false')
+  })
+})

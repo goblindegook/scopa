@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { State } from '../engine/state'
+import { createPlayerProfiles, type Difficulty } from './OfflineMode'
+import type { PlayerProfile } from './Scopa'
 
 type Updater<T> = T | ((current: T) => T)
 
@@ -38,15 +40,13 @@ interface PersistedGameState {
     firstPlayer?: number
   }
   playerAvatars: string[]
-}
-
-interface SavedPlayerProfile {
-  avatar: string
+  difficulty?: Difficulty
 }
 
 interface SavedGameState {
   game: State
-  playerProfiles: readonly SavedPlayerProfile[]
+  playerProfiles: readonly PlayerProfile[]
+  difficulty: Difficulty
 }
 
 export function useSavedGameStorage(session: SavedGameState | null) {
@@ -58,6 +58,7 @@ export function useSavedGameStorage(session: SavedGameState | null) {
     setPersistedGameState({
       game: session.game,
       playerAvatars: session.playerProfiles.map((profile) => profile.avatar),
+      difficulty: session.difficulty,
     })
   }, [session, setPersistedGameState])
 
@@ -67,6 +68,7 @@ export function useSavedGameStorage(session: SavedGameState | null) {
     setPersistedGameState({
       game: savedGameState.game,
       playerAvatars: savedGameState.playerProfiles.map((profile) => profile.avatar),
+      difficulty: savedGameState.difficulty,
     })
   }, [persistedGameState, savedGameState, setPersistedGameState])
 
@@ -78,12 +80,17 @@ export function useSavedGameStorage(session: SavedGameState | null) {
 function normalizeSavedGameState(savedGameState: PersistedGameState | null): SavedGameState | null {
   if (!savedGameState) return null
 
-  const { game, playerAvatars } = savedGameState
+  const { game, playerAvatars, difficulty } = savedGameState
   const { wins, score, firstPlayer, ...rest } = game
+  // Persisting the choice rather than the weights means changing what "expert" means needs no migration.
+  const level = difficulty ?? 'normal'
+  const count = playerAvatars.length === 3 ? 3 : 2
 
   return {
-    playerProfiles: playerAvatars.map((avatar, _i) => ({
-      avatar,
+    difficulty: level,
+    playerProfiles: createPlayerProfiles(playerAvatars[0], count, level).map((profile, index) => ({
+      ...profile,
+      avatar: playerAvatars[index] ?? profile.avatar,
     })),
     game: {
       ...rest,

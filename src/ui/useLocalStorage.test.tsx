@@ -1,7 +1,8 @@
 import { act, renderHook } from '@testing-library/react'
-import { afterEach, describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, it, test } from 'vitest'
 import { coppe, denari } from '../engine/cards'
 import type { State } from '../engine/state'
+import { startOfflineSession } from './OfflineMode'
 import { useSavedGameStorage } from './useLocalStorage'
 
 const playerProfiles = [{ avatar: '🐵' }, { avatar: '🤖' }]
@@ -28,23 +29,42 @@ afterEach(() => {
 
 describe('useSavedGameStorage', () => {
   test('saves the session it is given', () => {
-    renderHook(() => useSavedGameStorage({ game: game([4, 2]), playerProfiles }))
+    renderHook(() => useSavedGameStorage({ game: game([4, 2]), playerProfiles, difficulty: 'normal' }))
 
     expect(storedGame()).toMatchObject({ playerAvatars: ['🐵', '🤖'] })
   })
 
   test('saves nothing until a game has been dealt', () => {
-    renderHook(() => useSavedGameStorage({ game: game([], 'initial'), playerProfiles }))
+    renderHook(() => useSavedGameStorage({ game: game([], 'initial'), playerProfiles, difficulty: 'normal' }))
 
     expect(storedGame()).toBeNull()
   })
 
   test('forgets the saved game when asked', () => {
-    const session = { game: game([4, 2]), playerProfiles }
+    const session = { game: game([4, 2]), playerProfiles, difficulty: 'normal' as const }
     const { result } = renderHook(() => useSavedGameStorage(session))
 
     act(() => result.current.clearSavedGame())
 
     expect(storedGame()).toBeNull()
+  })
+})
+
+describe('difficulty across a resume', () => {
+  it('restores the difficulty the game was started with', () => {
+    const { session } = startOfflineSession('🐵', 2, 'expert')
+    const { result } = renderHook(() => useSavedGameStorage(session))
+
+    expect(result.current.savedGameState?.difficulty).toBe('expert')
+  })
+
+  it('treats a game saved before difficulties existed as normal', () => {
+    window.localStorage.setItem(
+      'scopa:saved-game',
+      JSON.stringify({ game: startOfflineSession('🐵', 2).session.game, playerAvatars: ['🐵', '🤖'] }),
+    )
+    const { result } = renderHook(() => useSavedGameStorage(null))
+
+    expect(result.current.savedGameState?.difficulty).toBe('normal')
   })
 })

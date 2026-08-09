@@ -3,6 +3,8 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { AVATARS, AvatarPicker } from './AvatarPicker'
 import { Button } from './Button'
+import { DifficultyPicker } from './DifficultyPicker'
+import type { Difficulty } from './OfflineMode'
 
 const LANGUAGES = [
   { code: 'en', flag: '🇬🇧', label: 'EN' },
@@ -194,7 +196,7 @@ const StackedButton = ({ main, caption, onClick }: { main: string; caption: stri
 
 interface TitleScreenProps {
   loadingProgress: number
-  onStart: (avatar: string, playerCount: 2 | 3) => void
+  onStart: (avatar: string, playerCount: 2 | 3, difficulty: Difficulty) => void
   resume?: ResumableGame
   onStartMultiplayer?: (avatar: string) => void
 }
@@ -202,6 +204,7 @@ interface TitleScreenProps {
 export const TitleScreen = ({ loadingProgress, onStart, resume, onStartMultiplayer }: TitleScreenProps) => {
   const { t, i18n } = useTranslation()
   const [selectedAvatar, setSelectedAvatar] = React.useState(AVATARS[0])
+  const [difficulty, setDifficulty] = React.useState<Difficulty>('normal')
 
   return (
     <TitleScreenContainer>
@@ -214,6 +217,7 @@ export const TitleScreen = ({ loadingProgress, onStart, resume, onStartMultiplay
         ) : (
           <>
             <AvatarPicker selected={selectedAvatar} onSelect={setSelectedAvatar} />
+            <DifficultyPicker selected={difficulty} onSelect={setDifficulty} />
             <ButtonStack>
               {resume && (
                 <ResumeSection>
@@ -228,12 +232,12 @@ export const TitleScreen = ({ loadingProgress, onStart, resume, onStartMultiplay
                 <StackedButton
                   main={t('newLocalGame')}
                   caption={t('twoPlayers')}
-                  onClick={() => onStart(selectedAvatar, 2)}
+                  onClick={() => onStart(selectedAvatar, 2, difficulty)}
                 />
                 <StackedButton
                   main={t('newLocalGame')}
                   caption={t('threePlayers')}
-                  onClick={() => onStart(selectedAvatar, 3)}
+                  onClick={() => onStart(selectedAvatar, 3, difficulty)}
                 />
               </LocalGameRow>
               {onStartMultiplayer && (

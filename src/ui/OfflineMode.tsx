@@ -11,6 +11,7 @@ import { type PlayerProfile, Scopa } from './Scopa'
 export interface OfflineSession {
   readonly game: State
   readonly playerProfiles: readonly PlayerProfile[]
+  readonly difficulty: Difficulty
 }
 
 const dealShuffledDeck = (score?: readonly number[], players: 2 | 3 = 2, previousFirstPlayer?: number) =>
@@ -20,24 +21,41 @@ const dealShuffledDeck = (score?: readonly number[], players: 2 | 3 = 2, previou
     previousFirstPlayer: previousFirstPlayer ?? randomFirstPlayer(players),
   })
 
-// Benchmarked posture per player count: head-to-head rewards defensive play, three-way rewards aggressive play.
-// Sampling aggression uniformly, as this used to, centred it near 0 — the weakest setting measured. Counting stays
-// off in both: its measured gain was conditional on dynamic aggression and vanished once aggression was fixed.
-const OPPONENT_AGGRESSION: Record<2 | 3, number> = { 2: -1, 3: 1 }
+export const DIFFICULTIES = ['easy', 'normal', 'hard', 'expert'] as const
 
-function createPlayerProfiles(playerOneAvatar: string, count: 2 | 3): readonly PlayerProfile[] {
-  return [playerOneAvatar, '🤖', '👾'].slice(0, count).map((avatar) => ({
-    avatar,
-    canCountCards: false,
-    aggression: OPPONENT_AGGRESSION[count],
-  }))
+export type Difficulty = (typeof DIFFICULTIES)[number]
+
+const POSTURE: Record<2 | 3, number> = { 2: -1, 3: 1 }
+
+function opponentProfile(difficulty: Difficulty, count: 2 | 3): Omit<PlayerProfile, 'avatar'> {
+  switch (difficulty) {
+    case 'easy':
+      return { aggression: 0, canCountCards: false, search: false }
+    case 'normal':
+      return { aggression: undefined, canCountCards: false, search: false }
+    case 'hard':
+      return { aggression: POSTURE[count], canCountCards: false, search: false }
+    case 'expert':
+      return { aggression: POSTURE[count], canCountCards: true, search: true, worlds: 4060 }
+  }
+}
+
+export function createPlayerProfiles(
+  playerOneAvatar: string,
+  count: 2 | 3,
+  difficulty: Difficulty,
+): readonly PlayerProfile[] {
+  return [playerOneAvatar, '🤖', '👾']
+    .slice(0, count)
+    .map((avatar, index) => (index === 0 ? { avatar } : { avatar, ...opponentProfile(difficulty, count) }))
 }
 
 export function startOfflineSession(
   playerOneAvatar: string,
   count: 2 | 3,
+  difficulty: Difficulty = 'normal',
 ): { readonly session: OfflineSession; readonly redealt: boolean } {
-  const playerProfiles = createPlayerProfiles(playerOneAvatar, count)
+  const playerProfiles = createPlayerProfiles(playerOneAvatar, count, difficulty)
   let result = dealShuffledDeck(undefined, count)
   let redealt = false
 
@@ -46,7 +64,7 @@ export function startOfflineSession(
     result = dealShuffledDeck(undefined, count)
   }
 
-  return { session: { game: result.value, playerProfiles }, redealt }
+  return { session: { game: result.value, playerProfiles, difficulty }, redealt }
 }
 
 interface OfflineModeProps {
