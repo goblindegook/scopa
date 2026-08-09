@@ -57,7 +57,7 @@ function usage(): string {
     '  node --experimental-strip-types scripts/simulate-matches.ts --matches <N> --p0 [spec] --p1 [spec] [--p2 [spec]]',
     '',
     'Player spec:',
-    '  [variant=<name>][,aggression=<number>][,count][,search][,worlds=<n>][,cheat]',
+    '  [variant=<name>][,aggression=<number>][,count][,worlds=<n>][,cheat]',
     '  Examples:',
     '    --p0 aggression=0.4,count',
     '    --p0 variant=baseline --p1 variant=baseline,count',
@@ -115,17 +115,12 @@ function parseProfileSpec(spec: string, argName: string): Profile {
       profile.options.canCountCards = true
       continue
     }
-    if (normalized === 'search') {
-      profile.options.search = true
-      continue
-    }
     if (normalized === 'cheat') {
       profile.options.cheats = true
       continue
     }
     if (normalized.startsWith('worlds=')) {
       profile.options.worlds = parseInteger(token.slice('worlds='.length), `${argName} worlds`)
-      profile.options.search = true
       continue
     }
     if (normalized.startsWith('aggression=')) {
@@ -142,7 +137,7 @@ function parseProfileSpec(spec: string, argName: string): Profile {
       continue
     }
     throw new Error(
-      `Unknown token "${token}" in ${argName}. Expected variant=<name>,aggression=<n>,count,search,worlds=<n>,cheat`,
+      `Unknown token "${token}" in ${argName}. Expected variant=<name>,aggression=<n>,count,worlds=<n>,cheat`,
     )
   }
 
@@ -426,7 +421,7 @@ function describeProfile(profile: Profile): string {
     profile.variant,
     aggression == null ? 'aggression=dynamic' : `aggression=${aggression.toFixed(2)}`,
     profile.options.canCountCards ? 'count' : null,
-    profile.options.search ? `search(${profile.options.worlds ?? 1})` : null,
+    profile.options.canCountCards && profile.options.worlds ? `worlds=${profile.options.worlds}` : null,
     profile.options.cheats ? 'cheat' : null,
   ]
     .filter(Boolean)

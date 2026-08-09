@@ -30,13 +30,13 @@ const POSTURE: Record<2 | 3, number> = { 2: -1, 3: 1 }
 function opponentProfile(difficulty: Difficulty, count: 2 | 3): Omit<PlayerProfile, 'avatar'> {
   switch (difficulty) {
     case 'easy':
-      return { aggression: 0, canCountCards: false, search: false }
+      return { aggression: 0, canCountCards: false }
     case 'normal':
-      return { aggression: undefined, canCountCards: false, search: false }
+      return { aggression: undefined, canCountCards: false }
     case 'hard':
-      return { aggression: POSTURE[count], canCountCards: false, search: false }
+      return { aggression: POSTURE[count], canCountCards: false }
     case 'expert':
-      return { aggression: POSTURE[count], canCountCards: true, search: true, worlds: 4060 }
+      return { aggression: POSTURE[count], canCountCards: true, worlds: 4060 }
   }
 }
 

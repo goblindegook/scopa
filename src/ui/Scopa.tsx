@@ -22,7 +22,6 @@ export interface PlayerProfile {
   avatar: string
   canCountCards?: boolean
   aggression?: number
-  search?: boolean
   worlds?: number
 }
 

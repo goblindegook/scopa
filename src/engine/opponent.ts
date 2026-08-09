@@ -8,10 +8,8 @@ import type { Move, Player, State } from './state.ts'
 export interface OpponentOptions {
   canCountCards?: boolean
   aggression?: number
-  search?: boolean
-  /** Sampled worlds the search averages the opponent's reply over. One measured worse than not searching. */
   worlds?: number
-  /** Benchmark instrument: the search reads real hands. Never ship true; a test enforces it. */
+  /** Never ship true: the search reads real hands. */
   cheats?: boolean
 }
 
@@ -74,7 +72,6 @@ function legalMoves(game: State): readonly Move[] {
   })
 }
 
-// The best immediately-scoring move and its score. Search needs the score, `move` needs only the move.
 function bestScoredMove(game: State, options: OpponentOptions): { move: Move; score: number } {
   const evaluation = evaluationContext(game, options)
   const candidates = legalMoves(game)
@@ -89,7 +86,7 @@ function bestScoredMove(game: State, options: OpponentOptions): { move: Move; sc
 }
 
 export function move(game: State, options: OpponentOptions = {}): Move {
-  return options.search ? searchMove(game, options) : bestScoredMove(game, options).move
+  return options.canCountCards ? searchMove(game, options) : bestScoredMove(game, options).move
 }
 
 const clamp = (value: number, min: number, max: number): number => Math.max(min, Math.min(max, value))
@@ -99,8 +96,6 @@ const HALF_DECK = 20
 const HALF_DENARI = 5
 const MAX_PRIMIERA = 84
 
-// The base sits well below the defensive weight on purpose: `tableCapturePotential` counts combinations, so a
-// full-strength always-on term drowns the objective weights and flattens the posture axis I0 depends on.
 const TABLE_CONTROL_BASE = 0.5
 const TABLE_CONTROL_DEFENSIVE = 6
 
@@ -246,16 +241,12 @@ function evaluateDiscard(card: Card, table: Pile, temperament: Temperament): num
   return scopaPreventionWeight + settebelloWeight + primeWeight + denariWeight + blockOpponentWeight
 }
 
-// Without counting, captured piles are forgotten.
-function unseenFrom(game: State, canCountCards: boolean): Pile {
-  const me = game.players[game.turn]
-  const seen = canCountCards
-    ? [...me.hand, ...game.table, ...game.players.flatMap((player) => player.pile)]
-    : [...me.hand, ...game.table]
+function unseenFrom(game: State): Pile {
+  const seen = [...game.players[game.turn].hand, ...game.table, ...game.players.flatMap((player) => player.pile)]
   return deck().filter((card) => !seen.some((known) => isSame(known, card)))
 }
 
-// Seeded from the position: the benchmark's zero-noise property needs the policy to be a pure function of state.
+// Seeded from the position, not Math.random: the benchmark needs the policy to be a pure function of state.
 function positionSeed(game: State): number {
   const me = game.players[game.turn]
   return [...game.table, ...me.hand, ...me.pile].reduce(
@@ -280,9 +271,8 @@ function seededShuffle(cards: Pile, seed: number): Pile {
   return shuffled
 }
 
-// Opponents' hands redealt from the unseen pool at their known sizes, deck size preserved.
-function determinize(game: State, canCountCards: boolean, index: number): State {
-  const pool = seededShuffle(unseenFrom(game, canCountCards), positionSeed(game) ^ Math.imul(index + 1, 0x9e3779b9))
+function determinize(game: State, index: number): State {
+  const pool = seededShuffle(unseenFrom(game), positionSeed(game) ^ Math.imul(index + 1, 0x9e3779b9))
   let taken = 0
   const players = game.players.map((player, playerIndex) => {
     if (playerIndex === game.turn) return player
@@ -293,18 +283,13 @@ function determinize(game: State, canCountCards: boolean, index: number): State 
   return { ...game, players, pile: pool.slice(taken, taken + game.pile.length) }
 }
 
-// `own immediate − opponent's best reply`. The deleted lookahead layer added its own best follow-up instead, which
-// ignored the opponent and turned the policy into a sweep-maximizer.
 function searchMove(game: State, options: OpponentOptions): Move {
   const evaluation = evaluationContext(game, options)
   const candidates = legalMoves(game)
   const worlds = options.cheats
     ? [game]
-    : Array.from({ length: Math.max(1, options.worlds ?? 1) }, (_, index) =>
-        determinize(game, options.canCountCards ?? false, index),
-      )
+    : Array.from({ length: Math.max(1, options.worlds ?? 1) }, (_, index) => determinize(game, index))
 
-  // A reply of zero when the round ends is correct: there is no opponent turn left to punish us.
   const replyIn = (candidate: Move, world: State): number => {
     const next = play(candidate, world)
     return isOk(next) && next.value.state !== 'stop' ? bestScoredMove(next.value, options).score : 0

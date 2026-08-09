@@ -86,7 +86,7 @@ function usage(): string {
     '  --concurrency <n>    parallel simulator processes (default: cores - 1)',
     '  --json               emit raw aggregated JSON instead of a table',
     '',
-    'Profile spec is the same as simulate-matches.ts: [variant=<name>][,aggression=<n>][,count].',
+    'Profile spec is the same as simulate-matches.ts: [variant=<name>][,aggression=<n>][,count][,worlds=<n>].',
     'An empty spec ("") means dynamic aggression with counting off.',
     '',
     `--control and --candidate also accept the keyword "${SHIPPED_KEYWORD}", which resolves per player count to what`,
