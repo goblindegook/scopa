@@ -93,7 +93,7 @@ const ButtonStack = styled('div')`
 const ResumeSection = styled('div')`
   display: flex;
   width: 100%;
-  margin-bottom: 1rem;
+  margin-top: 1rem;
 
   & > button {
     width: 100%;
@@ -219,15 +219,6 @@ export const TitleScreen = ({ loadingProgress, onStart, resume, onStartMultiplay
             <AvatarPicker selected={selectedAvatar} onSelect={setSelectedAvatar} />
             <DifficultyPicker selected={difficulty} onSelect={setDifficulty} />
             <ButtonStack>
-              {resume && (
-                <ResumeSection>
-                  <StackedButton
-                    main={resume.avatars.map((avatar, i) => `${avatar} ${resume.score[i] ?? 0}`).join(' \u00b7 ')}
-                    caption={resume.kind === 'online' ? `${t('onlineGame')} \u00b7 ${t('resume')}` : t('resume')}
-                    onClick={resume.onResume}
-                  />
-                </ResumeSection>
-              )}
               <LocalGameRow>
                 <StackedButton
                   main={t('newLocalGame')}
@@ -244,6 +235,15 @@ export const TitleScreen = ({ loadingProgress, onStart, resume, onStartMultiplay
                 <OnlineGameSection>
                   <Button onClick={() => onStartMultiplayer(selectedAvatar)}>{t('vsFriends')}</Button>
                 </OnlineGameSection>
+              )}
+              {resume && (
+                <ResumeSection>
+                  <StackedButton
+                    main={resume.avatars.map((avatar, i) => `${avatar} ${resume.score[i] ?? 0}`).join(' \u00b7 ')}
+                    caption={resume.kind === 'online' ? `${t('onlineGame')} \u00b7 ${t('resume')}` : t('resume')}
+                    onClick={resume.onResume}
+                  />
+                </ResumeSection>
               )}
             </ButtonStack>
             <LangRow>

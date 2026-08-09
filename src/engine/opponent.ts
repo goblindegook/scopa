@@ -283,12 +283,35 @@ function determinize(game: State, index: number): State {
   return { ...game, players, pile: pool.slice(taken, taken + game.pile.length) }
 }
 
+function combinations(cards: Pile, size: number): readonly Pile[] {
+  if (size === 0) return [[]]
+  if (cards.length < size) return []
+  const [first, ...rest] = cards
+  return [...combinations(rest, size - 1).map((combo) => [first, ...combo]), ...combinations(rest, size)]
+}
+
+// Sampling a space smaller than the sample only approximates an average we could compute exactly. On the last hand
+// of a round the unseen pool is the opponent's hand, so there is one world rather than `cap` copies of it.
+function plausibleWorlds(game: State, cap: number): readonly State[] {
+  const opponents = getOpponents(game)
+
+  if (opponents.length === 1 && game.pile.length === 0) {
+    const exact = combinations(unseenFrom(game), opponents[0].hand.length)
+    if (exact.length > 0 && exact.length <= cap) {
+      return exact.map((hand) => ({
+        ...game,
+        players: game.players.map((player, index) => (index === game.turn ? player : { ...player, hand })),
+      }))
+    }
+  }
+
+  return Array.from({ length: cap }, (_, index) => determinize(game, index))
+}
+
 function searchMove(game: State, options: OpponentOptions): Move {
   const evaluation = evaluationContext(game, options)
   const candidates = legalMoves(game)
-  const worlds = options.cheats
-    ? [game]
-    : Array.from({ length: Math.max(1, options.worlds ?? 1) }, (_, index) => determinize(game, index))
+  const worlds = options.cheats ? [game] : plausibleWorlds(game, Math.max(1, options.worlds ?? 1))
 
   const replyIn = (candidate: Move, world: State): number => {
     const next = play(candidate, world)

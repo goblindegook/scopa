@@ -36,7 +36,7 @@ function opponentProfile(difficulty: Difficulty, count: 2 | 3): Omit<PlayerProfi
     case 'hard':
       return { aggression: POSTURE[count], canCountCards: false }
     case 'expert':
-      return { aggression: POSTURE[count], canCountCards: true, worlds: 4060 }
+      return { aggression: POSTURE[count], canCountCards: true, worlds: 100 }
   }
 }
 
