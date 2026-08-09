@@ -105,6 +105,13 @@ const HALF_DECK = 20
 const HALF_DENARI = 5
 const MAX_PRIMIERA = 84
 
+// Cost per capture combination left available to the next player. Shaping what you leave behind is table control,
+// not a mood, so a base cost applies at every posture; the defensive coefficient is what the old gated term used and
+// now stacks on top. The base is deliberately well below the defensive weight: `tableCapturePotential` counts
+// combinations, which grows fast with table size, so a full-strength always-on term drowns the objective weights.
+const TABLE_CONTROL_BASE = 0.5
+const TABLE_CONTROL_DEFENSIVE = 6
+
 function dynamicAggression(game: State, canCountCards: boolean): number {
   const myScore = game.score[game.turn] ?? 0
   const opponentsScore = game.score.filter((_, index) => index !== game.turn)
@@ -199,6 +206,13 @@ function evaluatePrimes(cards: Pile, currentBest: Map<Suit, number>, ctx?: CardC
   }, 0)
 }
 
+function sweepingValues(table: Pile): readonly number[] {
+  if (table.length === 0) return []
+  return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].filter((value) =>
+    findCardsToTake(value, table).some((combo) => combo.length === table.length),
+  )
+}
+
 function evaluateTake(
   cards: Pile,
   table: Pile,
@@ -226,16 +240,10 @@ function evaluateTake(
 
   const takenCards = cards.slice(1)
   const remainingTable = table.filter((c) => !takenCards.some((t) => isSame(t, c)))
-  const scopaGiftWeight =
-    remainingTable.length > 0 &&
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].some((value) =>
-      findCardsToTake(value, remainingTable).some((combo) => combo.length === remainingTable.length),
-    )
-      ? -30 * temperament.caution
-      : 0
+  const scopaGiftWeight = sweepingValues(remainingTable).length > 0 ? -30 * temperament.caution : 0
 
   const blockOpponentWeight =
-    temperament.defensiveBias > 0 ? -tableCapturePotential(remainingTable) * 6 * temperament.defensiveBias : 0
+    -tableCapturePotential(remainingTable) * (TABLE_CONTROL_BASE + TABLE_CONTROL_DEFENSIVE * temperament.defensiveBias)
 
   const lastTableBonus = isLastTable ? takenCards.length * 10 * temperament.eagerness : 0
 
@@ -251,19 +259,14 @@ function evaluateTake(
   )
 }
 
-function enablesOpponentScopa(card: Card, table: Pile): boolean {
-  const newTable = [...table, card]
-  return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].some((value) =>
-    findCardsToTake(value, newTable).some((cards) => cards.length === newTable.length),
-  )
-}
-
 function evaluateDiscard(card: Card, table: Pile, temperament: Temperament): number {
-  const scopaPreventionWeight = enablesOpponentScopa(card, table) ? -1000 * temperament.caution : 0
+  const scopaPreventionWeight = sweepingValues([...table, card]).length > 0 ? -1000 * temperament.caution : 0
   const settebelloWeight = isSettebello(card) ? -1700 * temperament.caution : 0
   const primeWeight = -primePoints(card) * temperament.caution
   const denariWeight = isDenari(card) ? -10 * temperament.caution : 0
-  const blockOpponentWeight = -tableCapturePotential([...table, card]) * 8 * temperament.defensiveBias
+  const blockOpponentWeight =
+    -tableCapturePotential([...table, card]) *
+    (TABLE_CONTROL_BASE + TABLE_CONTROL_DEFENSIVE * temperament.defensiveBias)
 
   return scopaPreventionWeight + settebelloWeight + primeWeight + denariWeight + blockOpponentWeight
 }

@@ -466,10 +466,31 @@ describe('card counting', () => {
 
     const withCounting = move(game, { canCountCards: true })
 
-    const withoutCounting = move(game)
-    expect(withCounting.take.length).toBeGreaterThan(withoutCounting.take.length)
-    expect(withCounting.take).toEqual(expect.arrayContaining([coppe(5), coppe(2), coppe(3)]))
     expect(withCounting.card).toEqual(coppe(10))
+    expect(withCounting.take).toEqual(expect.arrayContaining([coppe(5), coppe(2), coppe(3)]))
+  })
+
+  // This used to require counting: without it the bot took the smaller capture. Always-on table control reaches the
+  // same decision, because the three-card take also leaves the opponent the least to work with.
+  test('prefers the larger capture when trailing on card count, with or without counting', () => {
+    const game: State = {
+      state: 'play',
+      turn: 0,
+      firstPlayer: 0,
+      score: [0, 0],
+      table: [bastoni(6), coppe(5), coppe(2), coppe(3)],
+      players: [
+        { id: 0, hand: [spade(6), coppe(10)], pile: [bastoni(7)], scope: 0 },
+        { id: 1, hand: [], pile: [denari(1), denari(2), denari(3), denari(4)], scope: 0 },
+      ],
+      pile: [denari(3)],
+      lastTaken: [],
+    }
+
+    const { card, take } = move(game)
+
+    expect(card).toEqual(coppe(10))
+    expect(take).toEqual(expect.arrayContaining([coppe(5), coppe(2), coppe(3)]))
   })
 })
 
@@ -616,5 +637,15 @@ describe('full game simulation', () => {
 
     expect(game.state).toBe('stop')
     // console.table(game.score.map((score, playerId) => ({ playerId, score })))
+  })
+})
+
+describe('table control', () => {
+  test('discards the card that leaves the opponent fewer ways to capture', () => {
+    const game = setupGame([coppe(1), coppe(3)], [spade(8), spade(10)])
+
+    const { card, take } = move(game, { aggression: 0 })
+
+    expect({ card, take }).toEqual({ card: spade(10), take: [] })
   })
 })

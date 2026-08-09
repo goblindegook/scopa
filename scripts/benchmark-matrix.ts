@@ -255,12 +255,15 @@ async function main(): Promise<void> {
     options.candidates.map((candidate) => {
       const group = runs.filter((run) => run.players === players && run.candidate === candidate)
       const roundWin = group.map((run) => run.liftRoundWin)
+      const matchWin = group.map((run) => run.liftMatchWin)
       return {
         mode: `${players}p`,
         candidate: label(candidate, options.control),
         roundWin: mean(roundWin),
         sd: standardDeviation(roundWin),
-        matchWin: mean(group.map((run) => run.liftMatchWin)),
+        matchWin: mean(matchWin),
+        // §6 calls match win the primary metric, so it needs a spread of its own to be actionable.
+        matchSd: standardDeviation(matchWin),
         net: mean(group.map((run) => run.netPoints)),
         lift: Object.fromEntries(
           CATEGORIES.map((category) => [category, mean(group.map((run) => run.lift[category]))]),
@@ -282,7 +285,7 @@ async function main(): Promise<void> {
       mode: row.mode,
       candidate: row.candidate,
       roundWin: `${row.roundWin.toFixed(2)} ±${row.sd.toFixed(2)}`,
-      matchWin: row.matchWin.toFixed(2),
+      matchWin: `${row.matchWin.toFixed(2)} ±${row.matchSd.toFixed(2)}`,
       net: row.net.toFixed(4),
       scope: row.lift.scope.toFixed(3),
       cards: row.lift.cards.toFixed(2),
