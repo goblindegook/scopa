@@ -6,6 +6,7 @@ import { TitleScreen } from './TitleScreen'
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+  window.localStorage.clear()
 })
 
 const renderTitleScreen = (props: Partial<React.ComponentProps<typeof TitleScreen>> = {}) =>
@@ -66,5 +67,22 @@ describe('difficulty', () => {
 
     expect(screen.getByLabelText('Select difficulty Hard')).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByLabelText('Select difficulty Normal')).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  test('remembers the picked avatar and difficulty across a remount', () => {
+    const { unmount } = render(<TitleScreen loadingProgress={1} onStart={vi.fn()} />)
+
+    fireEvent.click(screen.getByLabelText('Select avatar 🦊'))
+    fireEvent.click(screen.getByLabelText('Select difficulty Expert'))
+    unmount()
+
+    const onStart = vi.fn()
+    render(<TitleScreen loadingProgress={1} onStart={onStart} />)
+
+    expect(screen.getByLabelText('Select avatar 🦊')).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByLabelText('Select difficulty Expert')).toHaveAttribute('aria-pressed', 'true')
+
+    fireEvent.click(screen.getAllByText('2 Players')[0])
+    expect(onStart).toHaveBeenCalledWith('🦊', 2, 'expert')
   })
 })

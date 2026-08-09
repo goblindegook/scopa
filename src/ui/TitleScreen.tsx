@@ -1,10 +1,10 @@
 import styled from '@emotion/styled'
-import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { AVATARS, AvatarPicker } from './AvatarPicker'
 import { Button } from './Button'
 import { DifficultyPicker } from './DifficultyPicker'
 import type { Difficulty } from './OfflineMode'
+import { useLocalStorage } from './useLocalStorage'
 
 const LANGUAGES = [
   { code: 'en', flag: '🇬🇧', label: 'EN' },
@@ -203,8 +203,8 @@ interface TitleScreenProps {
 
 export const TitleScreen = ({ loadingProgress, onStart, resume, onStartMultiplayer }: TitleScreenProps) => {
   const { t, i18n } = useTranslation()
-  const [selectedAvatar, setSelectedAvatar] = React.useState(AVATARS[0])
-  const [difficulty, setDifficulty] = React.useState<Difficulty>('normal')
+  const [selectedAvatar, setSelectedAvatar] = useLocalStorage('last-avatar', AVATARS[0])
+  const [difficulty, setDifficulty] = useLocalStorage<Difficulty>('last-difficulty', 'normal')
 
   return (
     <TitleScreenContainer>
