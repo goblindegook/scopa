@@ -74,6 +74,7 @@ const App = () => {
     setIsTitleMenuVisible(false)
     if (session || !savedGameState) return
     setSession({
+      id: crypto.randomUUID(),
       game: savedGameState.game,
       playerProfiles: savedGameState.playerProfiles,
       difficulty: savedGameState.difficulty,
@@ -88,6 +89,7 @@ const App = () => {
     <>
       {session && (
         <OfflineMode
+          key={session.id}
           session={session}
           onGameStateChange={updateGame}
           onBack={() => setIsTitleMenuVisible(true)}

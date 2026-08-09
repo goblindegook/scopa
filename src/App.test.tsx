@@ -168,6 +168,19 @@ test('opens the title screen over a local game and resumes it in place', async (
   expect(screen.queryByRole('button', { name: /new local game\s*2 players/i })).not.toBeInTheDocument()
 })
 
+test('starting a new local game from the overlay replaces the game in progress', async () => {
+  render(<App />)
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Select avatar 🦊' }))
+  fireEvent.click(screen.getByRole('button', { name: /new local game\s*2 players/i }))
+  expect(await screen.findByText('🦊 0')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
+  fireEvent.click(await screen.findByRole('button', { name: /new local game\s*3 players/i }))
+
+  expect(await screen.findByText('👾 0')).toBeInTheDocument()
+})
+
 test('opens the title screen over an online game without touching the URL', async () => {
   joinOnlineGame()
 

@@ -9,6 +9,7 @@ import type { Move, State } from '../engine/state'
 import { type PlayerProfile, Scopa } from './Scopa'
 
 export interface OfflineSession {
+  readonly id: string
   readonly game: State
   readonly playerProfiles: readonly PlayerProfile[]
   readonly difficulty: Difficulty
@@ -64,7 +65,7 @@ export function startOfflineSession(
     result = dealShuffledDeck(undefined, count)
   }
 
-  return { session: { game: result.value, playerProfiles, difficulty }, redealt }
+  return { session: { id: crypto.randomUUID(), game: result.value, playerProfiles, difficulty }, redealt }
 }
 
 interface OfflineModeProps {
