@@ -10,13 +10,15 @@ import { Scopa } from './Scopa'
 import { useMultiplayerSession } from './useMultiplayerSession'
 
 const AvatarScreen = styled('main')`
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: rgba(0, 0, 0, 0.6);
-  flex: 1;
-  height: 100vh;
-  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
 `
 
 const AvatarScreenContent = styled('div')`
