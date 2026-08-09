@@ -17,8 +17,18 @@ const execFileAsync = promisify(execFile)
 
 const SIMULATOR = 'scripts/simulate-matches.ts'
 
+// What src/ui/OfflineMode.tsx actually ships, per player count. `shipped` resolves to this in --control/--candidate,
+// so ship decisions are measured against the real default rather than against the neutral control.
+const SHIPPED: Record<2 | 3, string> = {
+  2: 'aggression=-1',
+  3: 'aggression=1',
+}
+
+const SHIPPED_KEYWORD = 'shipped'
+
 const DEFAULT_CANDIDATES: readonly string[] = [
   'aggression=0',
+  SHIPPED_KEYWORD,
   'aggression=1',
   'aggression=-1',
   '',
@@ -28,6 +38,8 @@ const DEFAULT_CANDIDATES: readonly string[] = [
   'count',
   'lookahead',
 ]
+
+const resolve = (spec: string, players: 2 | 3): string => (spec === SHIPPED_KEYWORD ? SHIPPED[players] : spec)
 
 interface Options {
   matches: number
@@ -78,7 +90,11 @@ function usage(): string {
     '  --json               emit raw aggregated JSON instead of a table',
     '',
     'Profile spec is the same as simulate-matches.ts: [variant=<name>][,aggression=<n>][,count][,lookahead].',
-    'An empty spec ("") means the shipping defaults with dynamic aggression.',
+    'An empty spec ("") means dynamic aggression with counting and lookahead off.',
+    '',
+    `--control and --candidate also accept the keyword "${SHIPPED_KEYWORD}", which resolves per player count to what`,
+    `src/ui/OfflineMode.tsx ships: 2p "${SHIPPED[2]}", 3p "${SHIPPED[3]}". Keep the default aggression=0 control to`,
+    `attribute a change; use --control ${SHIPPED_KEYWORD} to decide whether it is worth shipping.`,
     '',
     'Scope lift is in points per round and is unbounded (Scopa scores one point per sweep). The other four',
     'categories are winner-takes-all, so their lift is in percentage points. "net" converts everything to',
@@ -150,10 +166,12 @@ function simulatorArgs({
     '--rotate-seats',
     '--json',
   ]
+  const control = resolve(options.control, players)
+  const arm = resolve(candidate, players)
   // The candidate always takes the last seat; every other seat is a control, so 3p measures one candidate against two.
   return players === 2
-    ? [...base, '--p0', options.control, '--p1', candidate]
-    : [...base, '--p0', options.control, '--p1', options.control, '--p2', candidate]
+    ? [...base, '--p0', control, '--p1', arm]
+    : [...base, '--p0', control, '--p1', control, '--p2', arm]
 }
 
 async function runOne(job: { players: 2 | 3; candidate: string; seed: number }, options: Options): Promise<Run> {
@@ -217,6 +235,7 @@ function standardDeviation(values: readonly number[]): number {
 
 function label(candidate: string, control: string): string {
   if (candidate === control) return `control (${control})`
+  if (candidate === SHIPPED_KEYWORD) return 'shipped default'
   return candidate === '' ? 'dynamic aggression' : candidate
 }
 

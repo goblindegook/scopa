@@ -20,12 +20,17 @@ const dealShuffledDeck = (score?: readonly number[], players: 2 | 3 = 2, previou
     previousFirstPlayer: previousFirstPlayer ?? randomFirstPlayer(players),
   })
 
+// Benchmarked posture per player count: head-to-head rewards defensive play, three-way rewards aggressive play.
+// Sampling aggression uniformly, as this used to, centred it near 0 — the weakest setting measured. Counting stays
+// off in both: its measured gain was conditional on dynamic aggression and vanished once aggression was fixed.
+const OPPONENT_AGGRESSION: Record<2 | 3, number> = { 2: -1, 3: 1 }
+
 function createPlayerProfiles(playerOneAvatar: string, count: 2 | 3): readonly PlayerProfile[] {
   return [playerOneAvatar, '🤖', '👾'].slice(0, count).map((avatar) => ({
     avatar,
-    canCountCards: Math.random() >= 0.5,
+    canCountCards: false,
     canLookAhead: false,
-    aggression: Math.random() >= 0.5 ? Math.random() * 2 - 1 : undefined,
+    aggression: OPPONENT_AGGRESSION[count],
   }))
 }
 
