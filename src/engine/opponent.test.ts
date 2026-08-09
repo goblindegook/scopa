@@ -2,7 +2,7 @@ import { isOk, type Result } from '@pacote/result'
 import { shuffle } from '@pacote/shuffle'
 import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
-import { bastoni, coppe, deck, denari, isSame, type Pile, spade } from './cards'
+import { bastoni, coppe, deck, denari, type Pile, spade } from './cards'
 import { move, type OpponentOptions } from './opponent'
 import { deal, play } from './scopa'
 import type { State } from './state'
@@ -80,7 +80,7 @@ describe('taking moves', () => {
     expect(take).toEqual([denari(7), denari(2)])
   })
 
-  test('with counting and lookahead, take settebello immediately when available', () => {
+  test('with counting, take settebello immediately when available', () => {
     const game: State = {
       state: 'play',
       turn: 0,
@@ -95,7 +95,7 @@ describe('taking moves', () => {
       lastTaken: [],
     }
 
-    const { card, take } = move(game, { canCountCards: true, canLookAhead: true })
+    const { card, take } = move(game, { canCountCards: true })
 
     expect(card).toEqual(coppe(7))
     expect(take).toEqual([denari(7)])
@@ -196,7 +196,7 @@ describe('taking moves', () => {
       score: [0, 0],
     }
 
-    expect(isOk(play(move(game, { canCountCards: true, canLookAhead: true }), game))).toBe(true)
+    expect(isOk(play(move(game, { canCountCards: true }), game))).toBe(true)
   })
 
   test('avoid gifting a scopa even when the alternative takes three denari', () => {
@@ -269,10 +269,10 @@ describe('discard moves', () => {
     expect(take).toHaveLength(0)
   })
 
-  test('with counting and lookahead, keep settebello in hand when another discard exists', () => {
+  test('with counting, keep settebello in hand when another discard exists', () => {
     const game = setupGame([denari(2), denari(3)], [denari(7), denari(1)])
 
-    const { card, take } = move(game, { canCountCards: true, canLookAhead: true })
+    const { card, take } = move(game, { canCountCards: true })
 
     expect(card).toEqual(denari(1))
     expect(take).toHaveLength(0)
@@ -494,42 +494,13 @@ describe('card counting', () => {
   })
 })
 
-describe('canLookAhead', () => {
-  test('discounts setup when opponent can plausibly disrupt it', () => {
-    const table: Pile = [denari(3), denari(9)]
-    const hand: Pile = [denari(1), denari(2)]
-    const knownCards = [...table, ...hand]
-    const game: State = {
-      state: 'play',
-      turn: 0,
-      firstPlayer: 0,
-      score: [0, 0],
-      table,
-      players: [
-        { id: 0, hand, pile: [], scope: 0 },
-        { id: 1, hand: [], pile: [], scope: 0 },
-      ],
-      pile: deck().filter((card) => !knownCards.some((k) => isSame(k, card))),
-      lastTaken: [],
-    }
-
-    const naiveLookahead = move(game, { canCountCards: false, canLookAhead: true })
-    const countingLookahead = move(game, { canCountCards: true, canLookAhead: true })
-
-    expect(naiveLookahead.take).toHaveLength(0)
-    expect(countingLookahead.take).toHaveLength(0)
-    expect(naiveLookahead.card).toEqual(denari(2))
-    expect(countingLookahead.card).toEqual(denari(1))
-  })
-})
-
 describe('aggression', () => {
   test('when behind in running score and aggression is undefined, it plays aggressively', () => {
     const game = setupGame([denari(1), denari(4), denari(5), coppe(9)], [coppe(8), bastoni(9)], [], [2, 9])
 
-    const implicit = move(game, { canCountCards: false, canLookAhead: false })
-    const aggressive = move(game, { canCountCards: false, canLookAhead: false, aggression: 0.9 })
-    const defensive = move(game, { canCountCards: false, canLookAhead: false, aggression: -0.9 })
+    const implicit = move(game, { canCountCards: false })
+    const aggressive = move(game, { canCountCards: false, aggression: 0.9 })
+    const defensive = move(game, { canCountCards: false, aggression: -0.9 })
 
     expect(implicit).toEqual(aggressive)
     expect(implicit).not.toEqual(defensive)
@@ -538,9 +509,9 @@ describe('aggression', () => {
   test('when ahead in running score and aggression is undefined, it plays defensively', () => {
     const game = setupGame([denari(1), denari(4), denari(5), coppe(9)], [coppe(8), bastoni(9)], [], [9, 2])
 
-    const implicit = move(game, { canCountCards: false, canLookAhead: false })
-    const defensive = move(game, { canCountCards: false, canLookAhead: false, aggression: -0.9 })
-    const aggressive = move(game, { canCountCards: false, canLookAhead: false, aggression: 0.9 })
+    const implicit = move(game, { canCountCards: false })
+    const defensive = move(game, { canCountCards: false, aggression: -0.9 })
+    const aggressive = move(game, { canCountCards: false, aggression: 0.9 })
 
     expect(implicit).toEqual(defensive)
     expect(implicit).not.toEqual(aggressive)
@@ -557,10 +528,10 @@ describe('aggression', () => {
       players: [{ ...base.players[0], pile: [denari(7)] }, base.players[1]],
     }
 
-    const implicitBehind = move(behindOnRound, { canCountCards: true, canLookAhead: false })
-    const implicitAhead = move(aheadOnRound, { canCountCards: true, canLookAhead: false })
-    const aggressiveBehind = move(behindOnRound, { canCountCards: true, canLookAhead: false, aggression: 0.9 })
-    const defensiveAhead = move(aheadOnRound, { canCountCards: true, canLookAhead: false, aggression: -0.9 })
+    const implicitBehind = move(behindOnRound, { canCountCards: true })
+    const implicitAhead = move(aheadOnRound, { canCountCards: true })
+    const aggressiveBehind = move(behindOnRound, { canCountCards: true, aggression: 0.9 })
+    const defensiveAhead = move(aheadOnRound, { canCountCards: true, aggression: -0.9 })
 
     expect(implicitBehind).toEqual(aggressiveBehind)
     expect(implicitAhead).toEqual(defensiveAhead)
@@ -596,9 +567,9 @@ describe('aggression', () => {
       players: [{ ...base.players[0], pile: highProgressPile }, base.players[1]],
     }
 
-    const implicitWeak = move(weakProgress, { canCountCards: false, canLookAhead: false })
-    const implicitStrong = move(strongProgress, { canCountCards: false, canLookAhead: false })
-    const defensiveStrong = move(strongProgress, { canCountCards: false, canLookAhead: false, aggression: -0.9 })
+    const implicitWeak = move(weakProgress, { canCountCards: false })
+    const implicitStrong = move(strongProgress, { canCountCards: false })
+    const defensiveStrong = move(strongProgress, { canCountCards: false, aggression: -0.9 })
 
     expect(implicitWeak.take.length).toBeGreaterThanOrEqual(implicitStrong.take.length)
     expect(implicitStrong).toEqual(defensiveStrong)
@@ -607,8 +578,8 @@ describe('aggression', () => {
   test('with aggression above 0 it captures more aggressively, below 0 it prioritizes blocking', () => {
     const game = setupGame([denari(1), denari(4), denari(5), coppe(9)], [coppe(8), bastoni(9)])
 
-    const aggressive = move(game, { canCountCards: false, canLookAhead: false, aggression: 0.9 })
-    const defensive = move(game, { canCountCards: false, canLookAhead: false, aggression: -0.9 })
+    const aggressive = move(game, { canCountCards: false, aggression: 0.9 })
+    const defensive = move(game, { canCountCards: false, aggression: -0.9 })
 
     expect(aggressive.card).toEqual(bastoni(9))
     expect(aggressive.take).toEqual([coppe(9)])
@@ -626,9 +597,9 @@ describe('full game simulation', () => {
   test('plays a complete game with two AI players', () => {
     let game = getGameState(deal(deck(), { players: 2, previousFirstPlayer: 1 }))
     const playerProfiles: readonly OpponentOptions[] = [
-      { canCountCards: true, canLookAhead: true, aggression: 0 },
-      { canCountCards: true, canLookAhead: true, aggression: 0 },
-      { canCountCards: true, canLookAhead: true, aggression: 0 },
+      { canCountCards: true, aggression: 0 },
+      { canCountCards: true, aggression: 0 },
+      { canCountCards: true, aggression: 0 },
     ]
 
     while (game.state !== 'stop') {

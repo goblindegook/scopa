@@ -21,7 +21,6 @@ import { useRefMap } from './useRefMap'
 export interface PlayerProfile {
   avatar: string
   canCountCards?: boolean
-  canLookAhead?: boolean
   aggression?: number
 }
 

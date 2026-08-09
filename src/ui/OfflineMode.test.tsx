@@ -23,14 +23,6 @@ describe('startOfflineSession', () => {
     ])
   })
 
-  it('never enables lookahead', () => {
-    expect(opponentProfiles(2)).toEqual([expect.objectContaining({ canLookAhead: false })])
-    expect(opponentProfiles(3)).toEqual([
-      expect.objectContaining({ canLookAhead: false }),
-      expect.objectContaining({ canLookAhead: false }),
-    ])
-  })
-
   it('deals every opponent the same profile from one match to the next', () => {
     expect(opponentProfiles(2)).toEqual(opponentProfiles(2))
     expect(opponentProfiles(3)).toEqual(opponentProfiles(3))

@@ -5,7 +5,6 @@ import type { Move, Player, State } from './state.ts'
 
 export interface OpponentOptions {
   canCountCards?: boolean
-  canLookAhead?: boolean
   aggression?: number
 }
 
@@ -27,10 +26,7 @@ interface CardCountContext {
   nextOpponent: OpponentProfile
 }
 
-export function move(
-  game: State,
-  { canCountCards = false, canLookAhead = false, aggression }: OpponentOptions = {},
-): Move {
+export function move(game: State, { canCountCards = false, aggression }: OpponentOptions = {}): Move {
   const effectiveAggression = aggression ?? dynamicAggression(game, canCountCards)
   const aggressiveBias = Math.max(effectiveAggression, 0)
   const defensiveBias = Math.max(-effectiveAggression, 0)
@@ -39,7 +35,6 @@ export function move(
     caution: 1 - aggressiveBias * 0.4 + defensiveBias * 1.2,
     defensiveBias,
   }
-  const lookaheadDiscount = 0.4 * (1 + aggressiveBias * 0.5 - defensiveBias * 0.2)
 
   const { hand, pile } = game.players[game.turn]
   const table = game.table
@@ -47,27 +42,15 @@ export function move(
   const ownDenariCount = pile.filter(isDenari).length
   const ctx = canCountCards ? buildContext(game) : null
   const isLastTable = game.pile.length === 0
-  const uncountedCards = canLookAhead && canCountCards ? inferUncountedCards(game) : []
 
   let bestMove: Move | null = null
   let bestScore = -Infinity
 
   for (const card of hand) {
-    const remainingHand = hand.filter((c) => !isSame(c, card))
     const availableTakes = findCardsToTake(card[0], table)
 
     if (availableTakes.length === 0) {
-      const discardTable = [...table, card]
-      const discardTables = canLookAhead
-        ? canCountCards
-          ? simulatedOpponentTables(discardTable, uncountedCards)
-          : [discardTable]
-        : []
-      const discardLookahead = canLookAhead
-        ? lookaheadDiscount *
-          lookaheadScore(remainingHand, discardTables, currentBestPrimes, ownDenariCount, isLastTable, temperament)
-        : 0
-      const discardScore = evaluateDiscard(card, table, temperament) + discardLookahead
+      const discardScore = evaluateDiscard(card, table, temperament)
       if (discardScore > bestScore) {
         bestScore = discardScore
         bestMove = { card, take: [] }
@@ -75,19 +58,15 @@ export function move(
     }
 
     for (const takenCards of availableTakes) {
-      const nextTable = table.filter((c) => !takenCards.some((t) => isSame(t, c)))
-      const takeTables = canLookAhead
-        ? canCountCards
-          ? simulatedOpponentTables(nextTable, uncountedCards)
-          : [nextTable]
-        : []
-      const takeLookahead = canLookAhead
-        ? lookaheadDiscount *
-          lookaheadScore(remainingHand, takeTables, currentBestPrimes, ownDenariCount, isLastTable, temperament)
-        : 0
-      const takeScore =
-        evaluateTake([card, ...takenCards], table, currentBestPrimes, ownDenariCount, temperament, ctx, isLastTable) +
-        takeLookahead
+      const takeScore = evaluateTake(
+        [card, ...takenCards],
+        table,
+        currentBestPrimes,
+        ownDenariCount,
+        temperament,
+        ctx,
+        isLastTable,
+      )
       if (takeScore > bestScore) {
         bestScore = takeScore
         bestMove = { card, take: takenCards }
@@ -172,23 +151,6 @@ function buildContext(game: State): CardCountContext {
   }
 }
 
-function inferUncountedCards(game: State): Pile {
-  return [...game.pile, ...getOpponents(game).flatMap((p) => p.hand)]
-}
-
-function simulatedOpponentTables(nextTable: Pile, uncountedCards: Pile): readonly Pile[] {
-  const tables: Pile[] = [nextTable]
-  for (const card of uncountedCards) {
-    const captures = findCardsToTake(card[0], nextTable)
-    for (const taken of captures) {
-      if (taken.length > 0) {
-        tables.push(nextTable.filter((c) => !taken.some((t) => isSame(t, c))))
-      }
-    }
-  }
-  return tables
-}
-
 function bestPrimes(pile: Pile, initial: Map<Suit, number> = new Map()): Map<Suit, number> {
   return pile.reduce((best, card) => {
     const pts = primePoints(card)
@@ -269,37 +231,4 @@ function evaluateDiscard(card: Card, table: Pile, temperament: Temperament): num
     (TABLE_CONTROL_BASE + TABLE_CONTROL_DEFENSIVE * temperament.defensiveBias)
 
   return scopaPreventionWeight + settebelloWeight + primeWeight + denariWeight + blockOpponentWeight
-}
-
-function lookaheadScore(
-  remainingHand: Pile,
-  tables: readonly Pile[],
-  currentBestPrimes: Map<Suit, number>,
-  ownDenariCount: number,
-  isLastTable: boolean,
-  temperament: Temperament,
-): number {
-  if (tables.length === 0) return 0
-  let total = 0
-  for (const table of tables) {
-    let best = -Infinity
-    for (const card of remainingHand) {
-      const discardScore = evaluateDiscard(card, table, temperament)
-      if (discardScore > best) best = discardScore
-      for (const taken of findCardsToTake(card[0], table)) {
-        const takeScore = evaluateTake(
-          [card, ...taken],
-          table,
-          currentBestPrimes,
-          ownDenariCount,
-          temperament,
-          null,
-          isLastTable,
-        )
-        if (takeScore > best) best = takeScore
-      }
-    }
-    total += best === -Infinity ? 0 : best
-  }
-  return total / tables.length
 }

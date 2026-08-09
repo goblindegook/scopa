@@ -29,7 +29,6 @@ function createPlayerProfiles(playerOneAvatar: string, count: 2 | 3): readonly P
   return [playerOneAvatar, '🤖', '👾'].slice(0, count).map((avatar) => ({
     avatar,
     canCountCards: false,
-    canLookAhead: false,
     aggression: OPPONENT_AGGRESSION[count],
   }))
 }

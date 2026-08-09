@@ -33,10 +33,7 @@ const DEFAULT_CANDIDATES: readonly string[] = [
   'aggression=-1',
   '',
   'aggression=0,count',
-  'aggression=0,lookahead',
-  'aggression=0,count,lookahead',
   'count',
-  'lookahead',
 ]
 
 const resolve = (spec: string, players: 2 | 3): string => (spec === SHIPPED_KEYWORD ? SHIPPED[players] : spec)
@@ -89,8 +86,8 @@ function usage(): string {
     '  --concurrency <n>    parallel simulator processes (default: cores - 1)',
     '  --json               emit raw aggregated JSON instead of a table',
     '',
-    'Profile spec is the same as simulate-matches.ts: [variant=<name>][,aggression=<n>][,count][,lookahead].',
-    'An empty spec ("") means dynamic aggression with counting and lookahead off.',
+    'Profile spec is the same as simulate-matches.ts: [variant=<name>][,aggression=<n>][,count].',
+    'An empty spec ("") means dynamic aggression with counting off.',
     '',
     `--control and --candidate also accept the keyword "${SHIPPED_KEYWORD}", which resolves per player count to what`,
     `src/ui/OfflineMode.tsx ships: 2p "${SHIPPED[2]}", 3p "${SHIPPED[3]}". Keep the default aggression=0 control to`,

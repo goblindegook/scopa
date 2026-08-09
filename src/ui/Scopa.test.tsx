@@ -432,7 +432,7 @@ test('opponent turn receives configured aggression from player profile', async (
     <Scopa
       playerId={0}
       state={initialState}
-      playerProfiles={[{ avatar: '🐵' }, { avatar: '🤖', canCountCards: true, canLookAhead: false, aggression: 0.5 }]}
+      playerProfiles={[{ avatar: '🐵' }, { avatar: '🤖', canCountCards: true, aggression: 0.5 }]}
       onPlay={vitest.fn()}
       onOpponentTurn={onOpponentTurn}
       onScore={vitest.fn()}
@@ -444,7 +444,6 @@ test('opponent turn receives configured aggression from player profile', async (
       expect(onOpponentTurn).toHaveBeenCalledWith(expect.anything(), {
         avatar: expect.anything(),
         canCountCards: true,
-        canLookAhead: false,
         aggression: 0.5,
       }),
     { timeout: 2500 },

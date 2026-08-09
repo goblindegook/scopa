@@ -57,9 +57,9 @@ function usage(): string {
     '  node --experimental-strip-types scripts/simulate-matches.ts --matches <N> --p0 [spec] --p1 [spec] [--p2 [spec]]',
     '',
     'Player spec:',
-    '  [variant=<name>][,aggression=<number>][,count][,lookahead]',
+    '  [variant=<name>][,aggression=<number>][,count]',
     '  Examples:',
-    '    --p0 aggression=0.4,count,lookahead',
+    '    --p0 aggression=0.4,count',
     '    --p0 variant=baseline --p1 variant=baseline,count',
     '    --p1 count',
     '    --p2',
@@ -73,7 +73,7 @@ function usage(): string {
     '  --json             machine-readable output (also how benchmark-matrix.ts consumes runs)',
     '',
     'Defaults:',
-    '  matches=100, players=2, variant=baseline, canCountCards=false, canLookAhead=false, aggression=dynamic',
+    '  matches=100, players=2, variant=baseline, canCountCards=false, aggression=dynamic',
     '  seed=none (non-reproducible), rotate-seats=off, output=table',
     '',
     'Shard across cores by running one process per seed and pooling the --json output.',
@@ -95,7 +95,7 @@ function parseNumber(value: string, argName: string): number {
 function defaultProfile(): Profile {
   return {
     variant: 'baseline',
-    options: { canCountCards: false, canLookAhead: false, aggression: undefined },
+    options: { canCountCards: false, aggression: undefined },
   }
 }
 
@@ -115,10 +115,6 @@ function parseProfileSpec(spec: string, argName: string): Profile {
       profile.options.canCountCards = true
       continue
     }
-    if (normalized === 'lookahead') {
-      profile.options.canLookAhead = true
-      continue
-    }
     if (normalized.startsWith('aggression=')) {
       const value = token.slice('aggression='.length)
       profile.options.aggression = parseNumber(value, `${argName} aggression`)
@@ -132,7 +128,7 @@ function parseProfileSpec(spec: string, argName: string): Profile {
       profile.variant = name
       continue
     }
-    throw new Error(`Unknown token "${token}" in ${argName}. Expected variant=<name>,aggression=<n>,count,lookahead`)
+    throw new Error(`Unknown token "${token}" in ${argName}. Expected variant=<name>,aggression=<n>,count`)
   }
 
   return profile
@@ -415,7 +411,6 @@ function describeProfile(profile: Profile): string {
     profile.variant,
     aggression == null ? 'aggression=dynamic' : `aggression=${aggression.toFixed(2)}`,
     profile.options.canCountCards ? 'count' : null,
-    profile.options.canLookAhead ? 'lookahead' : null,
   ]
     .filter(Boolean)
     .join(',')
@@ -435,7 +430,6 @@ export interface Report {
     variant: string
     aggression: number | null
     canCountCards: boolean
-    canLookAhead: boolean
     roundsPlayed: number
     roundsWonPct: number
     roundsWonMoe: number
@@ -475,7 +469,6 @@ function buildReport({
       variant: args.profiles[playerId].variant,
       aggression: args.profiles[playerId].options.aggression ?? null,
       canCountCards: args.profiles[playerId].options.canCountCards ?? false,
-      canLookAhead: args.profiles[playerId].options.canLookAhead ?? false,
       roundsPlayed: entry.roundsPlayed,
       roundsWonPct: percentage(entry.roundsWon, entry.roundsPlayed),
       roundsWonMoe: marginOfError(entry.roundsWon, entry.roundsPlayed),
