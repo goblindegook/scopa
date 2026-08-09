@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:mutation": "stryker run",
-    "simulate": "node --experimental-strip-types scripts/simulate-matches.ts"
+    "simulate": "node --experimental-strip-types scripts/simulate-matches.ts",
+    "benchmark": "node --experimental-strip-types scripts/benchmark-matrix.ts"
   },
   "dependencies": {
     "@emotion/styled": "^11.14.1",

@@ -61,18 +61,38 @@ Pure game logic with no UI dependencies. All public functions return `Result<Sta
 
 React components using Emotion styled-components and Framer Motion for card animations.
 
-- **`Game.tsx`** — Root game component. Manages game state, animation phase machine (`idle → play → taking`), and
-  coordinates between player interactions and opponent turns
+- **`Scopa.tsx`** — Shared game surface for both offline and online play. Manages the animation phase machine
+  (`idle → play → taking`) via `AnimationController`, and coordinates between player interactions and opponent turns
+  through the `onPlay`/`onOpponentTurn` callbacks it's given — it doesn't know or care whether the "opponent" is the
+  local AI or a remote player
+- **`OfflineMode.tsx`** — Local vs-AI session: deals with `deal()`/`shuffle()`, drives `onOpponentTurn` from
+  `engine/opponent.ts`'s `move()` with an artificial delay, renders `Scopa`
+- **`OnlineMode.tsx`** — Multiplayer session: wraps `useMultiplayerSession`, shows `ChooseAvatar` or `Lobby` before a
+  game exists, otherwise renders `Scopa` with `onOpponentTurn` fed by the socket's move queue
+- **`useMultiplayerSession.ts`** — PartyKit client hook: persists `sid`/avatar per room in `sessionStorage`, owns the
+  lockstep move queue, exposes `chooseAvatar`/`start`/`confirm`/`sendMove`/`cancelMove`
+- **`Lobby.tsx`** / **`AvatarPicker.tsx`** — Pre-game multiplayer screens (waiting room, avatar selection)
+- **`useActiveRoom.ts`** — Tracks the last active multiplayer room for title-screen resume
 - **`Card.tsx`** — Card rendering (lazy-loads JPG assets from `src/ui/assets/{suit}/{value}.jpg`), `AnimatedCard` (
   fixed-position overlay for move animations), `DealtCard` (deal-in animation wrapper), and `Duration` constants
 - **`Player.tsx` / `Opponent.tsx`** — Player hand and taken pile display (face-up vs. face-down)
 - **`Table.tsx`** — Table area with selectable cards for taking selection
 - **`ScoreBoard.tsx`** — End-of-game score display and `GameOver` screen
-- **`TitleScreen.tsx`** — Start screen shown at `state === 'initial'`
+- **`TitleScreen.tsx`** — Start screen shown when there's no active session or room
+
+### Multiplayer Worker (`src/party/`)
+
+PartyKit Durable Object, deployed as `scopa-party` (see `partykit.json`).
+
+- **`scopa.ts`** — Room authority: validates turns against `game.turn`, deals every round (redealing on the engine's
+  >2-kings rejection), broadcasts `move`/`state` messages, uses `storage.setAlarm` for inactivity cleanup
+- **`room.ts`** — Pure lobby guards (`canJoin`, `canStart`, `allConfirmed`, `upsertPlayer`), no PartyKit imports
 
 ### App wiring (`src/App.tsx`)
 
-Composes engine functions into the `Game` component's props: `onStart`, `onPlay`, `onOpponentTurn`, `onScore`.
+Thin router between `TitleScreen`, `OfflineMode`, and `OnlineMode` based on whether a local session or a `?room=` id
+is active. Does not itself compose engine functions into game props — `OfflineMode` and `OnlineMode` each wire their
+own `onPlay`/`onOpponentTurn`/`onScore` into `Scopa`.
 
 ## TDD — Non-Negotiable
 
@@ -92,7 +112,7 @@ Do not add comments that explain what the test is obviously doing. Focus instead
 - **Result type**: Engine functions return `Ok(state)` or `Err(error)` — use `fold`, `isOk`, `isErr` from
   `@pacote/result`
 - **Game states**: `'initial'` → `'play'` → `'stop'`
-- **Animation phases**: `AnimationController` in `Game.tsx` tracks `idle | play | taking` phase with position data for
+- **Animation phases**: `AnimationController` in `Scopa.tsx` tracks `idle | play | taking` phase with position data for
   flying card animations
 - **Styling**: Emotion `styled` with single quotes, no semicolons, 120-char line width (Biome config)
 - **Testing**: Vitest + Testing Library for UI, `fast-check` for property-based tests in engine (see `scopa.test.ts`)
