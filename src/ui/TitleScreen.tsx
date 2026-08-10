@@ -7,8 +7,8 @@ import type { Difficulty } from './OfflineMode'
 import { useLocalStorage } from './useLocalStorage'
 
 const LANGUAGES = [
-  { code: 'en', flag: '🇬🇧', label: 'EN' },
-  { code: 'it', flag: '🇮🇹', label: 'IT' },
+  { code: 'en', flag: '🇬🇧', label: 'EN', name: 'English' },
+  { code: 'it', flag: '🇮🇹', label: 'IT', name: 'Italiano' },
 ] as const
 
 const TitleScreenContainer = styled('main')`
@@ -17,8 +17,8 @@ const TitleScreenContainer = styled('main')`
   z-index: 10001;
   overflow-y: auto;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: safe center;
+  align-items: safe center;
   background-color: rgba(0, 0, 0, 0.6);
   min-height: 100vh;
   min-height: 100dvh;
@@ -239,16 +239,16 @@ export const TitleScreen = ({ loadingProgress, onStart, resume, onStartMultiplay
               {resume && (
                 <ResumeSection>
                   <StackedButton
-                    main={resume.avatars.map((avatar, i) => `${avatar} ${resume.score[i] ?? 0}`).join(' \u00b7 ')}
-                    caption={resume.kind === 'online' ? `${t('onlineGame')} \u00b7 ${t('resume')}` : t('resume')}
+                    main={resume.kind === 'online' ? `${t('onlineGame')} \u00b7 ${t('resume')}` : t('resume')}
+                    caption={resume.avatars.map((avatar, i) => `${avatar} ${resume.score[i] ?? 0}`).join(' \u00b7 ')}
                     onClick={resume.onResume}
                   />
                 </ResumeSection>
               )}
             </ButtonStack>
             <LangRow>
-              {LANGUAGES.filter(({ code }) => code !== i18n.language).map(({ code, flag, label }) => (
-                <LangButton key={code} onClick={() => i18n.changeLanguage(code)} aria-label={label}>
+              {LANGUAGES.filter(({ code }) => code !== i18n.language).map(({ code, flag, label, name }) => (
+                <LangButton key={code} onClick={() => i18n.changeLanguage(code)} aria-label={name} lang={code}>
                   {flag} <LangButtonText>{label}</LangButtonText>
                 </LangButton>
               ))}

@@ -102,14 +102,14 @@ test('render without crashing', () => {
 test('shows the title screen on load', async () => {
   render(<App />)
 
-  expect(await screen.findByRole('button', { name: /new local game\s*2 players/i })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /new local game\s*3 players/i })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: /offline game\s*2 players/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /offline game\s*3 players/i })).toBeInTheDocument()
 })
 
 test('starts a local game from the title screen', async () => {
   render(<App />)
 
-  fireEvent.click(await screen.findByRole('button', { name: /new local game\s*2 players/i }))
+  fireEvent.click(await screen.findByRole('button', { name: /offline game\s*2 players/i }))
 
   expect(await screen.findByLabelText('Game score')).toBeInTheDocument()
 })
@@ -118,7 +118,7 @@ test('uses the selected avatar in the local game header', async () => {
   render(<App />)
 
   fireEvent.click(await screen.findByRole('button', { name: 'Select avatar 🦊' }))
-  fireEvent.click(screen.getByRole('button', { name: /new local game\s*2 players/i }))
+  fireEvent.click(screen.getByRole('button', { name: /offline game\s*2 players/i }))
 
   expect(await screen.findByText('🦊 0')).toBeInTheDocument()
 })
@@ -156,27 +156,27 @@ test('opens the title screen over a local game and resumes it in place', async (
   render(<App />)
 
   fireEvent.click(await screen.findByRole('button', { name: 'Select avatar 🦊' }))
-  fireEvent.click(screen.getByRole('button', { name: /new local game\s*2 players/i }))
+  fireEvent.click(screen.getByRole('button', { name: /offline game\s*2 players/i }))
   expect(await screen.findByText('🦊 0')).toBeInTheDocument()
 
   fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
-  expect(await screen.findByRole('button', { name: /new local game\s*2 players/i })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: /offline game\s*2 players/i })).toBeInTheDocument()
 
-  fireEvent.click(screen.getByRole('button', { name: /🦊 0 · 🤖 0\s*resume/i }))
+  fireEvent.click(screen.getByRole('button', { name: /resume\s*🦊 0 · 🤖 0/i }))
 
   expect(screen.getByText('🦊 0')).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: /new local game\s*2 players/i })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /offline game\s*2 players/i })).not.toBeInTheDocument()
 })
 
-test('starting a new local game from the overlay replaces the game in progress', async () => {
+test('starting a offline game from the overlay replaces the game in progress', async () => {
   render(<App />)
 
   fireEvent.click(await screen.findByRole('button', { name: 'Select avatar 🦊' }))
-  fireEvent.click(screen.getByRole('button', { name: /new local game\s*2 players/i }))
+  fireEvent.click(screen.getByRole('button', { name: /offline game\s*2 players/i }))
   expect(await screen.findByText('🦊 0')).toBeInTheDocument()
 
   fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
-  fireEvent.click(await screen.findByRole('button', { name: /new local game\s*3 players/i }))
+  fireEvent.click(await screen.findByRole('button', { name: /offline game\s*3 players/i }))
 
   expect(await screen.findByText('👾 0')).toBeInTheDocument()
 })
@@ -188,7 +188,7 @@ test('opens the title screen over an online game without touching the URL', asyn
 
   fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
 
-  expect(await screen.findByRole('button', { name: /new local game\s*2 players/i })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: /offline game\s*2 players/i })).toBeInTheDocument()
   expect(window.location.search).toBe('?room=room')
 })
 
@@ -198,10 +198,10 @@ test('resumes the online game from the overlay with its state intact', async () 
   expect(await screen.findByLabelText('Game score')).toBeInTheDocument()
 
   fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
-  fireEvent.click(await screen.findByRole('button', { name: /🦊 0 · 🐵 0\s*online game · resume/i }))
+  fireEvent.click(await screen.findByRole('button', { name: /online game · resume\s*🦊 0 · 🐵 0/i }))
 
   expect(screen.getByLabelText('Game score')).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: /new local game\s*2 players/i })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /offline game\s*2 players/i })).not.toBeInTheDocument()
 })
 
 test('starting a local game from the overlay leaves the online game behind', async () => {
@@ -210,7 +210,7 @@ test('starting a local game from the overlay leaves the online game behind', asy
   expect(await screen.findByLabelText('Game score')).toBeInTheDocument()
 
   fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
-  fireEvent.click(await screen.findByRole('button', { name: /new local game\s*2 players/i }))
+  fireEvent.click(await screen.findByRole('button', { name: /offline game\s*2 players/i }))
 
   expect(await screen.findAllByLabelText('Game score')).toHaveLength(1)
   expect(window.location.search).toBe('')
@@ -219,7 +219,7 @@ test('starting a local game from the overlay leaves the online game behind', asy
   expect(window.sessionStorage.getItem('scopa:mp-active-room')).toBeNull()
 })
 
-test('starting a new local game ignores the saved running score', async () => {
+test('starting a offline game ignores the saved running score', async () => {
   window.localStorage.setItem(
     'scopa:saved-game',
     JSON.stringify({
@@ -242,7 +242,7 @@ test('starting a new local game ignores the saved running score', async () => {
 
   render(<App />)
 
-  fireEvent.click(await screen.findByRole('button', { name: /new local game\s*2 players/i }))
+  fireEvent.click(await screen.findByRole('button', { name: /offline game\s*2 players/i }))
 
   expect(await screen.findByText('🐵 0')).toBeInTheDocument()
   expect(screen.getByText('🤖 0')).toBeInTheDocument()

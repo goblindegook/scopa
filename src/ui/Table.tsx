@@ -32,7 +32,7 @@ export const TableCard = styled(Card)<{ $state?: 'capturable' | 'dimmed' }>`
     transform: scale(1.1) translateY(-4px);
   }
 
-  ${({ $state }) => $state === 'capturable' && `box-shadow: 0 0 0 2px #22c55e, 0 0 10px rgba(34, 197, 94, 0.4);`}
+  ${({ $state }) => $state === 'capturable' && `box-shadow: 0 0 0 2px #22c55e;`}
 
   ${({ $state }) =>
     $state === 'dimmed' &&

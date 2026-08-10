@@ -1,9 +1,9 @@
 {
   "chooseAvatar": "Choose your avatar",
-  "newLocalGame": "New Local Game",
+  "newLocalGame": "Offline Game",
   "twoPlayers": "2 Players",
   "threePlayers": "3 Players",
-  "vsFriends": "New Game with Friends",
+  "vsFriends": "Online Game with Friends",
   "selectAvatar": "Select avatar {emoji}",
   "resume": "Resume",
   "onlineGame": "Online Game",

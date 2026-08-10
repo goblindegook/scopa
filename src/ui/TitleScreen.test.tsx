@@ -19,6 +19,28 @@ describe('TitleScreen', () => {
     expect(screen.queryByText(/resume/i)).not.toBeInTheDocument()
   })
 
+  test('exposes an accessible name for each new-local-game button', () => {
+    renderTitleScreen()
+
+    expect(screen.getByRole('button', { name: /offline game.*2 players/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /offline game.*3 players/i })).toBeInTheDocument()
+  })
+
+  test('exposes an accessible name for the resume button', () => {
+    renderTitleScreen({
+      resume: { kind: 'local', avatars: ['🐵', '🤖'], score: [4, 2], onResume: vi.fn() },
+    })
+
+    expect(screen.getByRole('button', { name: /resume/i })).toBeInTheDocument()
+  })
+
+  test('labels the language switcher in the language it switches to', () => {
+    renderTitleScreen()
+
+    const italian = screen.getByRole('button', { name: 'Italiano' })
+    expect(italian).toHaveAttribute('lang', 'it')
+  })
+
   test('resumes a local game from its running score', () => {
     const onResume = vi.fn()
 

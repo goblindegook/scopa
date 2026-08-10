@@ -10,8 +10,8 @@ const LobbyContainer = styled('main')`
   inset: 0;
   z-index: 10001;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: safe center;
+  align-items: safe center;
   overflow-y: auto;
   background-color: rgba(0, 0, 0, 0.6);
   min-height: 100vh;

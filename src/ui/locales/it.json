@@ -1,9 +1,9 @@
 {
   "chooseAvatar": "Scegli il tuo avatar",
-  "newLocalGame": "Nuova Partita Locale",
+  "newLocalGame": "Partita Offline",
   "twoPlayers": "2 Giocatori",
   "threePlayers": "3 Giocatori",
-  "vsFriends": "Nuova Partita con Amici",
+  "vsFriends": "Partita Online con Amici",
   "selectAvatar": "Seleziona avatar {emoji}",
   "resume": "Riprendi",
   "onlineGame": "Partita Online",

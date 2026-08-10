@@ -62,7 +62,7 @@ export const PlayerCard = styled('button')<{ $aimed?: boolean }>`
     $aimed &&
     `
     transform: translateY(-8px) scale(1.1);
-    box-shadow: 0 0 0 3px #93c5fd, 0 12px 24px rgba(29, 78, 216, 0.6);
+    box-shadow: 0 0 0 3px #93c5fd, 0 12px 24px rgba(0, 0, 0, 0.4);
     border-radius: 1rem;
     `}
 
