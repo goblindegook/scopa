@@ -31,6 +31,9 @@
   --space-4: 1rem;
   --space-8: 2rem;
   --space-16: 4rem;
+
+  --card-height: min(14vw, 40vh);
+  --card-width: calc(var(--card-height) * 8 / 14);
 }
 
 *,

@@ -19,10 +19,8 @@ export const SUITS: Record<string, string> = {
 }
 
 const Face = styled('img')`
-  height: 14vw;
-  max-height: 40vh;
-  max-width: 8vw;
-  aspect-ratio: 1 / 1.66;
+  height: var(--card-height);
+  width: var(--card-width);
   border-radius: 0.75vw;
   box-shadow: 1px 1px 5px var(--overlay-black-40);
   -webkit-user-drag: none;
@@ -32,31 +30,28 @@ const Face = styled('img')`
 `
 
 const Back = styled('div')`
-  height: 14vw;
-  max-height: 40vh;
-  max-width: 8vw;
-  aspect-ratio: 1 / 1.66;
+  --card-back-pattern-size: 4vw;
+  --card-back-gradient:
+    var(--color-card-back-pattern) 0% 5%, var(--color-card-back) 6% 15%,
+    var(--color-card-back-pattern) 16% 25%, var(--color-card-back) 26% 35%,
+    var(--color-card-back-pattern) 36% 45%, var(--color-card-back) 46% 55%,
+    var(--color-card-back-pattern) 56% 65%, var(--color-card-back) 66% 75%,
+    var(--color-card-back-pattern) 76% 85%, var(--color-card-back) 86% 95%, #0000 96%;
+
+  height: var(--card-height);
+  width: var(--card-width);
   border-radius: 0.75vw;
   box-shadow: 0 2px 5px var(--overlay-black-40);
-  background-color: var(--color-card-back);
-  background-image:
-    repeating-linear-gradient(
-      45deg,
-      var(--color-card-back-pattern) 0px,
-      var(--color-card-back-pattern) 2px,
-      transparent 2px,
-      transparent 9px
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      var(--color-card-back-pattern) 0px,
-      var(--color-card-back-pattern) 2px,
-      transparent 2px,
-      transparent 9px
-    );
-  border: 5px solid var(--color-card-back-pattern);
+  background:
+    radial-gradient(50% 50% at 100% 0, var(--card-back-gradient)),
+    radial-gradient(50% 50% at 0 100%, var(--card-back-gradient)),
+    radial-gradient(50% 50%, var(--card-back-gradient)),
+    radial-gradient(50% 50%, var(--card-back-gradient)) calc(var(--card-back-pattern-size) / 2)
+    calc(var(--card-back-pattern-size) / 2) var(--color-card-back-pattern);
+  background-size: var(--card-back-pattern-size) var(--card-back-pattern-size);
+  border: 0.75vw solid var(--color-card-back-pattern);
   outline: 1px solid var(--color-card-back);
-  outline-offset: -8px;
+  outline-offset: -0.75vw;
   position: relative;
   overflow: hidden;
 `

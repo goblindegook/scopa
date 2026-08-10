@@ -22,10 +22,8 @@ const AnimatedCardOverlay = styled(motion.div)`
 const CardContainer = styled('div')`
   transform-style: preserve-3d;
   position: relative;
-  height: 14vw;
-  max-height: 40vh;
-  max-width: 8vw;
-  aspect-ratio: 1 / 1.66;
+  height: var(--card-height);
+  width: var(--card-width);
 `
 
 export interface AnimatedCardProps {
