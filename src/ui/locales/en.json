@@ -17,6 +17,11 @@
   "newGame": "New Game",
   "scopa": "Scopa!",
   "redeal": "Opening table with more than two kings, re-dealing hand.",
+  "invalidMove": {
+    "notYourTurn": "Not your turn.",
+    "chooseCards": "Choose the cards to take.",
+    "cannotTake": "Those cards can't be taken."
+  },
   "nextRound": "Next Round",
   "waitingForNextRound": "Waiting for all players to confirm…",
   "backToTitle": "Back to Title Screen",

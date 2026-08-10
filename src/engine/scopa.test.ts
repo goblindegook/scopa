@@ -286,7 +286,7 @@ describe('play', () => {
 
     const next = play({ card, take: [] }, game)
 
-    expect(next).toMatchObject(Err({ message: 'Not your turn.' }))
+    expect(next).toMatchObject(Err({ message: 'not_your_turn' }))
   })
 
   test(`a player takes a card from the table if it's the same value as the card played`, () => {
@@ -334,7 +334,7 @@ describe('play', () => {
 
     const next = play({ card, take: [] }, game)
 
-    expect(next).toMatchObject(Err({ message: 'Choose the cards to take.' }))
+    expect(next).toMatchObject(Err({ message: 'choose_cards' }))
   })
 
   test('a player must choose a valid card to take', () => {
@@ -356,7 +356,7 @@ describe('play', () => {
 
     expect(next).toMatchObject(
       Err({
-        message: 'The chosen cards may not be taken.',
+        message: 'cannot_take',
       }),
     )
   })

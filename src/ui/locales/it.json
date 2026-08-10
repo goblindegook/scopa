@@ -17,6 +17,11 @@
   "newGame": "Nuova partita",
   "scopa": "Scopa!",
   "redeal": "Più di due re sul tavolo iniziale, ridistribuisco.",
+  "invalidMove": {
+    "notYourTurn": "Non è il tuo turno.",
+    "chooseCards": "Scegli le carte da prendere.",
+    "cannotTake": "Quelle carte non si possono prendere."
+  },
   "nextRound": "Prossima mano",
   "waitingForNextRound": "In attesa che tutti confermino…",
   "backToTitle": "Torna al Titolo",

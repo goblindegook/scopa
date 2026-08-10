@@ -143,6 +143,12 @@ type AnimationController =
     }
   | { phase: 'taking'; takes: readonly TakingAnimationState[] }
 
+const INVALID_MOVE_KEYS: Record<string, string> = {
+  not_your_turn: 'invalidMove.notYourTurn',
+  choose_cards: 'invalidMove.chooseCards',
+  cannot_take: 'invalidMove.cannotTake',
+}
+
 const EMPTY_GAME: State = {
   state: 'play',
   turn: 0,
@@ -210,7 +216,13 @@ export function Scopa({
     }
   }, [state, onScore])
 
-  const invalidMove = React.useCallback((error: Error) => showAlert(error.message), [showAlert])
+  const invalidMove = React.useCallback(
+    (error: Error) => {
+      const key = INVALID_MOVE_KEYS[error.message]
+      showAlert(key ? t(key) : error.message)
+    },
+    [showAlert, t],
+  )
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: cardRefs is stable, empty deps are correct
   const getCardPosition = React.useCallback((card?: Card) => getPosition(cardRefs.current.get(getCardId(card))), [])

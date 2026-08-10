@@ -139,6 +139,28 @@ test('alerts auto-dismiss after 5 seconds', async () => {
   expect(screen.getByRole('alert')).toHaveTextContent('test error message')
 })
 
+test('translates known engine error codes', async () => {
+  const state = testGame({
+    players: [
+      { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+      { id: 1, hand: [], pile: [], scope: 0 },
+    ],
+  })
+
+  render(
+    <Scopa
+      playerId={0}
+      state={state}
+      onPlay={() => Err(Error('not_your_turn'))}
+      onOpponentTurn={vitest.fn()}
+      onScore={vitest.fn()}
+    />,
+  )
+
+  fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
+  expect(screen.getByRole('alert')).toHaveTextContent(i18n.t('invalidMove.notYourTurn'))
+})
+
 test('renders opponent hand', async () => {
   const state = testGame({
     players: [

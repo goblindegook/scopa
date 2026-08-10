@@ -143,17 +143,17 @@ export function play({ card, take }: Move, game: State): Result<State, Error> {
   const { table, turn, players } = game
 
   if (!hasCard(players[turn].hand, card)) {
-    return Err(Error('Not your turn.'))
+    return Err(Error('not_your_turn'))
   }
 
   const validTakes = findCardsToTake(card[0], table)
 
   if (!take.length && validTakes.length > 1) {
-    return Err(Error('Choose the cards to take.'))
+    return Err(Error('choose_cards'))
   }
 
   if (take.length && !hasTakenCards(validTakes, take)) {
-    return Err(Error('The chosen cards may not be taken.'))
+    return Err(Error('cannot_take'))
   }
 
   if (!take.length && validTakes.length === 0) {
