@@ -5,7 +5,7 @@ import type { Card as CardType } from '../engine/cards'
 import { Stack } from './Stack'
 
 const PlayerArea = styled('section')`
-  background-color: green;
+  background-color: oklch(50% 0.14 142);
   display: grid;
   grid-gap: 0;
   grid-template-columns: 1fr 20vw;

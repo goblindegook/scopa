@@ -70,7 +70,7 @@ const ProgressBarContainer = styled('div')`
 const ProgressBarFill = styled('div')<{ progress: number }>`
   height: 100%;
   width: ${(props) => props.progress * 100}%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: oklch(46% 0.15 152);
   border-radius: 0.25rem;
   transition: width 0.3s ease;
 `

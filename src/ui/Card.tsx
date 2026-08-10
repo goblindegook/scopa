@@ -39,43 +39,15 @@ const Back = styled('div')`
   aspect-ratio: 1 / 1.66;
   border-radius: 0.75vw;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  background-color: oklch(28% 0.005 80);
+  background-image:
+    repeating-linear-gradient(45deg, oklch(93% 0.01 80) 0px, oklch(93% 0.01 80) 2px, transparent 2px, transparent 9px),
+    repeating-linear-gradient(-45deg, oklch(93% 0.01 80) 0px, oklch(93% 0.01 80) 2px, transparent 2px, transparent 9px);
+  border: 5px solid oklch(93% 0.01 80);
+  outline: 1px solid oklch(28% 0.005 80);
+  outline-offset: -8px;
   position: relative;
   overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 200%;
-    height: 200%;
-    background: conic-gradient(
-      from 0deg at 50% 50%,
-      #667eea 0%,
-      #764ba2 20%,
-      #667eea 40%,
-      #764ba2 60%,
-      #667eea 80%,
-      #764ba2 95%,
-      #667eea 100%
-    );
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(
-      rgba(102, 126, 234, 0.4) 0%,
-      transparent 50%
-    );
-  }
 `
 
 export interface CardProps {
