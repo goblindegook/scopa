@@ -1,9 +1,9 @@
 import styled from '@emotion/styled'
 
-export const ModalOverlay = styled('main')<{ $absolute?: boolean; $zIndex?: number; $padded?: boolean }>`
+export const ModalOverlay = styled('main')<{ $absolute?: boolean; $zIndex?: number }>`
   position: ${({ $absolute }) => ($absolute ? 'absolute' : 'fixed')};
   inset: 0;
-  z-index: ${({ $zIndex = 10001 }) => $zIndex};
+  z-index: 10002;
   display: flex;
   justify-content: safe center;
   align-items: safe center;
@@ -16,18 +16,9 @@ export const ModalOverlay = styled('main')<{ $absolute?: boolean; $zIndex?: numb
     min-height: 100vh;
     min-height: 100dvh;
     `}
-
-  ${({ $padded }) =>
-    $padded &&
-    `
-    padding: var(--space-4);
-    box-sizing: border-box;
-    `}
 `
 
-export const ModalPanel = styled('div')<{
-  $maxWidth?: string
-}>`
+export const ModalPanel = styled('div')`
   position: relative;
   display: flex;
   flex-direction: column;
@@ -40,7 +31,7 @@ export const ModalPanel = styled('div')<{
   border-radius: var(--space-4);
   box-shadow: 0 8px 24px var(--overlay-black-40);
   padding: var(--space-8);
-  max-width: ${({ $maxWidth = '540px' }) => $maxWidth};
+  max-width: 540px;
   width: 100%;
 
   @media (max-height: 600px) {

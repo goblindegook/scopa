@@ -149,8 +149,8 @@ export const Lobby = ({ players, isCreator, roomId, onStart, onLeave }: LobbyPro
   }
 
   return (
-    <ModalOverlay $padded>
-      <ModalPanel $maxWidth="30rem">
+    <ModalOverlay>
+      <ModalPanel>
         <Title>Scopa</Title>
 
         <SeatRow aria-label={t('playersInRoom')}>

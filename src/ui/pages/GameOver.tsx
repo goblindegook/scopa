@@ -37,7 +37,7 @@ export const GameOver: React.FC<GameOverProps> = ({
   const title = winner == null ? t('endOfRound') : t('winsGame', { avatar: playerAvatars[winner] })
 
   return (
-    <ModalOverlay $absolute $zIndex={10002}>
+    <ModalOverlay $absolute>
       <ModalPanel>
         <ScoreBoard scores={scores} title={title} runningScore={runningScore} playerAvatars={playerAvatars} />
         <Button onClick={winner == null ? onNextRound : onReset} disabled={awaitingConfirmations}>

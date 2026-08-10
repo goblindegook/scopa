@@ -71,12 +71,14 @@ separate Templates layer; pages own their own layout directly).
     are props, not separate components
   - **`Card.tsx`** — the base card (lazy-loads JPG assets from `src/ui/assets/{suit}/{value}.jpg`), plus `SUITS` and
     the shared `Duration` animation-timing constants
+  - **`Table.tsx`** — the table's flex-wrap layout container (pure styled primitive, no composition)
 - **`molecules/`** — small reusable units composed from atoms
   - **`AnimatedCard.tsx`** / **`DealtCard.tsx`** — motion wrappers around `atoms/Card` (flip/fly animation, deal-in
     scale animation)
   - **`Stack.tsx`** — a face-down pile of cards
-  - **`Table.tsx`** — selectable-card styling (`TableCard`/`TableCardLabel`/`TableCardSelector`) plus the table layout
-    container
+  - **`TableCard.tsx`** — a selectable table card: hidden checkbox + label + `atoms/Card`, composed into one
+    component since the three pieces are never used independently (the checkbox drives the card's
+    focus/hover/checked styling via CSS sibling selectors, so it must stay adjacent to it in the DOM)
   - **`AvatarPicker.tsx`**, **`DifficultyPicker.tsx`** — selection grids used by `pages/TitleScreen`
 - **`organisms/`** — distinct composed interface sections
   - **`Player.tsx`** / **`Opponent.tsx`** — hand + pile display (face-up vs. face-down), built on `molecules/Stack`
