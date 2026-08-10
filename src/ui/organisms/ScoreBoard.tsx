@@ -1,12 +1,11 @@
 import styled from '@emotion/styled'
 import type React from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Score } from '../engine/scores'
-import { Button } from './Button'
+import type { Score } from '../../engine/scores'
 
 const WinnerTitle = styled('h2')`
   margin: 0;
-  padding-bottom: 1rem;
+  padding-bottom: var(--space-4);
   font-size: 2.5rem;
   font-weight: bold;
   text-align: center;
@@ -14,7 +13,7 @@ const WinnerTitle = styled('h2')`
   color: white;
 
   @media (max-height: 600px) {
-    padding-bottom: 0.5rem;
+    padding-bottom: var(--space-2);
     font-size: 1.25rem;
   }
 `
@@ -22,10 +21,10 @@ const WinnerTitle = styled('h2')`
 const Board = styled('table')`
   margin: 0;
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 0.5rem;
+  border: 1px solid var(--overlay-white-25);
+  border-radius: var(--space-2);
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--overlay-white-05);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
   border-spacing: 0;
@@ -38,32 +37,32 @@ const Board = styled('table')`
 const PlayerHeader = styled('th')`
   font-weight: 600;
   font-size: 1.5rem;
-  padding: 1rem;
+  padding: var(--space-4);
   text-align: center;
   text-transform: uppercase;
 
   @media (max-height: 600px) {
-    padding: 0.5rem;
+    padding: var(--space-2);
   }
 `
 
 const RowHeader = styled('th')`
-  padding: 1rem;
+  padding: var(--space-4);
   text-align: left;
   font-weight: 600;
 
   @media (max-height: 600px) {
-    padding: 0.5rem;
+    padding: var(--space-2);
   }
 `
 
 const Cell = styled('td')`
   color: white;
-  padding: 1rem;
+  padding: var(--space-4);
   text-align: center;
 
   @media (max-height: 600px) {
-    padding: 0.5rem;
+    padding: var(--space-2);
   }
 `
 
@@ -73,9 +72,9 @@ const ScoreCell = styled(Cell)<{ winner?: boolean }>`
 `
 
 const PointIndicator = styled('span')`
-  color: #4ade80;
+  color: var(--color-accent);
   font-weight: 600;
-  margin-left: 0.5rem;
+  margin-left: var(--space-2);
 `
 
 const TotalRow = styled('tr')`
@@ -89,10 +88,10 @@ const ScoreBoardStack = styled('section')`
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
 
   @media (max-height: 600px) {
-    gap: 0.5rem;
+    gap: var(--space-2);
   };
 `
 
@@ -100,10 +99,10 @@ const RunningTotal = styled('p')`
   margin: 0;
   width: 100%;
   display: flex;
-  gap: 1rem;
+  gap: var(--space-4);
 
   @media (max-height: 600px) {
-    gap: 0.5rem;
+    gap: var(--space-2);
   };
 `
 
@@ -115,17 +114,17 @@ const RunningTotalBox = styled('span')`
   font-weight: 600;
   font-size: 2rem;
   line-height: 1;
-  padding: 1rem;
-  background-color: rgba(255, 255, 255, 0.05);
+  padding: var(--space-4);
+  background-color: var(--overlay-white-05);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 0.5rem;
+  border: 1px solid var(--overlay-white-25);
+  border-radius: var(--space-2);
   letter-spacing: 0.35rem;
 
   @media (max-height: 600px) {
     font-size: 1.5rem;
-    padding: 0.5rem;
+    padding: var(--space-2);
   }
 `
 
@@ -198,80 +197,6 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, runningSc
         </tbody>
       </Board>
     </ScoreBoardStack>
-  )
-}
-
-const GameOverContainer = styled('main')`
-  position: absolute;
-  inset: 0;
-  z-index: 10002;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(0, 0, 0, 0.6);
-`
-
-const GameOverContent = styled('div')`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 0;
-  gap: 2rem;
-  background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 1rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  padding: 3rem;
-  max-width: 540px;
-  width: 100%;
-
-  @media (max-height: 600px) {
-    gap: 1rem;
-    padding: 2rem;
-  }
-`
-
-const WaitingNotice = styled('p')`
-  margin: 0;
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 0.95rem;
-  text-align: center;
-`
-
-interface GameOverProps {
-  scores: readonly Score[]
-  runningScore: readonly number[]
-  playerAvatars: string[]
-  winner?: number | null
-  awaitingConfirmations?: boolean
-  onNextRound: () => void
-  onReset: () => void
-}
-
-export const GameOver: React.FC<GameOverProps> = ({
-  scores,
-  winner,
-  runningScore,
-  playerAvatars,
-  awaitingConfirmations,
-  onNextRound,
-  onReset,
-}) => {
-  const { t } = useTranslation()
-
-  const title = winner == null ? t('endOfRound') : t('winsGame', { avatar: playerAvatars[winner] })
-
-  return (
-    <GameOverContainer>
-      <GameOverContent>
-        <ScoreBoard scores={scores} title={title} runningScore={runningScore} playerAvatars={playerAvatars} />
-        <Button onClick={winner == null ? onNextRound : onReset} disabled={awaitingConfirmations}>
-          {winner == null ? t('nextRound') : t('backToTitle')}
-        </Button>
-        {awaitingConfirmations && <WaitingNotice role="status">{t('waitingForNextRound')}</WaitingNotice>}
-      </GameOverContent>
-    </GameOverContainer>
   )
 }
 

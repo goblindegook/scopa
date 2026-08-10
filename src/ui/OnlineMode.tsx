@@ -1,40 +1,13 @@
-import styled from '@emotion/styled'
 import React from 'react'
 import { play } from '../engine/scopa'
 import { score } from '../engine/scores'
 import type { Move, State } from '../engine/state'
-import { Alert } from './Alert'
-import { AvatarPicker } from './AvatarPicker'
-import { Lobby } from './Lobby'
-import { Scopa } from './Scopa'
+import { Alert } from './atoms/Alert'
+import { ModalOverlay, ModalPanel } from './atoms/ModalOverlay'
+import { AvatarPicker } from './molecules/AvatarPicker'
+import { Lobby } from './pages/Lobby'
+import { Scopa } from './pages/Scopa'
 import { useMultiplayerSession } from './useMultiplayerSession'
-
-const AvatarScreen = styled('main')`
-  position: fixed;
-  inset: 0;
-  z-index: 10001;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(0, 0, 0, 0.6);
-  min-height: 100vh;
-  min-height: 100dvh;
-`
-
-const AvatarScreenContent = styled('div')`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
-  background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 1rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  padding: 3rem;
-  max-width: 540px;
-  width: 100%;
-`
 
 interface ChooseAvatarProps {
   onChoose: (avatar: string) => void
@@ -44,12 +17,12 @@ interface ChooseAvatarProps {
 
 /** A friend arriving via a shared link picks an avatar before joining. */
 const ChooseAvatar = ({ onChoose, taken = [], error }: ChooseAvatarProps) => (
-  <AvatarScreen>
-    <AvatarScreenContent>
+  <ModalOverlay>
+    <ModalPanel>
       <AvatarPicker taken={taken} onSelect={onChoose} />
       {error && <Alert role="alert">{error}</Alert>}
-    </AvatarScreenContent>
-  </AvatarScreen>
+    </ModalPanel>
+  </ModalOverlay>
 )
 
 interface OnlineModeProps {

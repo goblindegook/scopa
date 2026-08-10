@@ -1,9 +1,9 @@
 import { cleanup, render, waitFor } from '@testing-library/react'
 import { assert, asyncProperty, constantFrom, integer, property } from 'fast-check'
 import { afterEach, expect, test } from 'vitest'
-import { bastoni, coppe, denari, Suit, spade, type Value } from '../engine/cards'
+import { bastoni, coppe, denari, Suit, spade, type Value } from '../../engine/cards'
+import i18n from '../i18n'
 import { Card, SUITS } from './Card'
-import i18n from './i18n'
 
 afterEach(() => {
   cleanup()

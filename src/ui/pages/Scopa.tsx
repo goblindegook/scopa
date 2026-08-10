@@ -3,20 +3,24 @@ import { fold, isErr, type Result } from '@pacote/result'
 import { AnimatePresence, motion, type Target } from 'framer-motion'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { type Card, hasCard, isSame, type Pile } from '../engine/cards'
-import { findCardsToTake } from '../engine/move'
-import type { OpponentOptions } from '../engine/opponent'
-import { type Score, winner } from '../engine/scores'
-import type { Move, State } from '../engine/state'
-import { Button } from './Button'
-import { AnimatedCard, DealtCard, Card as DisplayCard, Duration } from './Card'
-import { OPPONENT_SCALE, Opponent, OpponentCard, Opponents } from './Opponent'
-import { FanCard, Player, PlayerCard } from './Player'
-import { GameOver } from './ScoreBoard'
-import { Table, TableCard, TableCardLabel, TableCardSelector } from './Table'
-import { useAlerts } from './useAlerts'
-import { type DragState, useDragState } from './useDragState'
-import { useRefMap } from './useRefMap'
+import { type Card, hasCard, isSame, type Pile } from '../../engine/cards'
+import { findCardsToTake } from '../../engine/move'
+import type { OpponentOptions } from '../../engine/opponent'
+import { type Score, winner } from '../../engine/scores'
+import type { Move, State } from '../../engine/state'
+import { Alert } from '../atoms/Alert'
+import { Button } from '../atoms/Button'
+import { Card as DisplayCard, Duration } from '../atoms/Card'
+import { Table } from '../atoms/Table'
+import { AnimatedCard } from '../molecules/AnimatedCard'
+import { DealtCard } from '../molecules/DealtCard'
+import { TableCard } from '../molecules/TableCard'
+import { OPPONENT_SCALE, Opponent, OpponentCard, Opponents } from '../organisms/Opponent'
+import { FanCard, Player, PlayerCard } from '../organisms/Player'
+import { useAlerts } from '../useAlerts'
+import { type DragState, useDragState } from '../useDragState'
+import { useRefMap } from '../useRefMap'
+import { GameOver } from './GameOver'
 
 export interface PlayerProfile {
   avatar: string
@@ -29,53 +33,33 @@ const Header = styled('header')`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: rgba(0, 0, 0, 0.5);
-  padding: 1rem;
+  background-color: var(--overlay-black-60);
+  padding: var(--space-4);
   font-size: 1rem;
   color: white;
   height: 3.5rem;
   flex-shrink: 0;
 
   @media (max-height: 600px) {
-    padding: 0.5rem;
+    padding: var(--space-2);
     font-size: 0.875rem;
     height: 2.5rem;
   }
 `
 
-const Alert = styled('aside')`
-  position: absolute;
-  top: 66%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: white;
-  padding: 1.5rem 2.5rem;
-  text-align: center;
-  font-size: 2rem;
-  font-weight: bold;
-  background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 9999;
-  white-space: nowrap;
-  pointer-events: none;
-`
-
 const Turn = styled('span')`
   display: inline-flex;
-  gap: 0.25rem;
+  gap: var(--space-1);
   align-items: center;
 `
 
 const TurnScore = styled('span')<{ active: boolean }>`
   color: white;
-  border-radius: 0.25rem;
-  padding: 0.25rem 0.5rem;
+  border-radius: var(--space-1);
+  padding: var(--space-1) var(--space-2);
   border: 2px solid
-    ${({ active }) => (active ? 'rgba(74, 222, 128, 0.9)' : 'rgba(255, 255, 255, 0.25)')};
-  background-color: ${({ active }) => (active ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.1)')};
+    ${({ active }) => (active ? 'var(--color-accent-translucent)' : 'var(--overlay-white-25)')};
+  background-color: ${({ active }) => (active ? 'var(--overlay-white-25)' : 'var(--overlay-white-05)')};
   font-weight: ${({ active }) => (active ? 700 : 500)};
 `
 
@@ -507,9 +491,24 @@ export function Scopa({
               const activeCapturable = aimed ? capturableSet : dragCapturableSet
 
               return (
-                <TableCardLabel
+                <TableCard
                   key={`table-${cardId}`}
-                  htmlFor={`table-${cardId}`}
+                  id={`table-${cardId}`}
+                  card={card}
+                  checked={hasCard(take, card)}
+                  disabled={
+                    game.turn !== playerId ||
+                    isTaken ||
+                    isAnimating ||
+                    (activeAimed != null && !hasCard(activeCapturable, card) && !hasCard(take, card))
+                  }
+                  onChange={() => toggleTakeTarget(card)}
+                  state={(() => {
+                    if (!activeAimed) return undefined
+                    if (hasCard(take, card)) return undefined
+                    if (hasCard(activeCapturable, card)) return 'capturable'
+                    return 'dimmed'
+                  })()}
                   layout
                   onLayoutAnimationComplete={() =>
                     animatePlayTo(
@@ -521,29 +520,7 @@ export function Scopa({
                   exit={{ opacity: 0, scale: 0.3 }}
                   transition={motion.transition}
                   style={{ pointerEvents: isAnimating ? 'none' : 'auto' }}
-                >
-                  <TableCardSelector
-                    disabled={
-                      game.turn !== playerId ||
-                      isTaken ||
-                      isAnimating ||
-                      (activeAimed != null && !hasCard(activeCapturable, card) && !hasCard(take, card))
-                    }
-                    type="checkbox"
-                    checked={hasCard(take, card)}
-                    onChange={() => toggleTakeTarget(card)}
-                    id={`table-${cardId}`}
-                  />
-                  <TableCard
-                    card={card}
-                    $state={(() => {
-                      if (!activeAimed) return undefined
-                      if (hasCard(take, card)) return undefined
-                      if (hasCard(activeCapturable, card)) return 'capturable'
-                      return 'dimmed'
-                    })()}
-                  />
-                </TableCardLabel>
+                />
               )
             })}
           </AnimatePresence>

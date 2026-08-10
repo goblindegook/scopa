@@ -1,44 +1,10 @@
 import styled from '@emotion/styled'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button } from './Button'
+import { Button } from '../atoms/Button'
+import { ModalOverlay, ModalPanel } from '../atoms/ModalOverlay'
 
 const MAX_SEATS = 3
-
-const LobbyContainer = styled('main')`
-  position: fixed;
-  inset: 0;
-  z-index: 10001;
-  display: flex;
-  justify-content: safe center;
-  align-items: safe center;
-  overflow-y: auto;
-  background-color: rgba(0, 0, 0, 0.6);
-  min-height: 100vh;
-  min-height: 100dvh;
-  padding: 1rem;
-  box-sizing: border-box;
-`
-
-const LobbyContent = styled('div')`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.75rem;
-  background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 1rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  padding: 2.5rem;
-  max-width: 30rem;
-  width: 100%;
-
-  @media (max-height: 600px) {
-    gap: 1rem;
-    padding: 1.5rem;
-  }
-`
 
 const Title = styled('h1')`
   color: white;
@@ -47,7 +13,7 @@ const Title = styled('h1')`
   margin: 0;
   text-align: center;
   letter-spacing: 0.05em;
-  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 4px 12px var(--overlay-black-40);
 
   @media (max-height: 600px) {
     font-size: 2rem;
@@ -57,7 +23,7 @@ const Title = styled('h1')`
 const SeatRow = styled('ul')`
   display: flex;
   justify-content: center;
-  gap: 0.75rem;
+  gap: var(--space-2);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -67,12 +33,12 @@ const Seat = styled('li')`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 4rem;
-  height: 4rem;
+  width: var(--space-16);
+  height: var(--space-16);
   font-size: 2.25rem;
   line-height: 1;
-  border-radius: 0.75rem;
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--space-2);
+  border: 2px solid var(--overlay-white-25);
   background-color: rgba(255, 255, 255, 0.08);
   position: relative;
   transition: opacity 0.15s;
@@ -84,7 +50,7 @@ const Seat = styled('li')`
 
 const EmptySeat = styled(Seat)`
   border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--overlay-white-25);
   background-color: transparent;
 `
 
@@ -94,12 +60,12 @@ const ConfirmedIndicator = styled('span')`
   bottom: -0.25rem;
   font-size: 1rem;
   line-height: 1;
-  color: rgb(74, 222, 128);
+  color: var(--color-accent);
 `
 
 const Status = styled('p')`
   margin: 0;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--overlay-white-75);
   font-size: 0.95rem;
   text-align: center;
 `
@@ -107,12 +73,12 @@ const Status = styled('p')`
 const InviteBlock = styled('div')`
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
   width: 100%;
 `
 
 const InviteLabel = styled('label')`
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--overlay-white-75);
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -120,17 +86,17 @@ const InviteLabel = styled('label')`
 
 const InviteControls = styled('div')`
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
 `
 
 const InviteInput = styled('input')`
   flex: 1;
   min-width: 0;
-  border-radius: 0.5rem;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--space-2);
+  border: 2px solid var(--overlay-white-25);
   background-color: rgba(0, 0, 0, 0.35);
   color: white;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-2);
   font-size: 0.9rem;
   font-family: inherit;
 `
@@ -138,11 +104,11 @@ const InviteInput = styled('input')`
 const TextButton = styled('button')`
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--overlay-white-75);
   font-size: 0.9rem;
   font-family: inherit;
   cursor: pointer;
-  padding: 0.25rem;
+  padding: var(--space-1);
   text-decoration: underline;
 
   &:hover {
@@ -183,8 +149,8 @@ export const Lobby = ({ players, isCreator, roomId, onStart, onLeave }: LobbyPro
   }
 
   return (
-    <LobbyContainer>
-      <LobbyContent>
+    <ModalOverlay $padded>
+      <ModalPanel $maxWidth="30rem">
         <Title>Scopa</Title>
 
         <SeatRow aria-label={t('playersInRoom')}>
@@ -220,7 +186,7 @@ export const Lobby = ({ players, isCreator, roomId, onStart, onLeave }: LobbyPro
         <TextButton type="button" onClick={onLeave}>
           {t('backToTitle')}
         </TextButton>
-      </LobbyContent>
-    </LobbyContainer>
+      </ModalPanel>
+    </ModalOverlay>
   )
 }

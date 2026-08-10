@@ -1,11 +1,11 @@
 import styled from '@emotion/styled'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Card as CardType } from '../engine/cards'
-import { Stack } from './Stack'
+import type { Card as CardType } from '../../engine/cards'
+import { Stack } from '../molecules/Stack'
 
 const PlayerArea = styled('section')`
-  background-color: oklch(50% 0.14 142);
+  background-color: var(--color-player-area);
   display: grid;
   grid-gap: 0;
   grid-template-columns: 1fr 20vw;
@@ -20,7 +20,7 @@ const PlayerHand = styled('div')`
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding-bottom: 1rem;
+  padding-bottom: var(--space-4);
 `
 
 export const FanCard = styled('div')<{ $fanIndex: number; $fanTotal: number }>`
@@ -50,11 +50,11 @@ export const PlayerCard = styled('button')<{ $aimed?: boolean }>`
   &:not(:disabled):hover {
     outline: 0;
     transform: translateY(-20px);
-    border-radius: 1rem;
+    border-radius: var(--space-4);
   }
 
   &:not(:disabled):focus {
-    border: 2px solid red;
+    border: 2px solid var(--color-focus-danger);
     padding: -2px;
   }
 
@@ -62,8 +62,8 @@ export const PlayerCard = styled('button')<{ $aimed?: boolean }>`
     $aimed &&
     `
     transform: translateY(-8px) scale(1.1);
-    box-shadow: 0 0 0 3px #93c5fd, 0 12px 24px rgba(0, 0, 0, 0.4);
-    border-radius: 1rem;
+    box-shadow: 0 0 0 3px var(--color-focus-ring), 0 12px 24px var(--overlay-black-40);
+    border-radius: var(--space-4);
     `}
 
 `

@@ -6,7 +6,7 @@ import { move } from '../engine/opponent'
 import { deal, play, randomFirstPlayer } from '../engine/scopa'
 import { score } from '../engine/scores'
 import type { Move, State } from '../engine/state'
-import { type PlayerProfile, Scopa } from './Scopa'
+import { type PlayerProfile, Scopa } from './pages/Scopa'
 
 export interface OfflineSession {
   readonly id: string

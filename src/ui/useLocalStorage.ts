@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { State } from '../engine/state'
 import { createPlayerProfiles, type Difficulty } from './OfflineMode'
-import type { PlayerProfile } from './Scopa'
+import type { PlayerProfile } from './pages/Scopa'
 
 type Updater<T> = T | ((current: T) => T)
 

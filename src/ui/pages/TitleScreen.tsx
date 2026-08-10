@@ -1,49 +1,16 @@
 import styled from '@emotion/styled'
 import { useTranslation } from 'react-i18next'
-import { AVATARS, AvatarPicker } from './AvatarPicker'
-import { Button } from './Button'
-import { DifficultyPicker } from './DifficultyPicker'
-import type { Difficulty } from './OfflineMode'
-import { useLocalStorage } from './useLocalStorage'
+import { Button } from '../atoms/Button'
+import { ModalOverlay, ModalPanel } from '../atoms/ModalOverlay'
+import { AVATARS, AvatarPicker } from '../molecules/AvatarPicker'
+import { DifficultyPicker } from '../molecules/DifficultyPicker'
+import type { Difficulty } from '../OfflineMode'
+import { useLocalStorage } from '../useLocalStorage'
 
 const LANGUAGES = [
   { code: 'en', flag: '🇬🇧', label: 'EN', name: 'English' },
   { code: 'it', flag: '🇮🇹', label: 'IT', name: 'Italiano' },
 ] as const
-
-const TitleScreenContainer = styled('main')`
-  position: fixed;
-  inset: 0;
-  z-index: 10001;
-  overflow-y: auto;
-  display: flex;
-  justify-content: safe center;
-  align-items: safe center;
-  background-color: rgba(0, 0, 0, 0.6);
-  min-height: 100vh;
-  min-height: 100dvh;
-`
-
-const TitleScreenContent = styled('div')`
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
-  background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 1rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  padding: 3rem;
-  max-width: 540px;
-  width: 100%;
-
-  @media (max-height: 600px) {
-    gap: 1rem;
-    padding: 2rem;
-  }
-`
 
 const Title = styled('h1')`
   color: white;
@@ -52,7 +19,7 @@ const Title = styled('h1')`
   margin: 0;
   text-align: center;
   letter-spacing: 0.05em;
-  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 4px 12px var(--overlay-black-40);
 
   @media (max-height: 600px) {
     font-size: 4rem;
@@ -61,24 +28,24 @@ const Title = styled('h1')`
 
 const ProgressBarContainer = styled('div')`
   width: 100%;
-  height: 0.5rem;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 0.25rem;
+  height: var(--space-2);
+  background-color: var(--overlay-white-25);
+  border-radius: var(--space-1);
   overflow: hidden;
 `
 
 const ProgressBarFill = styled('div')<{ progress: number }>`
   height: 100%;
   width: ${(props) => props.progress * 100}%;
-  background: oklch(46% 0.15 152);
-  border-radius: 0.25rem;
+  background: var(--color-primary);
+  border-radius: var(--space-1);
   transition: width 0.3s ease;
 `
 
 const ButtonStack = styled('div')`
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-2);
   width: 100%;
   align-items: stretch;
 
@@ -93,7 +60,7 @@ const ButtonStack = styled('div')`
 const ResumeSection = styled('div')`
   display: flex;
   width: 100%;
-  margin-top: 1rem;
+  margin-top: var(--space-4);
 
   & > button {
     width: 100%;
@@ -102,7 +69,7 @@ const ResumeSection = styled('div')`
 
 const LocalGameRow = styled('div')`
   display: flex;
-  gap: 0.75rem;
+  gap: var(--space-2);
   width: 100%;
 
   & > button {
@@ -139,31 +106,30 @@ const StackedButtonCaption = styled('span')`
 
 const LangRow = styled('div')`
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: var(--space-4);
+  right: var(--space-4);
   display: flex;
   align-items: center;
-  gap: 0.375rem;
 `
 
 const LangButton = styled('button')`
   font-size: 1.25rem;
   height: 2.25rem;
-  padding: 0 0.75rem;
-  border-radius: 0.5rem;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  background-color: rgba(255, 255, 255, 0.05);
+  padding: 0 var(--space-2);
+  border-radius: var(--space-2);
+  border: 2px solid var(--overlay-white-25);
+  background-color: var(--overlay-white-05);
   color: white;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: var(--space-1);
   transition: border-color 0.15s, background-color 0.15s, transform 0.1s;
   line-height: 1;
 
   &:hover {
-    border-color: rgba(255, 255, 255, 0.5);
-    background-color: rgba(255, 255, 255, 0.15);
+    border-color: var(--overlay-white-50);
+    background-color: var(--overlay-white-25);
     transform: scale(1.05);
   }
 
@@ -207,8 +173,8 @@ export const TitleScreen = ({ loadingProgress, onStart, resume, onStartMultiplay
   const [difficulty, setDifficulty] = useLocalStorage<Difficulty>('last-difficulty', 'normal')
 
   return (
-    <TitleScreenContainer>
-      <TitleScreenContent>
+    <ModalOverlay>
+      <ModalPanel>
         <Title>Scopa</Title>
         {loadingProgress < 1 ? (
           <ProgressBarContainer>
@@ -255,7 +221,7 @@ export const TitleScreen = ({ loadingProgress, onStart, resume, onStartMultiplay
             </LangRow>
           </>
         )}
-      </TitleScreenContent>
-    </TitleScreenContainer>
+      </ModalPanel>
+    </ModalOverlay>
   )
 }

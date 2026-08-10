@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { assert, constantFrom, property, tuple, uniqueArray } from 'fast-check'
 import { afterEach, expect, test } from 'vitest'
-import { Suit, type Value } from '../engine/cards'
-import i18n from './i18n'
+import { Suit, type Value } from '../../engine/cards'
+import i18n from '../i18n'
 import { Player } from './Player'
 
 afterEach(() => {

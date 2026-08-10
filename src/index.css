@@ -1,3 +1,38 @@
+:root {
+  --overlay-black-40: rgba(0, 0, 0, 0.4);
+  --overlay-black-60: rgba(0, 0, 0, 0.6);
+
+  --overlay-white-05: rgba(255, 255, 255, 0.05);
+  --overlay-white-25: rgba(255, 255, 255, 0.25);
+  --overlay-white-50: rgba(255, 255, 255, 0.5);
+  --overlay-white-75: rgba(255, 255, 255, 0.75);
+
+  --color-accent: #4ade80;
+  --color-accent-translucent: rgba(74, 222, 128, 0.9);
+  --color-accent-strong: #22c55e;
+
+  --color-primary: oklch(46% 0.15 152);
+  --color-primary-hover: oklch(54% 0.16 152);
+  --color-primary-active: oklch(38% 0.13 152);
+  --color-primary-shadow-20: oklch(46% 0.15 152 / 0.2);
+  --color-primary-shadow-40: oklch(46% 0.15 152 / 0.4);
+  --color-primary-shadow-60: oklch(46% 0.15 152 / 0.6);
+
+  --color-player-area: oklch(50% 0.14 142);
+
+  --color-card-back: oklch(28% 0.005 80);
+  --color-card-back-pattern: oklch(93% 0.01 80);
+
+  --color-focus-ring: #93c5fd;
+  --color-focus-danger: red;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-4: 1rem;
+  --space-8: 2rem;
+  --space-16: 4rem;
+}
+
 *,
 *:before,
 *:after {

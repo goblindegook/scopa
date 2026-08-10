@@ -1,15 +1,15 @@
 import styled from '@emotion/styled'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Card as CardType } from '../engine/cards'
-import { Card } from './Card'
-import { Stack } from './Stack'
+import type { Card as CardType } from '../../engine/cards'
+import { Card } from '../atoms/Card'
+import { Stack } from '../molecules/Stack'
 
 export const OPPONENT_SCALE = 2 / 3
 
 const CardWrapper = styled.div<{ opacity?: number }>`
   display: inline-block;
-  padding: 0.5rem;
+  padding: var(--space-2);
   opacity: ${({ opacity = 1 }) => opacity};
 `
 

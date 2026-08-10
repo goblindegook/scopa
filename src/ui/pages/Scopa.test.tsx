@@ -1,11 +1,11 @@
 import { Err, Ok } from '@pacote/result'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, expect, test, vi, vitest } from 'vitest'
-import { bastoni, coppe, denari, Suit, spade, type Value } from '../engine/cards'
-import type { OpponentOptions } from '../engine/opponent'
-import type { Move, State } from '../engine/state'
-import { SUITS } from './Card'
-import i18n from './i18n'
+import { bastoni, coppe, denari, Suit, spade, type Value } from '../../engine/cards'
+import type { OpponentOptions } from '../../engine/opponent'
+import type { Move, State } from '../../engine/state'
+import { SUITS } from '../atoms/Card'
+import i18n from '../i18n'
 import { Scopa } from './Scopa'
 
 function cn(value: Value, suit: Suit): string {

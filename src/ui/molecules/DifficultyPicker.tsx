@@ -1,17 +1,17 @@
 import styled from '@emotion/styled'
 import { useTranslation } from 'react-i18next'
-import { DIFFICULTIES, type Difficulty } from './OfflineMode'
+import { DIFFICULTIES, type Difficulty } from '../OfflineMode'
 
 const Section = styled('div')`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
   width: 100%;
 `
 
 const Label = styled('p')`
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--overlay-white-75);
   font-size: 0.875rem;
   margin: 0;
   letter-spacing: 0.05em;
@@ -21,7 +21,7 @@ const Label = styled('p')`
 const Row = styled('div')`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0.5rem;
+  gap: var(--space-2);
   width: 100%;
 `
 
@@ -29,10 +29,10 @@ const DifficultyButton = styled('button')<{ selected: boolean }>`
   position: relative;
   font-size: 0.875rem;
   width: 100%;
-  padding: 0.625rem 0.25rem;
+  padding: var(--space-2) var(--space-1);
   border: none;
   background: none;
-  color: rgba(255, 255, 255, ${({ selected }) => (selected ? 1 : 0.7)});
+  color: ${({ selected }) => (selected ? 'white' : 'var(--overlay-white-75)')};
   cursor: pointer;
   line-height: 1;
 
@@ -40,15 +40,15 @@ const DifficultyButton = styled('button')<{ selected: boolean }>`
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: 0.5rem;
-    border: 2px solid ${({ selected }) => (selected ? 'rgba(74, 222, 128, 0.9)' : 'rgba(255, 255, 255, 0.2)')};
-    background-color: ${({ selected }) => (selected ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.05)')};
+    border-radius: var(--space-2);
+    border: 2px solid ${({ selected }) => (selected ? 'var(--color-accent-translucent)' : 'var(--overlay-white-25)')};
+    background-color: ${({ selected }) => (selected ? 'var(--overlay-white-25)' : 'var(--overlay-white-05)')};
     transition: border-color 0.15s, background-color 0.15s;
   }
 
   &:hover::before {
-    border-color: rgba(255, 255, 255, 0.5);
-    background-color: rgba(255, 255, 255, 0.15);
+    border-color: var(--overlay-white-50);
+    background-color: var(--overlay-white-25);
   }
 `
 

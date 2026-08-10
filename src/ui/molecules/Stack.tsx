@@ -1,7 +1,7 @@
 import styled from '@emotion/styled'
 import React from 'react'
-import type { Card as CardType } from '../engine/cards'
-import { Card } from './Card'
+import type { Card as CardType } from '../../engine/cards'
+import { Card } from '../atoms/Card'
 
 const StackArea = styled('aside')`
   position: relative;

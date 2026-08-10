@@ -7,12 +7,12 @@ const Section = styled('div')`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
   width: 100%;
 `
 
 const Label = styled('p')`
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--overlay-white-75);
   font-size: 0.875rem;
   margin: 0;
   letter-spacing: 0.05em;
@@ -22,7 +22,7 @@ const Label = styled('p')`
 const Grid = styled('div')`
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 0.5rem;
+  gap: var(--space-2);
   width: 100%;
 `
 
@@ -44,15 +44,15 @@ const AvatarButton = styled('button')<{ selected: boolean }>`
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: 0.5rem;
-    border: 2px solid ${({ selected }) => (selected ? 'rgba(74, 222, 128, 0.9)' : 'rgba(255, 255, 255, 0.2)')};
-    background-color: ${({ selected }) => (selected ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.05)')};
+    border-radius: var(--space-2);
+    border: 2px solid ${({ selected }) => (selected ? 'var(--color-accent-translucent)' : 'var(--overlay-white-25)')};
+    background-color: ${({ selected }) => (selected ? 'var(--overlay-white-25)' : 'var(--overlay-white-05)')};
     transition: border-color 0.15s, background-color 0.15s;
   }
 
   &:hover:enabled::before {
-    border-color: rgba(255, 255, 255, 0.5);
-    background-color: rgba(255, 255, 255, 0.15);
+    border-color: var(--overlay-white-50);
+    background-color: var(--overlay-white-25);
   }
 
   &:disabled {

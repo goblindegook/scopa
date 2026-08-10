@@ -1,5 +1,5 @@
 import { deck } from '../engine/cards'
-import { SUITS } from './Card'
+import { SUITS } from './atoms/Card'
 
 export async function preloadCardAssets(onProgress?: (progress: number) => void): Promise<void> {
   const cards = deck()
