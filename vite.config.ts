@@ -24,7 +24,7 @@ export default defineConfig({
         name: 'Scopa',
         short_name: 'Scopa',
         description: 'Play Scopa, the classic Italian card game',
-        theme_color: '#0f5a0f',
+        theme_color: '#14260E',
         background_color: '#0f5a0f',
         display: 'standalone',
         orientation: 'landscape-primary',

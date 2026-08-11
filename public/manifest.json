@@ -34,7 +34,7 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "landscape-primary",
-  "theme_color": "#0f5a0f",
+  "theme_color": "#14260E",
   "background_color": "#0f5a0f",
   "categories": ["games", "entertainment"]
 }
