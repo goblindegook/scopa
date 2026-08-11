@@ -17,7 +17,6 @@ export default defineConfig({
         'icon.png',
         'icon-192.png',
         'icon-512.png',
-        'manifest.json',
         'screenshots/desktop-wide.png',
       ],
       manifest: {
