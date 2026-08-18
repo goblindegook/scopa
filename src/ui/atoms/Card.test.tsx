@@ -24,7 +24,7 @@ test.each<[string, Suit]>([
         exact: false,
       }) as HTMLImageElement
       expect(cardElement.tagName).toBe('IMG')
-      await waitFor(() => expect(cardElement.src).toMatch(`/assets/${match}/${value}.jpg`))
+      await waitFor(() => expect(cardElement.src).toMatch(`/assets/bergamo/${match}/${value}.jpg`))
     }),
   )
 })

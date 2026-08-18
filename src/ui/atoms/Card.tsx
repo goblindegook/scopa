@@ -71,7 +71,7 @@ export const Card = ({ className, faceDown, card }: CardProps) => {
   React.useEffect(() => {
     if (!card) return
     isMountedRef.current = true
-    import(`../assets/${SUITS[card[1]]}/${card[0]}.jpg`).then((asset) => {
+    import(`../assets/bergamo/${SUITS[card[1]]}/${card[0]}.jpg`).then((asset) => {
       if (isMountedRef.current) {
         setSrc(asset?.default)
       }
