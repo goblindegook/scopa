@@ -106,7 +106,7 @@ test('shows the title screen on load', async () => {
   render(<App />)
 
   expect(await screen.findByRole('button', { name: /offline game/i })).toBeInTheDocument()
-  expect(screen.getByRole('combobox')).toBeInTheDocument()
+  expect(screen.getAllByRole('button', { name: /select player count/i })).toHaveLength(4)
 })
 
 test('starts a local game from the title screen', async () => {
@@ -179,7 +179,7 @@ test('starting a offline game from the overlay replaces the game in progress', a
   expect(await screen.findByLabelText('🦊 0')).toBeInTheDocument()
 
   fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
-  fireEvent.change(await screen.findByRole('combobox'), { target: { value: '3' } })
+  fireEvent.click(await screen.findByLabelText('Select player count 1 × 1 × 1'))
   fireEvent.click(screen.getByRole('button', { name: /offline game/i }))
 
   expect(await screen.findByLabelText('👾 0')).toBeInTheDocument()
