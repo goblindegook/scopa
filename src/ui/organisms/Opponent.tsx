@@ -51,7 +51,7 @@ const OpponentHand = styled('aside')<{ compact?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: ${({ compact }) => (compact ? 'var(--card-height)' : '100%')};
+  min-height: var(--card-height);
   transform: scale(${OPPONENT_SCALE});
   margin-bottom: ${({ compact }) => (compact ? `calc(var(--card-height) * ${(OPPONENT_SCALE - 1) / 2})` : '0')};
 

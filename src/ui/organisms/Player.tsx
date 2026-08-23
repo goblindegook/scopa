@@ -26,7 +26,7 @@ const CompactPlayerArea = styled('section')`
 `
 
 const PlayerHand = styled('div')<{ compact?: boolean }>`
-  min-height: ${({ compact }) => (compact ? 'auto' : 'var(--card-height)')};
+  min-height: var(--card-height);
   display: flex;
   align-items: flex-end;
   justify-content: center;
