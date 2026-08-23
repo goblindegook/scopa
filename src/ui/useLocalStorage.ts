@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { sideCount } from '../engine/sides'
 import type { State } from '../engine/state'
 import { createPlayerProfiles, type Difficulty } from './OfflineMode'
 import type { PlayerProfile } from './pages/Scopa'
@@ -84,17 +85,16 @@ function normalizeSavedGameState(savedGameState: PersistedGameState | null): Sav
   const { wins, score, firstPlayer, ...rest } = game
   // Persisting the choice rather than the weights means changing what "expert" means needs no migration.
   const level = difficulty ?? 'normal'
-  const count = playerAvatars.length === 3 ? 3 : 2
 
   return {
     difficulty: level,
-    playerProfiles: createPlayerProfiles(playerAvatars[0], count, level).map((profile, index) => ({
+    playerProfiles: createPlayerProfiles(playerAvatars[0], game.players.length, level).map((profile, index) => ({
       ...profile,
       avatar: playerAvatars[index] ?? profile.avatar,
     })),
     game: {
       ...rest,
-      score: score ?? wins ?? Array<number>(playerAvatars.length).fill(0),
+      score: score ?? wins ?? Array<number>(sideCount(game.players.length)).fill(0),
       firstPlayer: firstPlayer ?? rest.turn,
     },
   }

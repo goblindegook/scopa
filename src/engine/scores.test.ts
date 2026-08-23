@@ -63,7 +63,7 @@ describe('single player score', () => {
 
     expect(score(players)).toEqual([
       {
-        playerId: 0,
+        sideId: 0,
         details: [
           { label: 'Scope', value: 1, cards: [] },
           { label: 'Taken', value: 0, cards: [] },
@@ -74,7 +74,7 @@ describe('single player score', () => {
         total: 1,
       },
       {
-        playerId: 1,
+        sideId: 1,
         details: [
           { label: 'Scope', value: 2, cards: [] },
           { label: 'Taken', value: 0, cards: [] },
@@ -95,7 +95,7 @@ describe('single player score', () => {
 
     expect(score(players)).toEqual([
       {
-        playerId: 0,
+        sideId: 0,
         details: [
           { label: 'Scope', value: 0, cards: [] },
           { label: 'Taken', value: 1, cards: [denari(7)] },
@@ -106,7 +106,7 @@ describe('single player score', () => {
         total: 4,
       },
       {
-        playerId: 1,
+        sideId: 1,
         details: [
           { label: 'Scope', value: 0, cards: [] },
           { label: 'Taken', value: 0, cards: [] },
@@ -127,7 +127,7 @@ describe('single player score', () => {
 
     expect(score(players)).toEqual([
       {
-        playerId: 0,
+        sideId: 0,
         details: [
           { label: 'Scope', value: 0, cards: [] },
           {
@@ -142,7 +142,7 @@ describe('single player score', () => {
         total: 0,
       },
       {
-        playerId: 1,
+        sideId: 1,
         details: [
           { label: 'Scope', value: 0, cards: [] },
           {
@@ -171,7 +171,7 @@ describe('single player score', () => {
 
     expect(score(players)).toEqual([
       {
-        playerId: 0,
+        sideId: 0,
         details: [
           { label: 'Scope', value: 0, cards: [] },
           { label: 'Taken', value: 2, cards: [denari(1), denari(2)] },
@@ -182,7 +182,7 @@ describe('single player score', () => {
         total: 1,
       },
       {
-        playerId: 1,
+        sideId: 1,
         details: [
           { label: 'Scope', value: 0, cards: [] },
           { label: 'Taken', value: 2, cards: [coppe(1), coppe(2)] },
@@ -203,7 +203,7 @@ describe('single player score', () => {
 
     expect(score(players)).toEqual([
       {
-        playerId: 0,
+        sideId: 0,
         details: [
           { label: 'Scope', value: 0, cards: [] },
           { label: 'Taken', value: 2, cards: [spade(6), spade(7)] },
@@ -214,7 +214,7 @@ describe('single player score', () => {
         total: 1,
       },
       {
-        playerId: 1,
+        sideId: 1,
         details: [
           { label: 'Scope', value: 0, cards: [] },
           { label: 'Taken', value: 2, cards: [coppe(5), coppe(6)] },
@@ -276,5 +276,192 @@ describe('winner', () => {
 
   test('a tie at the top is played on', () => {
     expect(winner([11, 11])).toBeNull()
+  })
+})
+
+describe('team scoring', () => {
+  const emptyHand = { hand: [], scope: 0 }
+
+  test('four players score as two sides pooling seats 0+2 against 1+3', () => {
+    const players = [
+      { id: 0, ...emptyHand, pile: [denari(7), coppe(1)] },
+      { id: 1, ...emptyHand, pile: [bastoni(3)] },
+      { id: 2, ...emptyHand, pile: [denari(6), spade(4)] },
+      { id: 3, ...emptyHand, pile: [bastoni(5)] },
+    ]
+
+    expect(score(players)).toEqual([
+      {
+        sideId: 0,
+        details: [
+          { label: 'Scope', value: 0, cards: [] },
+          { label: 'Taken', value: 4, cards: [denari(7), coppe(1), denari(6), spade(4)] },
+          { label: 'Denari', value: 2, cards: [denari(7), denari(6)] },
+          { label: 'Sette Bello', value: 1, cards: [denari(7)] },
+          { label: 'Primiera', value: 51, cards: [denari(7), coppe(1), spade(4)] },
+        ],
+        total: 4,
+      },
+      {
+        sideId: 1,
+        details: [
+          { label: 'Scope', value: 0, cards: [] },
+          { label: 'Taken', value: 2, cards: [bastoni(3), bastoni(5)] },
+          { label: 'Denari', value: 0, cards: [] },
+          { label: 'Sette Bello', value: 0, cards: [] },
+          { label: 'Primiera', value: 15, cards: [bastoni(5)] },
+        ],
+        total: 0,
+      },
+    ])
+  })
+
+  test('team primiera pools the partners piles instead of summing their scores', () => {
+    const players = [
+      { id: 0, ...emptyHand, pile: [denari(6), coppe(1)] },
+      { id: 1, ...emptyHand, pile: [] },
+      { id: 2, ...emptyHand, pile: [denari(7)] },
+      { id: 3, ...emptyHand, pile: [] },
+    ]
+
+    expect(score(players)).toEqual([
+      {
+        sideId: 0,
+        details: [
+          { label: 'Scope', value: 0, cards: [] },
+          { label: 'Taken', value: 3, cards: [denari(6), coppe(1), denari(7)] },
+          { label: 'Denari', value: 2, cards: [denari(6), denari(7)] },
+          { label: 'Sette Bello', value: 1, cards: [denari(7)] },
+          { label: 'Primiera', value: 37, cards: [denari(7), coppe(1)] },
+        ],
+        total: 4,
+      },
+      {
+        sideId: 1,
+        details: [
+          { label: 'Scope', value: 0, cards: [] },
+          { label: 'Taken', value: 0, cards: [] },
+          { label: 'Denari', value: 0, cards: [] },
+          { label: 'Sette Bello', value: 0, cards: [] },
+          { label: 'Primiera', value: 0, cards: [] },
+        ],
+        total: 0,
+      },
+    ])
+  })
+
+  test('team scope counts add up across partners', () => {
+    const players = [
+      { id: 0, hand: [], pile: [], scope: 2 },
+      { id: 1, hand: [], pile: [], scope: 1 },
+      { id: 2, hand: [], pile: [], scope: 3 },
+      { id: 3, hand: [], pile: [], scope: 0 },
+    ]
+
+    expect(score(players)).toEqual([
+      {
+        sideId: 0,
+        details: [
+          { label: 'Scope', value: 5, cards: [] },
+          { label: 'Taken', value: 0, cards: [] },
+          { label: 'Denari', value: 0, cards: [] },
+          { label: 'Sette Bello', value: 0, cards: [] },
+          { label: 'Primiera', value: 0, cards: [] },
+        ],
+        total: 5,
+      },
+      {
+        sideId: 1,
+        details: [
+          { label: 'Scope', value: 1, cards: [] },
+          { label: 'Taken', value: 0, cards: [] },
+          { label: 'Denari', value: 0, cards: [] },
+          { label: 'Sette Bello', value: 0, cards: [] },
+          { label: 'Primiera', value: 0, cards: [] },
+        ],
+        total: 1,
+      },
+    ])
+  })
+
+  test('six players score as three sides pooling seats 0+3, 1+4 and 2+5', () => {
+    const players = [
+      { id: 0, ...emptyHand, pile: [denari(7), coppe(1)] },
+      { id: 1, ...emptyHand, pile: [bastoni(3)] },
+      { id: 2, ...emptyHand, pile: [] },
+      { id: 3, ...emptyHand, pile: [spade(4)] },
+      { id: 4, ...emptyHand, pile: [] },
+      { id: 5, ...emptyHand, pile: [coppe(2)] },
+    ]
+
+    expect(score(players)).toEqual([
+      {
+        sideId: 0,
+        details: [
+          { label: 'Scope', value: 0, cards: [] },
+          { label: 'Taken', value: 3, cards: [denari(7), coppe(1), spade(4)] },
+          { label: 'Denari', value: 1, cards: [denari(7)] },
+          { label: 'Sette Bello', value: 1, cards: [denari(7)] },
+          { label: 'Primiera', value: 51, cards: [denari(7), coppe(1), spade(4)] },
+        ],
+        total: 4,
+      },
+      {
+        sideId: 1,
+        details: [
+          { label: 'Scope', value: 0, cards: [] },
+          { label: 'Taken', value: 1, cards: [bastoni(3)] },
+          { label: 'Denari', value: 0, cards: [] },
+          { label: 'Sette Bello', value: 0, cards: [] },
+          { label: 'Primiera', value: 13, cards: [bastoni(3)] },
+        ],
+        total: 0,
+      },
+      {
+        sideId: 2,
+        details: [
+          { label: 'Scope', value: 0, cards: [] },
+          { label: 'Taken', value: 1, cards: [coppe(2)] },
+          { label: 'Denari', value: 0, cards: [] },
+          { label: 'Sette Bello', value: 0, cards: [] },
+          { label: 'Primiera', value: 12, cards: [coppe(2)] },
+        ],
+        total: 0,
+      },
+    ])
+  })
+
+  test('settebello is credited to the side holding it', () => {
+    const players = [
+      { id: 0, ...emptyHand, pile: [] },
+      { id: 1, ...emptyHand, pile: [] },
+      { id: 2, ...emptyHand, pile: [denari(7)] },
+      { id: 3, ...emptyHand, pile: [] },
+    ]
+
+    expect(score(players)).toEqual([
+      {
+        sideId: 0,
+        details: [
+          { label: 'Scope', value: 0, cards: [] },
+          { label: 'Taken', value: 1, cards: [denari(7)] },
+          { label: 'Denari', value: 1, cards: [denari(7)] },
+          { label: 'Sette Bello', value: 1, cards: [denari(7)] },
+          { label: 'Primiera', value: 21, cards: [denari(7)] },
+        ],
+        total: 4,
+      },
+      {
+        sideId: 1,
+        details: [
+          { label: 'Scope', value: 0, cards: [] },
+          { label: 'Taken', value: 0, cards: [] },
+          { label: 'Denari', value: 0, cards: [] },
+          { label: 'Sette Bello', value: 0, cards: [] },
+          { label: 'Primiera', value: 0, cards: [] },
+        ],
+        total: 0,
+      },
+    ])
   })
 })

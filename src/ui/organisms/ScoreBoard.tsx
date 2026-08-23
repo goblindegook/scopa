@@ -2,6 +2,7 @@ import styled from '@emotion/styled'
 import type React from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Score } from '../../engine/scores'
+import { sideLabels } from '../sideLabels'
 
 const WinnerTitle = styled('h2')`
   margin: 0;
@@ -140,13 +141,15 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, runningSc
 
   if (scores.length === 0) return null
 
+  const labels = sideLabels(playerAvatars)
+
   return (
     <ScoreBoardStack>
       <WinnerTitle>{title}</WinnerTitle>
       <RunningTotal aria-label={t('gameScore')}>
-        {playerAvatars.map((playerAvatar, index) => (
-          <RunningTotalBox key={`running-total-${playerAvatar}`}>
-            {playerAvatar} {runningScore[index]}
+        {labels.map((label, index) => (
+          <RunningTotalBox key={`running-total-${label}`}>
+            {label} {runningScore[index]}
           </RunningTotalBox>
         ))}
       </RunningTotal>
@@ -157,9 +160,9 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, runningSc
             <th scope="col" className="sr-only">
               {t('scoreCategory')}
             </th>
-            {scores.map(({ playerId }) => (
-              <PlayerHeader key={`player-header-${playerId}`} scope="col">
-                {playerAvatars[playerId]}
+            {scores.map(({ sideId }) => (
+              <PlayerHeader key={`side-header-${sideId}`} scope="col">
+                {labels[sideId]}
               </PlayerHeader>
             ))}
           </tr>
@@ -171,12 +174,12 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, runningSc
             return (
               <tr key={detail.label}>
                 <RowHeader scope="row">{t(`scores.${detail.label}`)}</RowHeader>
-                {scores.map(({ playerId, details }) => {
-                  const isWinner = winnerId === playerId
+                {scores.map(({ sideId, details }) => {
+                  const isWinner = winnerId === sideId
                   const value = details[detailIndex]?.value ?? 0
                   return (
                     <ScoreCell
-                      key={`${detail.label}-${playerId}`}
+                      key={`${detail.label}-${sideId}`}
                       winner={isWinner}
                       {...(isWinner && !isScope && { 'aria-label': t('bonusPoint', { value }) })}
                     >
@@ -190,8 +193,8 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ scores, title, runningSc
           })}
           <TotalRow>
             <RowHeader scope="row">{t('scores.Total')}</RowHeader>
-            {scores.map(({ playerId, total }) => (
-              <Cell key={`player-total-${playerId}`}>{total}</Cell>
+            {scores.map(({ sideId, total }) => (
+              <Cell key={`side-total-${sideId}`}>{total}</Cell>
             ))}
           </TotalRow>
         </tbody>
@@ -204,7 +207,7 @@ const findWinner = (scores: readonly Score[], index: number): number => {
   const values = scores.map(({ details }) => details[index]?.value ?? 0)
   const maxValue = Math.max(...values)
   const winners = scores
-    .map(({ playerId, details }) => (details[index]?.value === maxValue ? playerId : null))
+    .map(({ sideId, details }) => (details[index]?.value === maxValue ? sideId : null))
     .filter((id) => id != null)
   return winners.length === 1 ? winners[0] : -1
 }

@@ -16,7 +16,7 @@ const getCellsByRowHeader = (table: HTMLElement, headerName: string) => {
 test('renders player names and scores', () => {
   const scores: Score[] = [
     {
-      playerId: 0,
+      sideId: 0,
       details: [
         { label: 'Scope', value: 2, cards: [] },
         { label: 'Taken', value: 20, cards: [] },
@@ -27,7 +27,7 @@ test('renders player names and scores', () => {
       total: 3,
     },
     {
-      playerId: 1,
+      sideId: 1,
       details: [
         { label: 'Scope', value: 1, cards: [] },
         { label: 'Taken', value: 20, cards: [] },
@@ -79,8 +79,8 @@ test('renders player names and scores', () => {
 
 test('renders the provided title', () => {
   const scores: Score[] = [
-    { playerId: 0, details: [], total: 3 },
-    { playerId: 1, details: [], total: 3 },
+    { sideId: 0, details: [], total: 3 },
+    { sideId: 1, details: [], total: 3 },
   ]
 
   render(<ScoreBoard scores={scores} title="End of round" runningScore={[0, 0]} playerAvatars={['🧑', '🤖']} />)
@@ -90,8 +90,8 @@ test('renders the provided title', () => {
 
 test('renders running game score when provided', () => {
   const scores: Score[] = [
-    { playerId: 0, details: [], total: 1 },
-    { playerId: 1, details: [], total: 0 },
+    { sideId: 0, details: [], total: 1 },
+    { sideId: 1, details: [], total: 0 },
   ]
 
   render(<ScoreBoard scores={scores} title="🧑 wins the round" runningScore={[3, 2]} playerAvatars={['🧑', '🤖']} />)
@@ -99,4 +99,45 @@ test('renders running game score when provided', () => {
   expect(screen.getByLabelText('Game score')).toBeTruthy()
   expect(screen.getByText('🧑 3')).toBeTruthy()
   expect(screen.getByText('🤖 2')).toBeTruthy()
+})
+
+test('renders one column per side headed by the grouped avatars', () => {
+  const fourPlayerScores: Score[] = [
+    { sideId: 0, details: [], total: 3 },
+    { sideId: 1, details: [], total: 5 },
+  ]
+
+  render(
+    <ScoreBoard
+      scores={fourPlayerScores}
+      title="End of round"
+      runningScore={[3, 5]}
+      playerAvatars={['🐵', '🤖', '👾', '👽']}
+    />,
+  )
+
+  expect(screen.getAllByRole('columnheader').map((header) => header.textContent)).toEqual([
+    'Score category',
+    '🐵👾',
+    '🤖👽',
+  ])
+})
+
+test('groups the running total row by side', () => {
+  const fourPlayerScores: Score[] = [
+    { sideId: 0, details: [], total: 3 },
+    { sideId: 1, details: [], total: 5 },
+  ]
+
+  render(
+    <ScoreBoard
+      scores={fourPlayerScores}
+      title="End of round"
+      runningScore={[3, 5]}
+      playerAvatars={['🐵', '🤖', '👾', '👽']}
+    />,
+  )
+
+  expect(screen.getByText('🐵👾 3')).toBeTruthy()
+  expect(screen.getByText('🤖👽 5')).toBeTruthy()
 })

@@ -5,6 +5,7 @@ import { deck } from '../engine/cards'
 import { move } from '../engine/opponent'
 import { deal, play, randomFirstPlayer } from '../engine/scopa'
 import { score } from '../engine/scores'
+import { type PlayerCount, sideCount } from '../engine/sides'
 import type { Move, State } from '../engine/state'
 import { type PlayerProfile, Scopa } from './pages/Scopa'
 
@@ -15,7 +16,9 @@ export interface OfflineSession {
   readonly difficulty: Difficulty
 }
 
-const dealShuffledDeck = (score?: readonly number[], players: 2 | 3 = 2, previousFirstPlayer?: number) =>
+const AI_AVATARS = ['🤖', '👾', '👽', '😈', '👻'] as const
+
+const dealShuffledDeck = (score?: readonly number[], players: PlayerCount = 2, previousFirstPlayer?: number) =>
   deal(shuffle(deck()), {
     players,
     score,
@@ -26,34 +29,35 @@ export const DIFFICULTIES = ['easy', 'normal', 'hard', 'expert'] as const
 
 export type Difficulty = (typeof DIFFICULTIES)[number]
 
-const POSTURE: Record<2 | 3, number> = { 2: -1, 3: 1 }
+const POSTURE: Record<number, number> = { 2: -1, 3: 1 }
 
-function opponentProfile(difficulty: Difficulty, count: 2 | 3): Omit<PlayerProfile, 'avatar'> {
+function opponentProfile(difficulty: Difficulty, count: number): Omit<PlayerProfile, 'avatar'> {
+  const posture = POSTURE[sideCount(count)]
   switch (difficulty) {
     case 'easy':
-      return { aggression: 0, canCountCards: false }
+      return { posture: 0, canCountCards: false }
     case 'normal':
-      return { aggression: undefined, canCountCards: false }
+      return { posture: undefined, canCountCards: false }
     case 'hard':
-      return { aggression: POSTURE[count], canCountCards: false }
+      return { posture, canCountCards: false }
     case 'expert':
-      return { aggression: POSTURE[count], canCountCards: true, worlds: 100 }
+      return { posture, canCountCards: true, worlds: 100 }
   }
 }
 
 export function createPlayerProfiles(
   playerOneAvatar: string,
-  count: 2 | 3,
+  count: number,
   difficulty: Difficulty,
 ): readonly PlayerProfile[] {
-  return [playerOneAvatar, '🤖', '👾']
+  return [playerOneAvatar, ...AI_AVATARS]
     .slice(0, count)
     .map((avatar, index) => (index === 0 ? { avatar } : { avatar, ...opponentProfile(difficulty, count) }))
 }
 
 export function startOfflineSession(
   playerOneAvatar: string,
-  count: 2 | 3,
+  count: PlayerCount,
   difficulty: Difficulty = 'normal',
 ): { readonly session: OfflineSession; readonly redealt: boolean } {
   const playerProfiles = createPlayerProfiles(playerOneAvatar, count, difficulty)
@@ -87,7 +91,7 @@ export const OfflineMode = ({ session, onGameStateChange, onBack, onLeave: onEnd
   const playMove = React.useCallback((playerMove: Move, game: State) => apply(play(playerMove, game)), [apply])
 
   const startRound = React.useCallback(
-    (runningScore?: readonly number[], players: 2 | 3 = 2, previousFirstPlayer?: number) =>
+    (runningScore?: readonly number[], players: PlayerCount = 2, previousFirstPlayer?: number) =>
       apply(dealShuffledDeck(runningScore, players, previousFirstPlayer)),
     [apply],
   )

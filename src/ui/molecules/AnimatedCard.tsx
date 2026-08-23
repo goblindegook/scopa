@@ -32,10 +32,19 @@ export interface AnimatedCardProps {
   animate?: Target
   faceDown?: boolean
   flip?: boolean
+  scaleOnLand?: boolean
   onComplete: () => void
 }
 
-export const AnimatedCard: React.FC<AnimatedCardProps> = ({ card, initial, animate, faceDown, flip, onComplete }) => {
+export const AnimatedCard: React.FC<AnimatedCardProps> = ({
+  card,
+  initial,
+  animate,
+  faceDown,
+  flip,
+  scaleOnLand,
+  onComplete,
+}) => {
   return (
     <AnimatedCardOverlay
       initial={{ ...initial, rotateY: faceDown ? 180 : 0 }}
@@ -45,6 +54,7 @@ export const AnimatedCard: React.FC<AnimatedCardProps> = ({ card, initial, anima
         rotateY: { duration: Duration.FLIP },
         x: { duration: Duration.PLAY },
         y: { duration: Duration.PLAY },
+        ...(scaleOnLand && { scale: { duration: Duration.PLAY } }),
       }}
       onAnimationComplete={onComplete}
     >

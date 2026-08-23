@@ -19,11 +19,21 @@ describe('TitleScreen', () => {
     expect(screen.queryByText(/resume/i)).not.toBeInTheDocument()
   })
 
-  test('exposes an accessible name for each new-local-game button', () => {
+  test('offers every supported player count in one selector', () => {
     renderTitleScreen()
 
-    expect(screen.getByRole('button', { name: /offline game.*2 players/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /offline game.*3 players/i })).toBeInTheDocument()
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+      '2 Players',
+      '3 Players',
+      '4 Players (Teams)',
+      '6 Players (Teams)',
+    ])
+  })
+
+  test('exposes an accessible name for the start-offline-game button', () => {
+    renderTitleScreen()
+
+    expect(screen.getByRole('button', { name: /offline game/i })).toBeInTheDocument()
   })
 
   test('exposes an accessible name for the resume button', () => {
@@ -50,6 +60,14 @@ describe('TitleScreen', () => {
     expect(onResume).toHaveBeenCalledOnce()
   })
 
+  test('groups a saved team game resume caption by side, not by seat', () => {
+    renderTitleScreen({
+      resume: { kind: 'local', avatars: ['🐵', '🤖', '🦊', '🐱'], score: [5, 3], onResume: vi.fn() },
+    })
+
+    expect(screen.getByText('🐵🦊 5 · 🤖🐱 3')).toBeInTheDocument()
+  })
+
   test('shows the running score of an online game too, labelled as one', () => {
     const onResume = vi.fn()
 
@@ -62,28 +80,39 @@ describe('TitleScreen', () => {
   })
 })
 
-describe('difficulty', () => {
-  test('starts a game at normal without the player choosing', () => {
+describe('starting an offline game', () => {
+  test('starts a game with 2 players at normal difficulty by default', () => {
     const onStart = vi.fn()
-    render(<TitleScreen loadingProgress={1} onStart={onStart} />)
+    renderTitleScreen({ onStart })
 
-    fireEvent.click(screen.getAllByText('2 Players')[0])
+    fireEvent.click(screen.getByRole('button', { name: /offline game/i }))
 
     expect(onStart).toHaveBeenCalledWith(expect.any(String), 2, 'normal')
   })
 
+  test('starts an offline game with the selected player count', () => {
+    const onStart = vi.fn()
+    renderTitleScreen({ onStart })
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '4' } })
+    fireEvent.click(screen.getByRole('button', { name: /offline game/i }))
+
+    expect(onStart).toHaveBeenCalledWith(expect.any(String), 4, expect.any(String))
+  })
+
   test('starts a game at the difficulty the player picked', () => {
     const onStart = vi.fn()
-    render(<TitleScreen loadingProgress={1} onStart={onStart} />)
+    renderTitleScreen({ onStart })
 
     fireEvent.click(screen.getByLabelText('Select difficulty Expert'))
-    fireEvent.click(screen.getAllByText('3 Players')[0])
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '3' } })
+    fireEvent.click(screen.getByRole('button', { name: /offline game/i }))
 
     expect(onStart).toHaveBeenCalledWith(expect.any(String), 3, 'expert')
   })
 
   test('shows the picked difficulty as the pressed one', () => {
-    render(<TitleScreen loadingProgress={1} onStart={vi.fn()} />)
+    renderTitleScreen()
 
     fireEvent.click(screen.getByLabelText('Select difficulty Hard'))
 
@@ -91,20 +120,21 @@ describe('difficulty', () => {
     expect(screen.getByLabelText('Select difficulty Normal')).toHaveAttribute('aria-pressed', 'false')
   })
 
-  test('remembers the picked avatar and difficulty across a remount', () => {
-    const { unmount } = render(<TitleScreen loadingProgress={1} onStart={vi.fn()} />)
+  test('remembers the picked avatar, difficulty and player count across a remount', () => {
+    const { unmount } = renderTitleScreen()
 
     fireEvent.click(screen.getByLabelText('Select avatar 🦊'))
     fireEvent.click(screen.getByLabelText('Select difficulty Expert'))
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '4' } })
     unmount()
 
     const onStart = vi.fn()
-    render(<TitleScreen loadingProgress={1} onStart={onStart} />)
+    renderTitleScreen({ onStart })
 
     expect(screen.getByLabelText('Select avatar 🦊')).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByLabelText('Select difficulty Expert')).toHaveAttribute('aria-pressed', 'true')
 
-    fireEvent.click(screen.getAllByText('2 Players')[0])
-    expect(onStart).toHaveBeenCalledWith('🦊', 2, 'expert')
+    fireEvent.click(screen.getByRole('button', { name: /offline game/i }))
+    expect(onStart).toHaveBeenCalledWith('🦊', 4, 'expert')
   })
 })

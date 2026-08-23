@@ -2,6 +2,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import './ui/i18n'
 import { winner } from './engine/scores'
+import type { PlayerCount } from './engine/sides'
 import type { State } from './engine/state'
 import { Alert } from './ui/atoms/Alert'
 import { type Difficulty, OfflineMode, type OfflineSession, startOfflineSession } from './ui/OfflineMode'
@@ -60,7 +61,7 @@ const App = () => {
   }, [onlineRoom])
 
   const startLocalGame = React.useCallback(
-    (playerOneAvatar: string, count: 2 | 3, difficulty: Difficulty) => {
+    (playerOneAvatar: string, count: PlayerCount, difficulty: Difficulty) => {
       leaveRoom()
       const { session: started, redealt } = startOfflineSession(playerOneAvatar, count, difficulty)
       setSession(started)

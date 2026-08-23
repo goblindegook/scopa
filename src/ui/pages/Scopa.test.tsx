@@ -1,7 +1,7 @@
 import { Err, Ok } from '@pacote/result'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, expect, test, vi, vitest } from 'vitest'
-import { bastoni, coppe, denari, Suit, spade, type Value } from '../../engine/cards'
+import { bastoni, type Card, coppe, denari, Suit, spade, type Value } from '../../engine/cards'
 import type { OpponentOptions } from '../../engine/opponent'
 import type { Move, State } from '../../engine/state'
 import { SUITS } from '../atoms/Card'
@@ -36,6 +36,36 @@ function testGame(overrides: Partial<State> = {}): State {
   }
 }
 
+const AVATARS = ['🐵', '🤖', '👾', '👽', '🦊', '🦉']
+
+function renderGame({
+  players,
+  score,
+  turn = 0,
+  piles,
+}: {
+  players: number
+  score?: readonly number[]
+  turn?: number
+  piles?: readonly (readonly Card[])[]
+}) {
+  const sides = players <= 3 ? players : players / 2
+  render(
+    <Scopa
+      playerId={0}
+      state={testGame({
+        players: Array.from({ length: players }, (_, id) => ({ id, hand: [], pile: piles?.[id] ?? [], scope: 0 })),
+        score: score ?? Array(sides).fill(0),
+        turn,
+      })}
+      playerProfiles={AVATARS.slice(0, players).map((avatar) => ({ avatar }))}
+      onPlay={vitest.fn()}
+      onOpponentTurn={vitest.fn()}
+      onScore={vitest.fn()}
+    />,
+  )
+}
+
 test('show re-deal message when starting the next round', async () => {
   const state = testGame({
     state: 'stop',
@@ -54,8 +84,8 @@ test('show re-deal message when starting the next round', async () => {
       onPlay={vitest.fn()}
       onOpponentTurn={vitest.fn()}
       onScore={() => [
-        { playerId: 0, total: 0, details: [] },
-        { playerId: 1, total: 0, details: [] },
+        { sideId: 0, total: 0, details: [] },
+        { sideId: 1, total: 0, details: [] },
       ]}
     />,
   )
@@ -104,9 +134,9 @@ test('re-deal preserves requested three-player mode on the next round', async ()
       onPlay={vitest.fn()}
       onOpponentTurn={vitest.fn()}
       onScore={() => [
-        { playerId: 0, total: 0, details: [] },
-        { playerId: 1, total: 0, details: [] },
-        { playerId: 2, total: 0, details: [] },
+        { sideId: 0, total: 0, details: [] },
+        { sideId: 1, total: 0, details: [] },
+        { sideId: 2, total: 0, details: [] },
       ]}
     />,
   )
@@ -177,7 +207,7 @@ test('renders opponent hand', async () => {
   })
   render(<Scopa playerId={0} state={state} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />)
 
-  expect(screen.getByTestId('p1-hand').children).toHaveLength(2)
+  expect(screen.getByLabelText('🤖 hand').children).toHaveLength(2)
 })
 
 test('card visibility', async () => {
@@ -283,7 +313,7 @@ test('allow playing a card by dragging it to the table', async () => {
   render(<Scopa playerId={0} state={initialState} onPlay={onPlay} onOpponentTurn={vitest.fn()} onScore={() => []} />)
 
   const card = screen.getByRole('button', { name: cn(1, Suit.DENARI) })
-  const table = screen.getByTestId('table')
+  const table = screen.getByLabelText('Table')
   vitest.spyOn(table, 'getBoundingClientRect').mockReturnValue({
     left: 0,
     top: 0,
@@ -435,7 +465,7 @@ test('computer opponent plays a card', async () => {
   await screen.findByRole('button', { name: cn(1, Suit.DENARI) })
 })
 
-test('opponent turn receives configured aggression from player profile', async () => {
+test('opponent turn receives configured posture from player profile', async () => {
   const initialState = testGame({
     turn: 1,
     score: [0, 0],
@@ -454,7 +484,7 @@ test('opponent turn receives configured aggression from player profile', async (
     <Scopa
       playerId={0}
       state={initialState}
-      playerProfiles={[{ avatar: '🐵' }, { avatar: '🤖', canCountCards: true, aggression: 0.5 }]}
+      playerProfiles={[{ avatar: '🐵' }, { avatar: '🤖', canCountCards: true, posture: 0.5 }]}
       onPlay={vitest.fn()}
       onOpponentTurn={onOpponentTurn}
       onScore={vitest.fn()}
@@ -466,7 +496,7 @@ test('opponent turn receives configured aggression from player profile', async (
       expect(onOpponentTurn).toHaveBeenCalledWith(expect.anything(), {
         avatar: expect.anything(),
         canCountCards: true,
-        aggression: 0.5,
+        posture: 0.5,
       }),
     { timeout: 2500 },
   )
@@ -483,8 +513,8 @@ test('end game and show scores', async () => {
   })
 
   const onScore = vitest.fn(() => [
-    { playerId: 0, total: 3, details: [] },
-    { playerId: 1, total: 4, details: [] },
+    { sideId: 0, total: 3, details: [] },
+    { sideId: 1, total: 4, details: [] },
   ])
 
   render(<Scopa playerId={0} state={state} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={onScore} />)
@@ -537,8 +567,8 @@ test('tracks game score and carries it to next round', async () => {
   const onScore = vitest
     .fn()
     .mockReturnValueOnce([
-      { playerId: 0, total: 2, details: [] },
-      { playerId: 1, total: 0, details: [] },
+      { sideId: 0, total: 2, details: [] },
+      { sideId: 1, total: 0, details: [] },
     ])
     .mockReturnValue([])
 
@@ -563,14 +593,17 @@ test('tracks game score and carries it to next round', async () => {
   fireEvent.click(screen.getByRole('button', { name: cn(1, Suit.DENARI) }))
   fireEvent.click(await screen.findByRole('button', { name: 'Next Round' }))
 
-  expect(screen.getByText('🐵 1')).toBeTruthy()
-  expect(screen.getByText('🤖 0')).toBeTruthy()
+  expect(
+    within(screen.getByLabelText('Game score'))
+      .getAllByRole('listitem')
+      .map((pill) => pill.textContent),
+  ).toEqual(['🐵 1', '🤖 0'])
 })
 
 test('when a player reaches 11 with a unique top score, return to title through onReset', async () => {
   const onScore = vitest.fn(() => [
-    { playerId: 0, total: 2, details: [] },
-    { playerId: 1, total: 0, details: [] },
+    { sideId: 0, total: 2, details: [] },
+    { sideId: 1, total: 0, details: [] },
   ])
   const onReset = vitest.fn()
 
@@ -640,8 +673,8 @@ test('the header Scopa button falls back to onReset when no onBack is provided',
 
 test('when all top scores are tied at 11, keep playing next round', async () => {
   const onScore = vitest.fn(() => [
-    { playerId: 0, total: 2, details: [] },
-    { playerId: 1, total: 2, details: [] },
+    { sideId: 0, total: 2, details: [] },
+    { sideId: 1, total: 2, details: [] },
   ])
 
   render(
@@ -821,4 +854,137 @@ test('does not render "Scopa!" when a player does not take all cards on the tabl
   fireEvent.click(screen.getByRole('button', { name: cn(2, Suit.BASTONI) }))
 
   expect(screen.queryByText('Scopa!')).not.toBeTruthy()
+})
+
+test('shows one score pill per side in a four player game', () => {
+  renderGame({ players: 4, score: [3, 5] })
+
+  expect(
+    within(screen.getByLabelText('Game score'))
+      .getAllByRole('listitem')
+      .map((pill) => pill.textContent),
+  ).toEqual(['🐵👾 3', '🤖👽 5'])
+})
+
+test('highlights the active seat pill at the table using the shared seatToPlay label', () => {
+  renderGame({ players: 4, turn: 2 })
+
+  expect(screen.getByLabelText('👾 to play')).toBeInTheDocument()
+})
+
+test('non-active seat pills at the table use the plain avatar as their accessible name', () => {
+  renderGame({ players: 4, turn: 2, piles: [[], [], [], [bastoni(3)]] })
+
+  const countPill = screen.getByLabelText('👽 captured 1 card')
+  const avatarPill = countPill.previousElementSibling
+
+  expect(avatarPill).toHaveAccessibleName('👽')
+})
+
+test('a capture in a four player game increments the acting seat captured count', () => {
+  const players = (pile: readonly Card[]) => [
+    { id: 0, hand: [], pile, scope: 0 },
+    { id: 1, hand: [], pile: [], scope: 0 },
+    { id: 2, hand: [], pile: [], scope: 0 },
+    { id: 3, hand: [], pile: [], scope: 0 },
+  ]
+
+  const { rerender } = render(
+    <Scopa
+      playerId={0}
+      state={testGame({ players: players([]), score: [0, 0] })}
+      playerProfiles={AVATARS.slice(0, 4).map((avatar) => ({ avatar }))}
+      onPlay={vitest.fn()}
+      onOpponentTurn={vitest.fn()}
+      onScore={vitest.fn()}
+    />,
+  )
+
+  expect(screen.getByLabelText('🐵 captured 0 cards')).toBeInTheDocument()
+
+  rerender(
+    <Scopa
+      playerId={0}
+      state={testGame({ players: players([denari(1)]), score: [0, 0] })}
+      playerProfiles={AVATARS.slice(0, 4).map((avatar) => ({ avatar }))}
+      onPlay={vitest.fn()}
+      onOpponentTurn={vitest.fn()}
+      onScore={vitest.fn()}
+    />,
+  )
+
+  expect(screen.getByLabelText('🐵 captured 1 card')).toBeInTheDocument()
+})
+
+test('a capture in a four player game counts the taken table cards and played card immediately', () => {
+  const initialState = testGame({
+    players: [
+      { id: 0, hand: [denari(5)], pile: [], scope: 0 },
+      { id: 1, hand: [], pile: [], scope: 0 },
+      { id: 2, hand: [], pile: [], scope: 0 },
+      { id: 3, hand: [], pile: [], scope: 0 },
+    ],
+    score: [0, 0],
+    table: [coppe(2), spade(3)],
+  })
+
+  render(
+    <Scopa
+      playerId={0}
+      state={initialState}
+      playerProfiles={AVATARS.slice(0, 4).map((avatar) => ({ avatar }))}
+      onPlay={() =>
+        Ok(
+          testGame({
+            turn: 3,
+            players: [
+              { id: 0, hand: [], pile: [coppe(2), spade(3), denari(5)], scope: 1 },
+              { id: 1, hand: [], pile: [], scope: 0 },
+              { id: 2, hand: [], pile: [], scope: 0 },
+              { id: 3, hand: [], pile: [], scope: 0 },
+            ],
+            score: [0, 0],
+            table: [],
+            lastTaken: [coppe(2), spade(3)],
+          }),
+        )
+      }
+      onOpponentTurn={vitest.fn()}
+      onScore={vitest.fn()}
+    />,
+  )
+
+  fireEvent.click(screen.getByRole('button', { name: cn(5, Suit.DENARI) }))
+
+  expect(screen.getByLabelText('🐵 captured 3 cards')).toBeInTheDocument()
+})
+
+test('shows a captured count pill for every seat in a four player game', () => {
+  renderGame({ players: 4, piles: [[denari(7), coppe(1)], [], [bastoni(3)], []] })
+
+  expect(screen.getByLabelText('🐵 captured 2 cards')).toBeInTheDocument()
+})
+
+test('shows a captured count pill for an opponent seat in a four player game', () => {
+  renderGame({ players: 4, piles: [[], [], [bastoni(3)], []] })
+
+  expect(screen.getByLabelText('👾 captured 1 card')).toBeInTheDocument()
+})
+
+test('shows a captured count pill for every seat in a six player game', () => {
+  renderGame({ players: 6, piles: [[], [], [], [], [denari(7)], []] })
+
+  expect(screen.getByLabelText('🦊 captured 1 card')).toBeInTheDocument()
+})
+
+test('keeps the visible captured pile in a two player game', () => {
+  renderGame({ players: 2, piles: [[denari(7)], []] })
+
+  expect(screen.getByTitle('🐵 pile: 1 card')).toBeInTheDocument()
+})
+
+test('keeps the visible captured pile in a three player game', () => {
+  renderGame({ players: 3, piles: [[denari(7)], [], []] })
+
+  expect(screen.getByTitle('🐵 pile: 1 card')).toBeInTheDocument()
 })

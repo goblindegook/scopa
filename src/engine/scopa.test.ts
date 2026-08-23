@@ -126,6 +126,63 @@ describe('deal', () => {
   })
 })
 
+describe('team running score', () => {
+  test('a four player deal starts with one running score entry per side', () => {
+    const game = getGameState(deal(deck(), { players: 4, previousFirstPlayer: 0 }))
+
+    expect(game.score).toEqual([0, 0])
+  })
+
+  test('a six player deal starts with one running score entry per side', () => {
+    const game = getGameState(deal(deck(), { players: 6, previousFirstPlayer: 0 }))
+
+    expect(game.score).toEqual([0, 0, 0])
+  })
+
+  test('side scores pool contributions from every seat on the side when a four player hand ends', () => {
+    const game: State = {
+      state: 'play',
+      turn: 3,
+      firstPlayer: 3,
+      score: [2, 1],
+      players: [
+        { id: 0, hand: [], pile: [], scope: 0 },
+        { id: 1, hand: [], pile: [], scope: 0 },
+        { id: 2, hand: [], pile: [denari(7), denari(1), coppe(7), bastoni(7), spade(7)], scope: 0 },
+        { id: 3, hand: [spade(1)], pile: [], scope: 0 },
+      ],
+      pile: [],
+      table: [denari(2)],
+      lastTaken: [],
+      lastTaker: 2,
+    }
+
+    const next = getGameState(play({ card: spade(1), take: [] }, game))
+
+    expect(next).toEqual({
+      state: 'stop',
+      turn: 2,
+      firstPlayer: 3,
+      score: [6, 1],
+      players: [
+        { id: 0, hand: [], pile: [], scope: 0 },
+        { id: 1, hand: [], pile: [], scope: 0 },
+        {
+          id: 2,
+          hand: [],
+          pile: [denari(7), denari(1), coppe(7), bastoni(7), spade(7), denari(2), spade(1)],
+          scope: 0,
+        },
+        { id: 3, hand: [], pile: [], scope: 0 },
+      ],
+      pile: [],
+      table: [],
+      lastTaken: [],
+      lastTaker: 2,
+    })
+  })
+})
+
 describe('play', () => {
   test('player one plays a card from their hand on the table', () => {
     const game: State = {
@@ -707,8 +764,10 @@ describe('play', () => {
 
     const next = getGameState(play({ card: spade(1), take: [] }, game))
 
-    expect(next.state).toBe('stop')
-    expect(next.score).toEqual([6, 1])
+    expect(next).toMatchObject({
+      state: 'stop',
+      score: [6, 1],
+    })
   })
 
   test('score is not updated when the hand ends in a tie', () => {
@@ -728,7 +787,9 @@ describe('play', () => {
 
     const next = getGameState(play({ card: denari(1), take: [] }, game))
 
-    expect(next.state).toBe('stop')
-    expect(next.score).toEqual([1, 2])
+    expect(next).toMatchObject({
+      state: 'stop',
+      score: [1, 2],
+    })
   })
 })

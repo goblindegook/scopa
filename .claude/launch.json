@@ -2,9 +2,15 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "scopa-dev",
+      "name": "partykit",
       "runtimeExecutable": "mise",
-      "runtimeArgs": ["exec", "--", "npm", "run", "dev"],
+      "runtimeArgs": ["exec", "--", "npx", "partykit", "dev"],
+      "port": 1999
+    },
+    {
+      "name": "vite",
+      "runtimeExecutable": "mise",
+      "runtimeArgs": ["exec", "--", "npm", "run", "dev:vite", "--", "--port", "5174", "--strictPort"],
       "port": 5174
     }
   ]

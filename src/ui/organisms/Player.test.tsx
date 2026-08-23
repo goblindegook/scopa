@@ -16,6 +16,12 @@ const arbitraryCard = tuple(
 
 const cardSet = (maxLength: number) => uniqueArray(arbitraryCard, { maxLength, selector: (v) => v.join('-') })
 
+test('names the hand so it can be reached by its avatar', () => {
+  render(<Player avatar="🐵" pile={[]} />)
+
+  expect(screen.getByLabelText('🐵 hand')).toBeInTheDocument()
+})
+
 test('renders pile', () => {
   assert(
     property(cardSet(10), (pile) => {

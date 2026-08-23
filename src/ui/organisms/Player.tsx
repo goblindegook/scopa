@@ -2,7 +2,7 @@ import styled from '@emotion/styled'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Card as CardType } from '../../engine/cards'
-import { Stack } from '../molecules/Stack'
+import { CapturedCount, Stack } from '../molecules/Stack'
 
 const PlayerArea = styled('section')`
   background-color: var(--color-player-area);
@@ -15,12 +15,22 @@ const PlayerArea = styled('section')`
   flex: 0 0 35vh;
 `
 
-const PlayerHand = styled('div')`
-  min-height: 150px;
+const CompactPlayerArea = styled('section')`
+  background-color: var(--color-player-area);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  flex: 0 0 35vh;
+`
+
+const PlayerHand = styled('div')<{ compact?: boolean }>`
+  min-height: ${({ compact }) => (compact ? 'auto' : 'var(--card-height)')};
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding-bottom: var(--space-4);
+  padding-bottom: ${({ compact }) => (compact ? '0' : 'var(--space-4)')};
 `
 
 export const FanCard = styled('div')<{ $fanIndex: number; $fanTotal: number }>`
@@ -70,16 +80,33 @@ export const PlayerCard = styled('button')<{ $aimed?: boolean }>`
 
 type PlayerProps = React.PropsWithChildren<{
   pile: readonly CardType[]
+  capturedCount?: number
   avatar: string
+  compact?: boolean
+  active?: boolean
 }>
 
-export const Player = React.forwardRef<HTMLElement, PlayerProps>(({ children, avatar, pile }, ref) => {
-  const { t } = useTranslation()
-  return (
-    <PlayerArea>
-      <PlayerHand>{children}</PlayerHand>
-      <Stack ref={ref} pile={pile} title={t('playerPile', { avatar, count: pile.length })} />
-    </PlayerArea>
-  )
-})
+export const Player = React.forwardRef<HTMLElement, PlayerProps>(
+  ({ children, avatar, pile, capturedCount = pile.length, compact, active = false }, ref) => {
+    const { t } = useTranslation()
+
+    if (compact) {
+      return (
+        <CompactPlayerArea>
+          <PlayerHand compact aria-label={t('playerHand', { avatar })}>
+            {children}
+          </PlayerHand>
+          <CapturedCount ref={ref} avatar={avatar} count={capturedCount} active={active} />
+        </CompactPlayerArea>
+      )
+    }
+
+    return (
+      <PlayerArea>
+        <PlayerHand aria-label={t('playerHand', { avatar })}>{children}</PlayerHand>
+        <Stack ref={ref} pile={pile} title={t('playerPile', { avatar, count: capturedCount })} />
+      </PlayerArea>
+    )
+  },
+)
 Player.displayName = 'Player'

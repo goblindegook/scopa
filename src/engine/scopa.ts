@@ -3,11 +3,12 @@ import { Err, Ok, type Result } from '@pacote/result'
 import { hasCard, isSame, type Pile } from './cards.ts'
 import { findCardsToTake } from './move.ts'
 import { score } from './scores.ts'
+import { type PlayerCount, sideCount } from './sides.ts'
 import type { Move, Player, State } from './state.ts'
 
 interface Options {
   previousFirstPlayer: number
-  players?: 2 | 3 | 4 | 6
+  players?: PlayerCount
   score?: readonly number[]
 }
 
@@ -38,7 +39,7 @@ const hasTakenCards = (allowedCards: readonly Pile[], cardsToTake: readonly Pile
 
 export function deal(cards: Pile, options: Options): Result<State, Error> {
   const players = options.players ?? DEFAULT_PLAYERS
-  const score = options.score ?? Array.from({ length: players }, () => 0)
+  const score = options.score ?? Array.from({ length: sideCount(players) }, () => 0)
   const [table, rest] = splitAt(4, cards)
   const dealtKings = table.filter(([value]) => value === 10).length
 
@@ -109,10 +110,10 @@ function next({ card, take }: Move, game: State): State {
   const finalTable = nextState === 'stop' && lastTaker != null ? [] : nextTable
 
   if (nextState === 'stop') {
-    const handTotals = score(finalPlayers).reduce<Map<number, number>>((totals, { playerId, total }) => {
-      totals.set(playerId, total)
+    const handTotals = score(finalPlayers).reduce<Record<number, number>>((totals, { sideId, total }) => {
+      totals[sideId] = total
       return totals
-    }, new Map())
+    }, {})
     return {
       state: nextState,
       pile: nextPile,
@@ -122,7 +123,7 @@ function next({ card, take }: Move, game: State): State {
       firstPlayer: game.firstPlayer,
       lastTaken: take,
       lastTaker,
-      score: game.score.map((total, playerId) => total + (handTotals.get(playerId) ?? 0)),
+      score: game.score.map((total, sideId) => total + (handTotals[sideId] ?? 0)),
     }
   }
 

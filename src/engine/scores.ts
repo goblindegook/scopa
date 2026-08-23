@@ -1,4 +1,5 @@
 import { type Card, denari, isDenari, isSettebello, type Pile } from './cards.ts'
+import { sideCount, sideOf } from './sides.ts'
 import type { Player } from './state.ts'
 
 interface ScoreDetail {
@@ -8,7 +9,7 @@ interface ScoreDetail {
 }
 
 export interface Score {
-  playerId: number
+  sideId: number
   details: readonly ScoreDetail[]
   total: number
 }
@@ -62,26 +63,36 @@ function findWinners(totals: number[]): number[] {
 }
 
 export function score(players: readonly Player[]): readonly Score[] {
-  const cardTotal = players.map(({ pile }) => pile.length)
+  const sides = Array.from({ length: sideCount(players.length) }, (_, side) =>
+    players.reduce(
+      (pooled, { pile, scope }, seat) =>
+        sideOf(seat, players.length) === side
+          ? { pile: [...pooled.pile, ...pile], scope: pooled.scope + scope }
+          : pooled,
+      { pile: [] as Pile, scope: 0 },
+    ),
+  )
+
+  const cardTotal = sides.map(({ pile }) => pile.length)
   const mostCards = findWinners(cardTotal)
 
-  const denariTotal = players.map(({ pile }) => pile.filter(isDenari).length)
+  const denariTotal = sides.map(({ pile }) => pile.filter(isDenari).length)
   const mostDenari = findWinners(denariTotal)
 
-  const primes = players.map(({ pile }) => prime(pile))
+  const primes = sides.map(({ pile }) => prime(pile))
   const highestPrime = findWinners(primes.map(({ value }) => value))
 
-  return players.map(({ scope, pile }, player) => {
+  return sides.map(({ scope, pile }, sideId) => {
     const settebello = pile.some(isSettebello) ? 1 : 0
 
     return {
-      playerId: player,
+      sideId,
       details: [
         { label: 'Scope', value: scope, cards: [] },
         { label: 'Taken', value: pile.length, cards: pile },
         {
           label: 'Denari',
-          value: denariTotal[player],
+          value: denariTotal[sideId],
           cards: pile.filter(isDenari),
         },
         {
@@ -89,14 +100,14 @@ export function score(players: readonly Player[]): readonly Score[] {
           value: settebello,
           cards: settebello === 1 ? [denari(7)] : [],
         },
-        primes[player],
+        primes[sideId],
       ],
       total:
         scope +
         settebello +
-        (mostCards.includes(player) ? 1 : 0) +
-        (mostDenari.includes(player) ? 1 : 0) +
-        (highestPrime.includes(player) ? 1 : 0),
+        (mostCards.includes(sideId) ? 1 : 0) +
+        (mostDenari.includes(sideId) ? 1 : 0) +
+        (highestPrime.includes(sideId) ? 1 : 0),
     }
   })
 }

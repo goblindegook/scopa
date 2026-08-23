@@ -3,11 +3,12 @@ import { type Card, deck, isDenari, isSame, isSettebello, type Pile, type Suit }
 import { findCardsToTake } from './move.ts'
 import { play } from './scopa.ts'
 import { primePoints, score } from './scores.ts'
+import { sideOf } from './sides.ts'
 import type { Move, Player, State } from './state.ts'
 
 export interface OpponentOptions {
   canCountCards?: boolean
-  aggression?: number
+  posture?: number
   worlds?: number
   /** Never ship true: the search reads real hands. */
   cheats?: boolean
@@ -39,10 +40,10 @@ interface Evaluation {
   isLastTable: boolean
 }
 
-function evaluationContext(game: State, { canCountCards = false, aggression }: OpponentOptions): Evaluation {
-  const effectiveAggression = aggression ?? dynamicAggression(game, canCountCards)
-  const aggressiveBias = Math.max(effectiveAggression, 0)
-  const defensiveBias = Math.max(-effectiveAggression, 0)
+function evaluationContext(game: State, { canCountCards = false, posture }: OpponentOptions): Evaluation {
+  const effectivePosture = posture ?? dynamicPosture(game, canCountCards)
+  const aggressiveBias = Math.max(effectivePosture, 0)
+  const defensiveBias = Math.max(-effectivePosture, 0)
   const { pile } = game.players[game.turn]
 
   return {
@@ -99,9 +100,12 @@ const MAX_PRIMIERA = 84
 const TABLE_CONTROL_BASE = 0.5
 const TABLE_CONTROL_DEFENSIVE = 6
 
-function dynamicAggression(game: State, canCountCards: boolean): number {
-  const myScore = game.score[game.turn] ?? 0
-  const opponentsScore = game.score.filter((_, index) => index !== game.turn)
+function dynamicPosture(game: State, canCountCards: boolean): number {
+  const playerCount = game.players.length
+  const mySide = sideOf(game.turn, playerCount)
+
+  const myScore = game.score[mySide] ?? 0
+  const opponentsScore = game.score.filter((_, index) => index !== mySide)
   const prospectiveWinner = Math.max(...game.score)
   const bestOpponentScore = opponentsScore.length > 0 ? Math.max(...opponentsScore) : myScore
 
@@ -111,9 +115,9 @@ function dynamicAggression(game: State, canCountCards: boolean): number {
 
   if (canCountCards) {
     const roundTotals = score(game.players).map(({ total }) => total)
-    const myRoundTotal = roundTotals[game.turn] ?? 0
+    const myRoundTotal = roundTotals[mySide] ?? 0
     const bestOpponentRoundTotal = roundTotals
-      .filter((_, index) => index !== game.turn)
+      .filter((_, index) => index !== mySide)
       .reduce((best, total) => Math.max(best, total), 0)
     return clamp((bestOpponentRoundTotal - myRoundTotal) / 2, -0.8, 0.8)
   }

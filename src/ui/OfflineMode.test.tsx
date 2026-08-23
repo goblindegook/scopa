@@ -18,4 +18,30 @@ describe('startOfflineSession', () => {
   it('starts at normal when no difficulty is given', () => {
     expect(startOfflineSession('🐵', 2).session.difficulty).toBe('normal')
   })
+
+  it('seats four players in a four player game', () => {
+    expect(startOfflineSession('🐵', 4).session.playerProfiles).toHaveLength(4)
+  })
+
+  it('seats six players in a six player game', () => {
+    expect(startOfflineSession('🐵', 6).session.playerProfiles).toHaveLength(6)
+  })
+
+  it('gives every seat a distinct avatar in a four player game', () => {
+    const avatars = startOfflineSession('🐵', 4).session.playerProfiles.map((profile) => profile.avatar)
+
+    expect(new Set(avatars).size).toBe(4)
+  })
+
+  it('gives every seat a distinct avatar in a six player game', () => {
+    const avatars = startOfflineSession('🐵', 6).session.playerProfiles.map((profile) => profile.avatar)
+
+    expect(new Set(avatars).size).toBe(6)
+  })
+
+  it('deals a hand for every seated player in a four player game', () => {
+    const { session } = startOfflineSession('🐵', 4)
+
+    expect(session.game.players).toHaveLength(session.playerProfiles.length)
+  })
 })

@@ -7,6 +7,7 @@ import { type Card, hasCard, isSame, type Pile } from '../../engine/cards'
 import { findCardsToTake } from '../../engine/move'
 import type { OpponentOptions } from '../../engine/opponent'
 import { type Score, winner } from '../../engine/scores'
+import { sideOf } from '../../engine/sides'
 import type { Move, State } from '../../engine/state'
 import { Alert } from '../atoms/Alert'
 import { Button } from '../atoms/Button'
@@ -17,6 +18,7 @@ import { DealtCard } from '../molecules/DealtCard'
 import { TableCard } from '../molecules/TableCard'
 import { OPPONENT_SCALE, Opponent, OpponentCard, Opponents } from '../organisms/Opponent'
 import { FanCard, Player, PlayerCard } from '../organisms/Player'
+import { sideLabels } from '../sideLabels'
 import { useAlerts } from '../useAlerts'
 import { type DragState, useDragState } from '../useDragState'
 import { useRefMap } from '../useRefMap'
@@ -25,7 +27,7 @@ import { GameOver } from './GameOver'
 export interface PlayerProfile {
   avatar: string
   canCountCards?: boolean
-  aggression?: number
+  posture?: number
   worlds?: number
 }
 
@@ -431,23 +433,32 @@ export function Scopa({
       ? previousTableRef.current
       : game.table
 
+  const isLayoutCompact = game.players.length >= 4
+
   return (
     <Container>
       <Main>
         {game.state === 'play' && (
           <Header>
             <Button onClick={onBack}>Scopa</Button>
-            <Turn aria-label={t('gameScore')}>
-              {game.players.map((_, playerId) => (
-                <TurnScore
-                  // biome-ignore lint/suspicious/noArrayIndexKey: player ID is the index
-                  key={`player-score-${playerId}`}
-                  active={game.turn === playerId}
-                  data-active={game.turn === playerId}
-                >
-                  {playerProfiles[playerId].avatar} {game.score[playerId] ?? 0}
-                </TurnScore>
-              ))}
+            <Turn aria-label={t('gameScore')} role="list">
+              {sideLabels(playerProfiles.slice(0, game.players.length).map(({ avatar }) => avatar)).map(
+                (label, side) => {
+                  const isActiveSide = sideOf(game.turn, game.players.length) === side
+                  const score = game.score[side] ?? 0
+                  return (
+                    <TurnScore
+                      key={`side-score-${label}`}
+                      role="listitem"
+                      aria-label={t('sideScore', { avatar: label, score })}
+                      active={isActiveSide}
+                      data-active={isActiveSide}
+                    >
+                      {label} {score}
+                    </TurnScore>
+                  )
+                },
+              )}
             </Turn>
           </Header>
         )}
@@ -461,6 +472,9 @@ export function Scopa({
                 index={id}
                 avatar={playerProfiles[id].avatar}
                 pile={getFilteredPile(id)}
+                capturedCount={game.players[id].pile.length}
+                compact={isLayoutCompact}
+                active={game.turn === id}
               >
                 <HandCards
                   hand={hand}
@@ -478,7 +492,7 @@ export function Scopa({
               </Opponent>
             ))}
         </Opponents>
-        <Table data-testid="table" ref={tableRef}>
+        <Table aria-label={t('table')} ref={tableRef}>
           <AnimatePresence mode="popLayout">
             {/* Table cards */}
             {tableCards.map((card) => {
@@ -549,6 +563,8 @@ export function Scopa({
 
                 const pileAreaRect = pileRef.getBoundingClientRect()
                 const targetRect = Array.from(pileRef.children).at(-1)?.getBoundingClientRect() ?? pileAreaRect
+                const baseScale = pileRef.offsetWidth > 0 ? pileAreaRect.width / pileRef.offsetWidth : 1
+                const shrinkFactor = isLayoutCompact ? Math.min(1, targetRect.height / animatedH) : 1
 
                 setAnimation({
                   phase: 'taking',
@@ -561,7 +577,7 @@ export function Scopa({
                     animate: {
                       x: targetRect.left + targetRect.width / 2 - animatedW / 2,
                       y: targetRect.top + targetRect.height / 2 - animatedH / 2 - (index + 1) * 2,
-                      scale: pileRef.offsetWidth > 0 ? pileAreaRect.width / pileRef.offsetWidth : 1,
+                      scale: baseScale * shrinkFactor,
                     },
                   })),
                 })
@@ -580,6 +596,7 @@ export function Scopa({
                   animate={a.animate}
                   faceDown={false}
                   flip
+                  scaleOnLand={isLayoutCompact}
                   onComplete={() => {
                     if (index === filtered.length - 1) setAnimation({ phase: 'idle' })
                   }}
@@ -590,6 +607,9 @@ export function Scopa({
           ref={getPlayerPileRef(playerId)}
           avatar={playerProfiles[playerId].avatar}
           pile={getFilteredPile(playerId)}
+          capturedCount={game.players[playerId].pile.length}
+          compact={isLayoutCompact}
+          active={game.turn === playerId}
         >
           <HandCards
             hand={game.players[playerId].hand}

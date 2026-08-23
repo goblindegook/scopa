@@ -95,7 +95,7 @@ function parseNumber(value: string, argName: string): number {
 function defaultProfile(): Profile {
   return {
     variant: 'baseline',
-    options: { canCountCards: false, aggression: undefined },
+    options: { canCountCards: false, posture: undefined },
   }
 }
 
@@ -125,7 +125,7 @@ function parseProfileSpec(spec: string, argName: string): Profile {
     }
     if (normalized.startsWith('aggression=')) {
       const value = token.slice('aggression='.length)
-      profile.options.aggression = parseNumber(value, `${argName} aggression`)
+      profile.options.posture = parseNumber(value, `${argName} aggression`)
       continue
     }
     if (normalized.startsWith('variant=')) {
@@ -416,7 +416,7 @@ function marginOfError(value: number, total: number): number {
 }
 
 function describeProfile(profile: Profile): string {
-  const aggression = profile.options.aggression
+  const aggression = profile.options.posture
   return [
     profile.variant,
     aggression == null ? 'aggression=dynamic' : `aggression=${aggression.toFixed(2)}`,
@@ -479,7 +479,7 @@ function buildReport({
       player: `p${playerId}`,
       profile: describeProfile(args.profiles[playerId]),
       variant: args.profiles[playerId].variant,
-      aggression: args.profiles[playerId].options.aggression ?? null,
+      aggression: args.profiles[playerId].options.posture ?? null,
       canCountCards: args.profiles[playerId].options.canCountCards ?? false,
       roundsPlayed: entry.roundsPlayed,
       roundsWonPct: percentage(entry.roundsWon, entry.roundsPlayed),

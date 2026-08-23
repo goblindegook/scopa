@@ -5,6 +5,7 @@ import type { Score } from '../../engine/scores'
 import { Button } from '../atoms/Button'
 import { ModalOverlay, ModalPanel } from '../atoms/ModalOverlay'
 import { ScoreBoard } from '../organisms/ScoreBoard'
+import { sideLabels } from '../sideLabels'
 
 const WaitingNotice = styled('p')`
   margin: 0;
@@ -34,7 +35,7 @@ export const GameOver: React.FC<GameOverProps> = ({
 }) => {
   const { t } = useTranslation()
 
-  const title = winner == null ? t('endOfRound') : t('winsGame', { avatar: playerAvatars[winner] })
+  const title = winner == null ? t('endOfRound') : t('winsGame', { avatar: sideLabels(playerAvatars)[winner] })
 
   return (
     <ModalOverlay $absolute>

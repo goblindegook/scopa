@@ -128,6 +128,13 @@ This project uses Test-Driven Development. The red-green-refactor cycle is manda
 
 Never write implementation code without a failing test first. Never skip the refactor step.
 
+**A test that passes before the implementation is a useless test.** Run every new test and watch it fail. If it
+passes on the first run, delete it or rewrite it until it fails — never explain the pass away. Adding N tests and
+seeing fewer than N fail is not a verified red step. Before writing a test, answer: *what production change would
+make this fail?* Choose inputs where old and new behaviour give genuinely different values — e.g. a team-primiera
+test where per-player scores 34, pooled scores 37 and summed scores 55 separates all three; one where every
+implementation returns 21 proves nothing.
+
 Do not add comments that explain what the test is obviously doing. Focus instead on a good test description.
 
 ## Key Patterns
@@ -138,7 +145,7 @@ Do not add comments that explain what the test is obviously doing. Focus instead
 - **Game states**: `'initial'` → `'play'` → `'stop'`
 - **Animation phases**: `AnimationController` in `Scopa.tsx` tracks `idle | play | taking` phase with position data for
   flying card animations
-- **Styling**: Emotion `styled` with single quotes, no semicolons, 120-char line width (Biome config)
+- **Styling**: Emotion `styled` — code style is enforced by Biome (`biome.json`); run `npm run lint`/`format` rather than hand-match a description
 - **Design tokens**: colors and spacing are CSS custom properties defined once in the `:root` block of
   `src/index.css` (`--overlay-black-*`/`--overlay-white-*` alpha scales, `--color-accent`/`--color-primary`/etc.,
   `--space-*` on a quarter-rem scale). Reference them via `var(--token-name)` directly inside Emotion template
@@ -147,3 +154,7 @@ Do not add comments that explain what the test is obviously doing. Focus instead
   (e.g. `rgba(255, 255, 255, 0.08)` in `Lobby.tsx`) are deliberately left inline rather than forced into the token
   set.
 - **Testing**: Vitest + Testing Library for UI, `fast-check` for property-based tests in engine (see `scopa.test.ts`)
+- **Never use `data-testid`.** Test accessible behaviour and things the user can actually interact with: query by
+  role, accessible name, and label text, and drive the UI through real interactions (`userEvent.click`, `selectOptions`).
+  If an element is hard to select, that is a missing accessible name, not a missing test hook — fix it with
+  `aria-label`/`aria-current`/proper roles so the test gets exactly the affordance a screen-reader user gets.

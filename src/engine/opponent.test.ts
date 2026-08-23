@@ -494,24 +494,24 @@ describe('card counting', () => {
   })
 })
 
-describe('aggression', () => {
-  test('when behind in running score and aggression is undefined, it plays aggressively', () => {
+describe('posture', () => {
+  test('when behind in running score and posture is undefined, it plays aggressively', () => {
     const game = setupGame([denari(1), denari(4), denari(5), coppe(9)], [coppe(8), bastoni(9)], [], [2, 9])
 
     const implicit = move(game, { canCountCards: false })
-    const aggressive = move(game, { canCountCards: false, aggression: 0.9 })
-    const defensive = move(game, { canCountCards: false, aggression: -0.9 })
+    const aggressive = move(game, { canCountCards: false, posture: 0.9 })
+    const defensive = move(game, { canCountCards: false, posture: -0.9 })
 
     expect(implicit).toEqual(aggressive)
     expect(implicit).not.toEqual(defensive)
   })
 
-  test('when ahead in running score and aggression is undefined, it plays defensively', () => {
+  test('when ahead in running score and posture is undefined, it plays defensively', () => {
     const game = setupGame([denari(1), denari(4), denari(5), coppe(9)], [coppe(8), bastoni(9)], [], [9, 2])
 
     const implicit = move(game, { canCountCards: false })
-    const defensive = move(game, { canCountCards: false, aggression: -0.9 })
-    const aggressive = move(game, { canCountCards: false, aggression: 0.9 })
+    const defensive = move(game, { canCountCards: false, posture: -0.9 })
+    const aggressive = move(game, { canCountCards: false, posture: 0.9 })
 
     expect(implicit).toEqual(defensive)
     expect(implicit).not.toEqual(aggressive)
@@ -530,8 +530,8 @@ describe('aggression', () => {
 
     const implicitBehind = move(behindOnRound, { canCountCards: true })
     const implicitAhead = move(aheadOnRound, { canCountCards: true })
-    const aggressiveBehind = move(behindOnRound, { canCountCards: true, aggression: 0.9 })
-    const defensiveAhead = move(aheadOnRound, { canCountCards: true, aggression: -0.9 })
+    const aggressiveBehind = move(behindOnRound, { canCountCards: true, posture: 0.9 })
+    const defensiveAhead = move(aheadOnRound, { canCountCards: true, posture: -0.9 })
 
     expect(implicitBehind).toEqual(aggressiveBehind)
     expect(implicitAhead).toEqual(defensiveAhead)
@@ -569,17 +569,17 @@ describe('aggression', () => {
 
     const implicitWeak = move(weakProgress, { canCountCards: false })
     const implicitStrong = move(strongProgress, { canCountCards: false })
-    const defensiveStrong = move(strongProgress, { canCountCards: false, aggression: -0.9 })
+    const defensiveStrong = move(strongProgress, { canCountCards: false, posture: -0.9 })
 
     expect(implicitWeak.take.length).toBeGreaterThanOrEqual(implicitStrong.take.length)
     expect(implicitStrong).toEqual(defensiveStrong)
   })
 
-  test('with aggression above 0 it captures more aggressively, below 0 it prioritizes blocking', () => {
+  test('with posture above 0 it captures more aggressively, below 0 it prioritizes blocking', () => {
     const game = setupGame([denari(1), denari(4), denari(5), coppe(9)], [coppe(8), bastoni(9)])
 
-    const aggressive = move(game, { canCountCards: false, aggression: 0.9 })
-    const defensive = move(game, { canCountCards: false, aggression: -0.9 })
+    const aggressive = move(game, { canCountCards: false, posture: 0.9 })
+    const defensive = move(game, { canCountCards: false, posture: -0.9 })
 
     expect(aggressive.card).toEqual(bastoni(9))
     expect(aggressive.take).toEqual([coppe(9)])
@@ -597,9 +597,9 @@ describe('full game simulation', () => {
   test('plays a complete game with two AI players', () => {
     let game = getGameState(deal(deck(), { players: 2, previousFirstPlayer: 1 }))
     const playerProfiles: readonly OpponentOptions[] = [
-      { canCountCards: true, aggression: 0 },
-      { canCountCards: true, aggression: 0 },
-      { canCountCards: true, aggression: 0 },
+      { canCountCards: true, posture: 0 },
+      { canCountCards: true, posture: 0 },
+      { canCountCards: true, posture: 0 },
     ]
 
     while (game.state !== 'stop') {
@@ -611,11 +611,65 @@ describe('full game simulation', () => {
   })
 })
 
+describe('team modes', () => {
+  test('reads its own side score, not its seat score, for running-score posture', () => {
+    const game: State = {
+      state: 'play',
+      turn: 3,
+      firstPlayer: 0,
+      score: [0, 20],
+      table: [denari(1), denari(4), denari(5), coppe(9)],
+      players: [
+        { id: 0, hand: [], pile: [], scope: 0 },
+        { id: 1, hand: [], pile: [], scope: 0 },
+        { id: 2, hand: [], pile: [], scope: 0 },
+        { id: 3, hand: [coppe(8), bastoni(9)], pile: [], scope: 0 },
+      ],
+      pile: [],
+      lastTaken: [],
+    }
+
+    // Seat 3 is on side 1 (score 20), far ahead of side 0 (score 0) → play defensively.
+    // Reading score by seat would see game.score[3] as undefined (falls back to 0) and misjudge the race as
+    // desperately behind, driving the opposite, aggressive choice.
+    const { card, take } = move(game, { canCountCards: false })
+
+    expect(card).toEqual(coppe(8))
+    expect(take).toHaveLength(0)
+  })
+
+  test('reads its own side round total, not its seat round total, when tied and counting cards', () => {
+    const game: State = {
+      state: 'play',
+      turn: 3,
+      firstPlayer: 0,
+      score: [5, 5],
+      table: [denari(1), denari(4), denari(5), coppe(9)],
+      players: [
+        { id: 0, hand: [], pile: [], scope: 0 },
+        { id: 1, hand: [], pile: [], scope: 0 },
+        { id: 2, hand: [], pile: [], scope: 0 },
+        { id: 3, hand: [coppe(8), bastoni(9)], pile: [denari(7)], scope: 0 },
+      ],
+      pile: [],
+      lastTaken: [],
+    }
+
+    // Side 1 (seats 1+3) already holds settebello, most cards, most denari and best primiera — well ahead on
+    // round total, so it should play defensively. Reading round totals by seat would see roundTotals[3] as
+    // undefined (falls back to 0) and misjudge side 1 as behind, driving the opposite, aggressive choice.
+    const { card, take } = move(game, { canCountCards: true })
+
+    expect(card).toEqual(coppe(8))
+    expect(take).toHaveLength(0)
+  })
+})
+
 describe('table control', () => {
   test('discards the card that leaves the opponent fewer ways to capture', () => {
     const game = setupGame([coppe(1), coppe(3)], [spade(8), spade(10)])
 
-    const { card, take } = move(game, { aggression: 0 })
+    const { card, take } = move(game, { posture: 0 })
 
     expect({ card, take }).toEqual({ card: spade(10), take: [] })
   })

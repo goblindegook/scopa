@@ -3,7 +3,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Card as CardType } from '../../engine/cards'
 import { Card } from '../atoms/Card'
-import { Stack } from '../molecules/Stack'
+import { CapturedCount, Stack } from '../molecules/Stack'
 
 export const OPPONENT_SCALE = 2 / 3
 
@@ -37,15 +37,27 @@ const OpponentArea = styled('section')`
   padding: 0 0 0 10vw;
 `
 
-const OpponentHand = styled('aside')`
+const CompactOpponentArea = styled('section')`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  height: 20vh;
+`
+
+const OpponentHand = styled('aside')<{ compact?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100%;
+  min-height: ${({ compact }) => (compact ? 'var(--card-height)' : '100%')};
   transform: scale(${OPPONENT_SCALE});
+  margin-bottom: ${({ compact }) => (compact ? `calc(var(--card-height) * ${(OPPONENT_SCALE - 1) / 2})` : '0')};
 
   @media (max-height: 600px) {
     transform: scale(${OPPONENT_SCALE * 0.6});
+    margin-bottom: ${({ compact }) => (compact ? `calc(var(--card-height) * ${(OPPONENT_SCALE * 0.6 - 1) / 2})` : '0')};
   }
 `
 
@@ -59,17 +71,37 @@ const OpponentPile = styled(Stack)`
 
 type OpponentProps = React.PropsWithChildren<{
   pile: readonly CardType[]
+  capturedCount?: number
   index: number
   avatar: string
+  compact?: boolean
+  active?: boolean
 }>
 
-export const Opponent = React.forwardRef<HTMLElement, OpponentProps>(({ children, index, avatar, pile }, ref) => {
-  const { t } = useTranslation()
-  return (
-    <OpponentArea>
-      <OpponentHand data-testid={`p${index}-hand`}>{children}</OpponentHand>
-      <OpponentPile ref={ref} pile={pile} title={t('playerPile', { avatar, count: pile.length })} />
-    </OpponentArea>
-  )
-})
+export const Opponent = React.forwardRef<HTMLElement, OpponentProps>(
+  ({ children, avatar, pile, capturedCount = pile.length, compact, active = false }, ref) => {
+    const { t } = useTranslation()
+    const hand = (
+      <OpponentHand aria-label={t('playerHand', { avatar })} compact={compact}>
+        {children}
+      </OpponentHand>
+    )
+
+    if (compact) {
+      return (
+        <CompactOpponentArea>
+          {hand}
+          <CapturedCount ref={ref} avatar={avatar} count={capturedCount} active={active} />
+        </CompactOpponentArea>
+      )
+    }
+
+    return (
+      <OpponentArea>
+        {hand}
+        <OpponentPile ref={ref} pile={pile} title={t('playerPile', { avatar, count: capturedCount })} />
+      </OpponentArea>
+    )
+  },
+)
 Opponent.displayName = 'Opponent'

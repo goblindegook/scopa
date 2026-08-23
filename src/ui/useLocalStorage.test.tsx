@@ -67,4 +67,30 @@ describe('difficulty across a resume', () => {
 
     expect(result.current.savedGameState?.difficulty).toBe('normal')
   })
+
+  it('seats every avatar from a resumed four player game', () => {
+    window.localStorage.setItem(
+      'scopa:saved-game',
+      JSON.stringify({
+        game: startOfflineSession('🐵', 4).session.game,
+        playerAvatars: ['🐵', '🤖', '👾', '👽'],
+      }),
+    )
+    const { result } = renderHook(() => useSavedGameStorage(null))
+
+    expect(result.current.savedGameState?.playerProfiles).toHaveLength(4)
+  })
+
+  it('sizes a resumed four player game score by side, not by seat', () => {
+    window.localStorage.setItem(
+      'scopa:saved-game',
+      JSON.stringify({
+        game: { ...startOfflineSession('🐵', 4).session.game, score: undefined },
+        playerAvatars: ['🐵', '🤖', '👾', '👽'],
+      }),
+    )
+    const { result } = renderHook(() => useSavedGameStorage(null))
+
+    expect(result.current.savedGameState?.game.score).toHaveLength(2)
+  })
 })
