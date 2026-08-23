@@ -4,8 +4,8 @@ import type { PlayerCount } from '../../engine/sides'
 import { Button } from '../atoms/Button'
 import { ModalOverlay, ModalPanel } from '../atoms/ModalOverlay'
 import { AVATARS, AvatarPicker } from '../molecules/AvatarPicker'
-import { DifficultyPicker } from '../molecules/DifficultyPicker'
-import type { Difficulty } from '../OfflineMode'
+import { OptionPicker } from '../molecules/OptionPicker'
+import { DIFFICULTIES, type Difficulty } from '../OfflineMode'
 import { sideLabels } from '../sideLabels'
 import { useLocalStorage } from '../useLocalStorage'
 
@@ -13,6 +13,13 @@ const LANGUAGES = [
   { code: 'en', flag: '🇬🇧', label: 'EN', name: 'English' },
   { code: 'it', flag: '🇮🇹', label: 'IT', name: 'Italiano' },
 ] as const
+
+const PLAYER_COUNTS = [
+  { count: 2, labelKey: 'oneVsOne' },
+  { count: 3, labelKey: 'oneVsOneVsOne' },
+  { count: 4, labelKey: 'twoVsTwo' },
+  { count: 6, labelKey: 'twoVsTwoVsTwo' },
+] as const satisfies readonly { count: PlayerCount; labelKey: string }[]
 
 const Title = styled('h1')`
   color: white;
@@ -62,14 +69,13 @@ const ButtonStack = styled('div')`
 const ResumeSection = styled('div')`
   display: flex;
   width: 100%;
-  margin-top: var(--space-4);
 
   & > button {
     width: 100%;
   }
 `
 
-const LocalGameRow = styled('div')`
+const StartActions = styled('div')`
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
@@ -77,43 +83,7 @@ const LocalGameRow = styled('div')`
 
   & > button {
     flex: 1;
-  }
-`
-
-const PlayerCountSelect = styled('select')`
-  border-radius: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  color: white;
-  font-size: 1rem;
-  font-weight: 600;
-  background: var(--overlay-white-05);
-  border: 2px solid var(--overlay-white-25);
-  cursor: pointer;
-  flex: 1;
-  transition: border-color 0.15s, background-color 0.15s;
-
-  &:hover {
-    border-color: var(--overlay-white-50);
-    background-color: var(--overlay-white-25);
-  }
-
-  &:focus {
-    outline: 2px solid var(--overlay-white-50);
-    outline-offset: 2px;
-  }
-
-  @media (max-height: 600px) {
-    padding: var(--space-1) var(--space-2);
-    font-size: 0.875rem;
-  }
-`
-
-const OnlineGameSection = styled('div')`
-  display: flex;
-  width: 100%;
-
-  & > button {
-    width: 100%;
+    min-width: 0;
   }
 `
 
@@ -179,8 +149,16 @@ export interface ResumableGame {
   readonly kind: 'local' | 'online'
   readonly avatars: readonly string[]
   readonly score: readonly number[]
+  readonly size?: number
   readonly onResume: () => void
 }
+
+const resumeCaption = (resume: ResumableGame): string =>
+  resume.size === undefined || resume.avatars.length === resume.size
+    ? sideLabels(resume.avatars)
+        .map((label, index) => `${label} ${resume.score[index] ?? 0}`)
+        .join(' · ')
+    : `${resume.avatars.join(' ')} · ${resume.avatars.length}/${resume.size}`
 
 const StackedButton = ({ main, caption, onClick }: { main: string; caption: string; onClick: () => void }) => (
   <Button onClick={onClick}>
@@ -195,7 +173,7 @@ interface TitleScreenProps {
   loadingProgress: number
   onStart: (avatar: string, playerCount: PlayerCount, difficulty: Difficulty) => void
   resume?: ResumableGame
-  onStartMultiplayer?: (avatar: string) => void
+  onStartMultiplayer?: (avatar: string, size: PlayerCount) => void
 }
 
 export const TitleScreen = ({ loadingProgress, onStart, resume, onStartMultiplayer }: TitleScreenProps) => {
@@ -215,35 +193,40 @@ export const TitleScreen = ({ loadingProgress, onStart, resume, onStartMultiplay
         ) : (
           <>
             <AvatarPicker selected={selectedAvatar} onSelect={setSelectedAvatar} />
-            <DifficultyPicker selected={difficulty} onSelect={setDifficulty} />
+            <OptionPicker
+              label={t('difficulty')}
+              options={DIFFICULTIES.map((level) => ({
+                value: level,
+                label: t(level),
+                ariaLabel: t('selectDifficulty', { level: t(level) }),
+              }))}
+              selected={difficulty}
+              onSelect={setDifficulty}
+            />
+            <OptionPicker
+              label={t('playerCount')}
+              options={PLAYER_COUNTS.map(({ count, labelKey }) => ({
+                value: count,
+                label: t(labelKey),
+                ariaLabel: t('selectPlayerCount', { playerCount: t(labelKey) }),
+              }))}
+              selected={playerCount}
+              onSelect={setPlayerCount}
+            />
             <ButtonStack>
-              <LocalGameRow>
-                <PlayerCountSelect
-                  aria-label={t('playerCount')}
-                  value={playerCount}
-                  onChange={(event) => setPlayerCount(Number(event.target.value) as PlayerCount)}
-                >
-                  <option value={2}>{t('twoPlayers')}</option>
-                  <option value={3}>{t('threePlayers')}</option>
-                  <option value={4}>{t('fourPlayersTeams')}</option>
-                  <option value={6}>{t('sixPlayersTeams')}</option>
-                </PlayerCountSelect>
+              <StartActions>
                 <Button onClick={() => onStart(selectedAvatar, playerCount, difficulty)}>
                   {t('startOfflineGame')}
                 </Button>
-              </LocalGameRow>
-              {onStartMultiplayer && (
-                <OnlineGameSection>
-                  <Button onClick={() => onStartMultiplayer(selectedAvatar)}>{t('vsFriends')}</Button>
-                </OnlineGameSection>
-              )}
+                {onStartMultiplayer && (
+                  <Button onClick={() => onStartMultiplayer(selectedAvatar, playerCount)}>{t('vsFriends')}</Button>
+                )}
+              </StartActions>
               {resume && (
                 <ResumeSection>
                   <StackedButton
                     main={resume.kind === 'online' ? `${t('onlineGame')} \u00b7 ${t('resume')}` : t('resume')}
-                    caption={sideLabels(resume.avatars)
-                      .map((label, i) => `${label} ${resume.score[i] ?? 0}`)
-                      .join(' \u00b7 ')}
+                    caption={resumeCaption(resume)}
                     onClick={resume.onResume}
                   />
                 </ResumeSection>

@@ -1,10 +1,10 @@
 import styled from '@emotion/styled'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
+import type { PlayerCount } from '../../engine/sides'
+import { sideCount, sideOf } from '../../engine/sides'
 import { Button } from '../atoms/Button'
 import { ModalOverlay, ModalPanel } from '../atoms/ModalOverlay'
-
-const MAX_SEATS = 3
 
 const Title = styled('h1')`
   color: white;
@@ -18,6 +18,17 @@ const Title = styled('h1')`
   @media (max-height: 600px) {
     font-size: 2rem;
   }
+`
+
+const Teams = styled('div')`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-8);
+`
+
+const TeamGroup = styled('div')`
+  display: contents;
 `
 
 const SeatRow = styled('ul')`
@@ -54,6 +65,28 @@ const EmptySeat = styled(Seat)`
   background-color: transparent;
 `
 
+const SeatButton = styled('button')`
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: inherit;
+  color: var(--overlay-white-75);
+  font-size: 2.25rem;
+  line-height: 1;
+  font-family: inherit;
+  cursor: pointer;
+
+  &:hover {
+    color: white;
+  }
+`
+
 const ConfirmedIndicator = styled('span')`
   position: absolute;
   right: -0.25rem;
@@ -61,6 +94,17 @@ const ConfirmedIndicator = styled('span')`
   font-size: 1rem;
   line-height: 1;
   color: var(--color-accent);
+`
+
+const HostBadge = styled('span')`
+  position: absolute;
+  top: calc(var(--space-1) * -1);
+  left: calc(var(--space-1) * -1);
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: 50%;
+  background-color: var(--color-accent);
+  border: 2px solid var(--overlay-black-40);
 `
 
 const Status = styled('p')`
@@ -123,9 +167,12 @@ export interface LobbyPlayer {
 }
 
 interface LobbyProps {
-  players: readonly LobbyPlayer[]
-  isCreator: boolean
+  seats: readonly (LobbyPlayer | null)[]
+  size: PlayerCount
+  host: number | null
+  isHost: boolean
   roomId: string
+  onSit: (seat: number) => void
   onStart: () => void
   onLeave: () => void
 }
@@ -134,50 +181,70 @@ export function inviteUrl(roomId: string): string {
   return `${window.location.origin}${window.location.pathname}?room=${roomId}`
 }
 
-export const Lobby = ({ players, isCreator, roomId, onStart, onLeave }: LobbyProps) => {
+export const Lobby = ({ seats, size, host, isHost, roomId, onSit, onStart, onLeave }: LobbyProps) => {
   const { t } = useTranslation()
   const [copied, setCopied] = React.useState(false)
-  const connectedCount = players.filter(({ connected }) => connected).length
-  const canStart = connectedCount >= 2
+  const canStart = seats.length > 0 && seats.every((occupant) => occupant?.connected === true)
   const link = inviteUrl(roomId)
-  const emptySeats = Array.from({ length: Math.max(0, MAX_SEATS - players.length) }, (_, index) => `seat-${index}`)
 
-  const copy = async () => {
-    await navigator.clipboard?.writeText(link)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+  const teams = Array.from({ length: sideCount(size) }, (_, side) =>
+    seats.map((occupant, index) => ({ occupant, index })).filter(({ index }) => sideOf(index, size) === side),
+  )
 
   return (
     <ModalOverlay>
       <ModalPanel>
         <Title>Scopa</Title>
 
-        <SeatRow aria-label={t('playersInRoom')}>
-          {players.map(({ avatar, connected, confirmed }) => (
-            <Seat key={avatar} data-connected={connected}>
-              {avatar}
-              {confirmed && <ConfirmedIndicator>✓</ConfirmedIndicator>}
-            </Seat>
+        <Teams aria-label={t('playersInRoom')} role="group">
+          {teams.map((members, side) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: side never reorders — it's derived from a fixed sideCount(size)
+            <TeamGroup key={`team-${side}`} role="group" aria-label={t('team', { number: side + 1 })}>
+              <SeatRow>
+                {members.map(({ occupant, index }) =>
+                  occupant?.connected ? (
+                    <Seat key={`seat-${index}`} data-connected="true">
+                      {occupant.avatar}
+                      {host === index && <HostBadge role="img" aria-label={t('host')} />}
+                      {occupant.confirmed && <ConfirmedIndicator>✓</ConfirmedIndicator>}
+                    </Seat>
+                  ) : (
+                    <EmptySeat key={`seat-${index}`} data-connected="false">
+                      <SeatButton
+                        type="button"
+                        aria-label={t('sitHere', { seat: index + 1 })}
+                        onClick={() => onSit(index)}
+                      >
+                        {occupant?.avatar ?? ''}
+                      </SeatButton>
+                    </EmptySeat>
+                  ),
+                )}
+              </SeatRow>
+            </TeamGroup>
           ))}
-          {emptySeats.map((seat) => (
-            <EmptySeat key={seat} aria-hidden="true" />
-          ))}
-        </SeatRow>
+        </Teams>
 
-        <Status>{canStart ? t('readyToStart') : t('waitingForPlayers')}</Status>
+        <Status>{canStart ? t('readyToStart') : t('waitingForSeats')}</Status>
 
         <InviteBlock>
           <InviteLabel htmlFor="invite-link">{t('inviteFriends')}</InviteLabel>
           <InviteControls>
             <InviteInput id="invite-link" readOnly value={link} onFocus={(event) => event.target.select()} />
-            <Button type="button" onClick={copy}>
+            <Button
+              type="button"
+              onClick={async () => {
+                await navigator.clipboard?.writeText(link)
+                setCopied(true)
+                setTimeout(() => setCopied(false), 2000)
+              }}
+            >
               {copied ? t('linkCopied') : t('copyLink')}
             </Button>
           </InviteControls>
         </InviteBlock>
 
-        {isCreator && (
+        {isHost && (
           <Button onClick={onStart} disabled={!canStart}>
             {t('start')}
           </Button>

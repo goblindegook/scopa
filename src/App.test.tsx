@@ -8,6 +8,7 @@ import type { State } from './engine/state'
 
 type SocketOptions = {
   readonly onMessage?: (event: MessageEvent<string>) => void
+  readonly onOpen?: () => void
 }
 
 const mockedSocket = vi.hoisted(() => ({
@@ -51,7 +52,9 @@ function joinOnlineGame() {
 
   receive({
     type: 'lobby',
-    players: [
+    size: 2,
+    host: 0,
+    seats: [
       { avatar: '🦊', connected: true, confirmed: false },
       { avatar: '🐵', connected: true, confirmed: false },
     ],
@@ -218,6 +221,48 @@ test('starting a local game from the overlay leaves the online game behind', asy
   expect(window.sessionStorage.getItem('scopa:mp-sid-room')).toBeNull()
   expect(window.sessionStorage.getItem('scopa:mp-avatar-room')).toBeNull()
   expect(window.sessionStorage.getItem('scopa:mp-active-room')).toBeNull()
+})
+
+test('an invalid numeric ?size falls back to the default, omitting size from the join message', () => {
+  window.history.replaceState({}, '', `/?room=room&avatar=${encodeURIComponent('🦊')}&size=5`)
+
+  render(<App />)
+  mockedSocket.options?.onOpen?.()
+
+  expect(JSON.parse(mockedSocket.send.mock.calls[0][0])).toEqual({ type: 'join', avatar: '🦊' })
+})
+
+test('a non-numeric ?size falls back to the default, omitting size from the join message', () => {
+  window.history.replaceState({}, '', `/?room=room&avatar=${encodeURIComponent('🦊')}&size=abc`)
+
+  render(<App />)
+  mockedSocket.options?.onOpen?.()
+
+  expect(JSON.parse(mockedSocket.send.mock.calls[0][0])).toEqual({ type: 'join', avatar: '🦊' })
+})
+
+test('reloading a room URL with size already stripped omits size from the join message', () => {
+  window.sessionStorage.setItem('scopa:mp-sid-room', 'sid')
+  window.sessionStorage.setItem('scopa:mp-avatar-room', '🦊')
+  window.history.replaceState({}, '', '/?room=room')
+
+  render(<App />)
+  mockedSocket.options?.onOpen?.()
+
+  expect(JSON.parse(mockedSocket.send.mock.calls[0][0])).toEqual({ type: 'join', avatar: '🦊' })
+})
+
+test('a valid ?size survives a re-render after the URL-stripping effect, present in the join message', () => {
+  window.history.replaceState({}, '', `/?room=room&avatar=${encodeURIComponent('🦊')}&size=4`)
+
+  const { rerender } = render(<App />)
+  // The mount effect has now stripped `size` from the URL. Force App's function body to
+  // run again, as a real re-render would (e.g. from preload progress) — this is the exact
+  // race the real websocket's async onOpen loses to when size is read live on every render.
+  rerender(<App />)
+  mockedSocket.options?.onOpen?.()
+
+  expect(JSON.parse(mockedSocket.send.mock.calls[0][0])).toEqual({ type: 'join', avatar: '🦊', size: 4 })
 })
 
 test('starting a offline game ignores the saved running score', async () => {

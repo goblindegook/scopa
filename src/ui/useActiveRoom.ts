@@ -9,6 +9,7 @@ export interface ActiveRoomGame {
   readonly roomId: string
   readonly avatars: readonly string[]
   readonly score: readonly number[]
+  readonly size: number
 }
 
 const read = (): ActiveRoomGame | null => {

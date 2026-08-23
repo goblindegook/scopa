@@ -101,7 +101,7 @@ interface ScopaProps {
   onScore: (game: State['players']) => readonly Score[]
   playerProfiles?: readonly PlayerProfile[]
   onNextRound?: () => void
-  awaitingConfirmations?: boolean
+  readonly waitingFor?: readonly string[]
 }
 
 interface TakingAnimationState {
@@ -159,7 +159,7 @@ export function Scopa({
   onScore,
   playerProfiles: providedPlayerProfiles,
   onNextRound,
-  awaitingConfirmations,
+  waitingFor,
 }: ScopaProps) {
   const { t } = useTranslation()
   const [alert, showAlert] = useAlerts(3000)
@@ -661,7 +661,7 @@ export function Scopa({
           scores={roundScoresRef.current}
           runningScore={game.score}
           winner={winner(game.score)}
-          awaitingConfirmations={awaitingConfirmations}
+          waitingFor={waitingFor}
           onNextRound={onNextRound ?? (() => start())}
           onReset={onReset}
         />

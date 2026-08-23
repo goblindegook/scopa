@@ -23,14 +23,29 @@ test('shows who the next round is still waiting on once this player has confirme
       scores={[]}
       runningScore={[0, 0]}
       playerAvatars={['🐵', '🐶']}
-      awaitingConfirmations
+      waitingFor={['🐶']}
       onNextRound={vi.fn()}
       onReset={vi.fn()}
     />,
   )
 
   expect(screen.getByRole('button', { name: /next round/i })).toBeDisabled()
-  expect(screen.getByRole('status')).toHaveTextContent(/waiting for all players/i)
+  expect(screen.getByRole('status')).toHaveTextContent('Waiting for 🐶…')
+})
+
+test('names the players the round is waiting on', () => {
+  render(
+    <GameOver
+      scores={[]}
+      runningScore={[0, 0]}
+      playerAvatars={['🐵', '🐶', '🦊', '🐱']}
+      waitingFor={['🦊', '🐱']}
+      onNextRound={vi.fn()}
+      onReset={vi.fn()}
+    />,
+  )
+
+  expect(screen.getByText('Waiting for 🦊 🐱…')).toBeInTheDocument()
 })
 
 test('names the whole winning side', () => {

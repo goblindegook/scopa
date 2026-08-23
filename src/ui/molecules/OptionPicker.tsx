@@ -1,6 +1,4 @@
 import styled from '@emotion/styled'
-import { useTranslation } from 'react-i18next'
-import { DIFFICULTIES, type Difficulty } from '../OfflineMode'
 
 const Section = styled('div')`
   display: flex;
@@ -25,7 +23,7 @@ const Row = styled('div')`
   width: 100%;
 `
 
-const DifficultyButton = styled('button')<{ selected: boolean }>`
+const OptionButton = styled('button')<{ selected: boolean }>`
   position: relative;
   font-size: 0.875rem;
   width: 100%;
@@ -56,31 +54,40 @@ const Text = styled('span')`
   position: relative;
 `
 
-interface DifficultyPickerProps {
-  readonly selected: Difficulty
-  readonly onSelect: (difficulty: Difficulty) => void
+interface Option<T extends string | number> {
+  readonly value: T
+  readonly label: string
+  readonly ariaLabel: string
 }
 
-export const DifficultyPicker = ({ selected, onSelect }: DifficultyPickerProps) => {
-  const { t } = useTranslation()
-
-  return (
-    <Section>
-      <Label>{t('difficulty')}</Label>
-      <Row>
-        {DIFFICULTIES.map((difficulty) => (
-          <DifficultyButton
-            key={difficulty}
-            type="button"
-            selected={difficulty === selected}
-            aria-pressed={difficulty === selected}
-            aria-label={t('selectDifficulty', { level: t(difficulty) })}
-            onClick={() => onSelect(difficulty)}
-          >
-            <Text>{t(difficulty)}</Text>
-          </DifficultyButton>
-        ))}
-      </Row>
-    </Section>
-  )
+interface OptionPickerProps<T extends string | number> {
+  readonly label: string
+  readonly options: readonly Option<T>[]
+  readonly selected: T
+  readonly onSelect: (value: T) => void
 }
+
+export const OptionPicker = <T extends string | number>({
+  label,
+  options,
+  selected,
+  onSelect,
+}: OptionPickerProps<T>) => (
+  <Section>
+    <Label>{label}</Label>
+    <Row>
+      {options.map((option) => (
+        <OptionButton
+          key={option.value}
+          type="button"
+          selected={option.value === selected}
+          aria-pressed={option.value === selected}
+          aria-label={option.ariaLabel}
+          onClick={() => onSelect(option.value)}
+        >
+          <Text>{option.label}</Text>
+        </OptionButton>
+      ))}
+    </Row>
+  </Section>
+)

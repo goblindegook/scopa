@@ -1,6 +1,7 @@
 import type { PartySocket } from 'partysocket'
 import { usePartySocket } from 'partysocket/react'
 import React from 'react'
+import type { PlayerCount } from '../engine/sides'
 import type { Move, State } from '../engine/state'
 import { useActiveRoom } from './useActiveRoom'
 
@@ -68,9 +69,23 @@ export interface LobbyPlayer {
   readonly confirmed: boolean
 }
 
+// Mirrors the Worker's ClientMessage (src/party/scopa.ts) so a mismatch between
+// what this hook sends and what the room accepts is caught at compile time.
+type ClientMessage =
+  | { readonly type: 'join'; readonly avatar: string; readonly size?: PlayerCount }
+  | { readonly type: 'sit'; readonly seat: number }
+  | { readonly type: 'start' }
+  | { readonly type: 'move'; readonly move: Move }
+  | { readonly type: 'confirm' }
+
 type ServerMessage =
   | { readonly type: 'seated'; readonly index: number }
-  | { readonly type: 'lobby'; readonly players: readonly LobbyPlayer[] }
+  | {
+      readonly type: 'lobby'
+      readonly size: PlayerCount
+      readonly host: number | null
+      readonly seats: readonly (LobbyPlayer | null)[]
+    }
   | { readonly type: 'move'; readonly move: Move }
   | { readonly type: 'state'; readonly state: State }
   | { readonly type: 'error'; readonly message: string }
@@ -79,11 +94,14 @@ type ServerMessage =
 interface MultiplayerSessionOptions {
   readonly roomId: string
   readonly initialAvatar?: string | null
+  readonly size?: PlayerCount
 }
 
 export interface MultiplayerSession {
   readonly avatar: string | null
-  readonly lobby: readonly LobbyPlayer[]
+  readonly seats: readonly (LobbyPlayer | null)[]
+  readonly size: PlayerCount
+  readonly host: number | null
   readonly state: State | null
   readonly seat: number | null
   readonly ended: boolean
@@ -95,6 +113,7 @@ export interface MultiplayerSession {
   readonly start: () => void
   readonly confirm: () => void
   readonly sendMove: (move: Move) => void
+  readonly sit: (seat: number) => void
 }
 
 const sidStorageKey = (roomId: string) => `scopa:mp-sid-${roomId}`
@@ -104,14 +123,16 @@ function normalizeStoredValue(value: string | null | undefined): string | null {
   return value && value.length > 0 ? value : null
 }
 
-export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSessionOptions): MultiplayerSession {
+export function useMultiplayerSession({ roomId, initialAvatar, size }: MultiplayerSessionOptions): MultiplayerSession {
   const [avatar, setAvatar] = React.useState<string | null>(
     () =>
       normalizeStoredValue(initialAvatar) ??
       normalizeStoredValue(window.sessionStorage.getItem(avatarStorageKey(roomId))),
   )
   const [sid, setSid] = React.useState<string>(() => window.sessionStorage.getItem(sidStorageKey(roomId)) ?? '')
-  const [lobby, setLobby] = React.useState<readonly LobbyPlayer[]>([])
+  const [seats, setSeats] = React.useState<readonly (LobbyPlayer | null)[]>([])
+  const [roomSize, setRoomSize] = React.useState<PlayerCount>(2)
+  const [host, setHost] = React.useState<number | null>(null)
   const [state, setState] = React.useState<State | null>(null)
   const [seat, setSeat] = React.useState<number | null>(null)
   const [ended, setEnded] = React.useState(false)
@@ -149,7 +170,7 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
     query: sid ? { sid } : undefined,
     onOpen() {
       if (!avatar) return
-      socket.send(JSON.stringify({ type: 'join', avatar }))
+      socket.send(JSON.stringify(size === undefined ? { type: 'join', avatar } : { type: 'join', avatar, size }))
     },
     onMessage(event: MessageEvent<string>) {
       const message: ServerMessage = JSON.parse(event.data)
@@ -160,7 +181,9 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
           break
 
         case 'lobby':
-          setLobby(message.players)
+          setSeats(message.seats)
+          setRoomSize(message.size)
+          setHost(message.host)
           break
 
         case 'ended':
@@ -190,8 +213,13 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
 
   React.useEffect(() => {
     if (seat === null || ended) return
-    activeRoom.remember({ roomId, avatars: lobby.map((player) => player.avatar), score: state?.score ?? [] })
-  }, [ended, lobby, activeRoom.remember, roomId, seat, state])
+    activeRoom.remember({
+      roomId,
+      avatars: seats.flatMap((player) => (player ? [player.avatar] : [])),
+      score: state?.score ?? [],
+      size: roomSize,
+    })
+  }, [ended, seats, roomSize, activeRoom.remember, roomId, seat, state])
 
   const nextMove = React.useCallback((): Promise<Move> => moves.next(), [moves])
   const cancelMove = React.useCallback(() => moves.cancel(), [moves])
@@ -211,7 +239,9 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
     activeRoom.forget()
     setAvatar(null)
     setSid('')
-    setLobby([])
+    setSeats([])
+    setRoomSize(2)
+    setHost(null)
     setState(null)
     setSeat(null)
     setEnded(false)
@@ -220,7 +250,7 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
   }, [activeRoom, moves, roomId])
 
   const send = React.useCallback(
-    (message: unknown) => {
+    (message: ClientMessage) => {
       if (!sid) return
       socket.send(JSON.stringify(message))
     },
@@ -229,7 +259,9 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
 
   return {
     avatar,
-    lobby,
+    seats,
+    size: roomSize,
+    host,
     state,
     seat,
     ended,
@@ -241,5 +273,6 @@ export function useMultiplayerSession({ roomId, initialAvatar }: MultiplayerSess
     start: React.useCallback(() => send({ type: 'start' }), [send]),
     confirm: React.useCallback(() => send({ type: 'confirm' }), [send]),
     sendMove: React.useCallback((move: Move) => send({ type: 'move', move }), [send]),
+    sit: React.useCallback((seat: number) => send({ type: 'sit', seat }), [send]),
   }
 }

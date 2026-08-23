@@ -19,15 +19,14 @@ describe('TitleScreen', () => {
     expect(screen.queryByText(/resume/i)).not.toBeInTheDocument()
   })
 
-  test('offers every supported player count in one selector', () => {
+  test('offers every supported player count as a pressed button choice', () => {
     renderTitleScreen()
 
-    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
-      '2 Players',
-      '3 Players',
-      '4 Players (Teams)',
-      '6 Players (Teams)',
-    ])
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /select player count/i }).map((button) => button.textContent)).toEqual(
+      ['1 × 1', '1 × 1 × 1', '2 × 2', '2 × 2 × 2'],
+    )
+    expect(screen.getByLabelText('Select player count 1 × 1')).toHaveAttribute('aria-pressed', 'true')
   })
 
   test('exposes an accessible name for the start-offline-game button', () => {
@@ -42,6 +41,27 @@ describe('TitleScreen', () => {
     })
 
     expect(screen.getByRole('button', { name: /resume/i })).toBeInTheDocument()
+  })
+
+  test('starts an online room at the selected player count', () => {
+    const onStartMultiplayer = vi.fn()
+    renderTitleScreen({ onStartMultiplayer })
+
+    fireEvent.click(screen.getByLabelText('Select player count 2 × 2'))
+    fireEvent.click(screen.getByRole('button', { name: 'Online game' }))
+
+    expect(onStartMultiplayer).toHaveBeenCalledWith('🐵', 4)
+  })
+
+  test('places the start actions before the resume action', () => {
+    renderTitleScreen({
+      onStartMultiplayer: vi.fn(),
+      resume: { kind: 'local', avatars: ['🐵', '🤖'], score: [4, 2], onResume: vi.fn() },
+    })
+
+    const buttons = screen.getAllByRole('button').map((button) => button.textContent)
+    expect(buttons.indexOf('Offline game')).toBeLessThan(buttons.findIndex((text) => text?.includes('Resume')))
+    expect(buttons.indexOf('Online game')).toBeLessThan(buttons.findIndex((text) => text?.includes('Resume')))
   })
 
   test('labels the language switcher in the language it switches to', () => {
@@ -78,6 +98,22 @@ describe('TitleScreen', () => {
     fireEvent.click(screen.getByText('🦊 3 · 🐵 1'))
     expect(onResume).toHaveBeenCalledOnce()
   })
+
+  test('counts filled seats while an online room is still filling', () => {
+    renderTitleScreen({
+      resume: { kind: 'online', avatars: ['🐵', '🦊'], score: [], size: 6, onResume: vi.fn() },
+    })
+
+    expect(screen.getByText('🐵 🦊 · 2/6')).toBeInTheDocument()
+  })
+
+  test('shows team scores once an online room is full', () => {
+    renderTitleScreen({
+      resume: { kind: 'online', avatars: ['🐵', '🐶', '🦊', '🐱'], score: [3, 5], size: 4, onResume: vi.fn() },
+    })
+
+    expect(screen.getByText('🐵🦊 3 · 🐶🐱 5')).toBeInTheDocument()
+  })
 })
 
 describe('starting an offline game', () => {
@@ -94,7 +130,7 @@ describe('starting an offline game', () => {
     const onStart = vi.fn()
     renderTitleScreen({ onStart })
 
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: '4' } })
+    fireEvent.click(screen.getByLabelText('Select player count 2 × 2'))
     fireEvent.click(screen.getByRole('button', { name: /offline game/i }))
 
     expect(onStart).toHaveBeenCalledWith(expect.any(String), 4, expect.any(String))
@@ -105,7 +141,7 @@ describe('starting an offline game', () => {
     renderTitleScreen({ onStart })
 
     fireEvent.click(screen.getByLabelText('Select difficulty Expert'))
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: '3' } })
+    fireEvent.click(screen.getByLabelText('Select player count 1 × 1 × 1'))
     fireEvent.click(screen.getByRole('button', { name: /offline game/i }))
 
     expect(onStart).toHaveBeenCalledWith(expect.any(String), 3, 'expert')
@@ -125,7 +161,7 @@ describe('starting an offline game', () => {
 
     fireEvent.click(screen.getByLabelText('Select avatar 🦊'))
     fireEvent.click(screen.getByLabelText('Select difficulty Expert'))
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: '4' } })
+    fireEvent.click(screen.getByLabelText('Select player count 2 × 2'))
     unmount()
 
     const onStart = vi.fn()
@@ -133,6 +169,7 @@ describe('starting an offline game', () => {
 
     expect(screen.getByLabelText('Select avatar 🦊')).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByLabelText('Select difficulty Expert')).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByLabelText('Select player count 2 × 2')).toHaveAttribute('aria-pressed', 'true')
 
     fireEvent.click(screen.getByRole('button', { name: /offline game/i }))
     expect(onStart).toHaveBeenCalledWith('🦊', 4, 'expert')

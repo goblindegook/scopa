@@ -2,7 +2,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import './ui/i18n'
 import { winner } from './engine/scores'
-import type { PlayerCount } from './engine/sides'
+import { isPlayerCount, type PlayerCount } from './engine/sides'
 import type { State } from './engine/state'
 import { Alert } from './ui/atoms/Alert'
 import { type Difficulty, OfflineMode, type OfflineSession, startOfflineSession } from './ui/OfflineMode'
@@ -36,6 +36,10 @@ const App = () => {
   const [alert, showAlert] = useAlerts(3000)
   const [session, setSession] = React.useState<OfflineSession | null>(null)
   const [roomId, setRoomId] = React.useState(() => params.get('room'))
+  // Captured once at mount, like roomId above: the URL-stripping effect below removes
+  // `size` from the URL, so reading it live on every render would go blank after the
+  // first re-render, well before the async websocket onOpen fires and needs it.
+  const [requestedSize] = React.useState(() => Number(params.get('size')))
   const [isTitleMenuVisible, setIsTitleMenuVisible] = React.useState(false)
   const onlineRoom = useActiveRoom()
   const { savedGameState, clearSavedGame } = useSavedGameStorage(session)
@@ -101,6 +105,7 @@ const App = () => {
         <OnlineMode
           roomId={roomId}
           initialAvatar={avatar}
+          size={isPlayerCount(requestedSize) ? requestedSize : undefined}
           onBack={() => setIsTitleMenuVisible(true)}
           onLeave={leaveRoom}
           forgetSeat={forgetSeat}
@@ -115,6 +120,7 @@ const App = () => {
                   kind: 'online',
                   avatars: onlineRoom.game.avatars,
                   score: onlineRoom.game.score,
+                  size: onlineRoom.game.size,
                   onResume: roomId
                     ? () => setIsTitleMenuVisible(false)
                     : // biome-ignore lint/style/noNonNullAssertion: onlineRoom.game != null
@@ -130,7 +136,9 @@ const App = () => {
                 : undefined
           }
           onStart={startLocalGame}
-          onStartMultiplayer={(playerOneAvatar) => goTo({ room: crypto.randomUUID(), avatar: playerOneAvatar })}
+          onStartMultiplayer={(playerOneAvatar, playerCount) =>
+            goTo({ room: crypto.randomUUID(), avatar: playerOneAvatar, size: String(playerCount) })
+          }
         />
       )}
       {alert && <Alert role="alert">{alert}</Alert>}

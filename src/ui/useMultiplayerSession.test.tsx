@@ -220,7 +220,9 @@ describe('useMultiplayerSession', () => {
 
     receive({
       type: 'lobby',
-      players: [
+      size: 2,
+      host: 0,
+      seats: [
         { avatar: '🦊', connected: true, confirmed: false },
         { avatar: '🐵', connected: true, confirmed: false },
       ],
@@ -232,6 +234,7 @@ describe('useMultiplayerSession', () => {
       roomId: 'room',
       avatars: ['🦊', '🐵'],
       score: [3, 1],
+      size: 2,
     })
   })
 
@@ -251,5 +254,45 @@ describe('useMultiplayerSession', () => {
     act(() => result.current.clearSession())
 
     expect(window.sessionStorage.getItem('scopa:mp-active-room')).toBeNull()
+  })
+
+  test('sends the requested room size when joining', async () => {
+    renderHook(() => useMultiplayerSession({ roomId: 'r', initialAvatar: '🐵', size: 4 }))
+
+    await waitFor(() => expect(mockedSocket.options?.enabled).toBe(true))
+    act(() => mockedSocket.options?.onOpen?.())
+
+    expect(mockedSocket.send).toHaveBeenCalledWith(JSON.stringify({ type: 'join', avatar: '🐵', size: 4 }))
+  })
+
+  test('exposes vacant seats as nulls', async () => {
+    const { result } = renderHook(() => useMultiplayerSession({ roomId: 'r', initialAvatar: '🐵' }))
+
+    await waitFor(() => expect(mockedSocket.options?.enabled).toBe(true))
+    act(() =>
+      mockedSocket.options?.onMessage?.(
+        new MessageEvent('message', {
+          data: JSON.stringify({
+            type: 'lobby',
+            size: 4,
+            host: 0,
+            seats: [{ avatar: '🐵', connected: true, confirmed: false }, null, null, null],
+          }),
+        }),
+      ),
+    )
+
+    expect(result.current.seats).toEqual([{ avatar: '🐵', connected: true, confirmed: false }, null, null, null])
+    expect(result.current.size).toBe(4)
+    expect(result.current.host).toBe(0)
+  })
+
+  test('asks the room for a seat', async () => {
+    const { result } = renderHook(() => useMultiplayerSession({ roomId: 'r', initialAvatar: '🐵' }))
+
+    await waitFor(() => expect(mockedSocket.options?.enabled).toBe(true))
+    act(() => result.current.sit(2))
+
+    expect(mockedSocket.send).toHaveBeenCalledWith(JSON.stringify({ type: 'sit', seat: 2 }))
   })
 })

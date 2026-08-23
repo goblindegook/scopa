@@ -19,7 +19,7 @@ interface GameOverProps {
   runningScore: readonly number[]
   playerAvatars: string[]
   winner?: number | null
-  awaitingConfirmations?: boolean
+  readonly waitingFor?: readonly string[]
   onNextRound: () => void
   onReset: () => void
 }
@@ -29,7 +29,7 @@ export const GameOver: React.FC<GameOverProps> = ({
   winner,
   runningScore,
   playerAvatars,
-  awaitingConfirmations,
+  waitingFor = [],
   onNextRound,
   onReset,
 }) => {
@@ -41,10 +41,12 @@ export const GameOver: React.FC<GameOverProps> = ({
     <ModalOverlay $absolute>
       <ModalPanel>
         <ScoreBoard scores={scores} title={title} runningScore={runningScore} playerAvatars={playerAvatars} />
-        <Button onClick={winner == null ? onNextRound : onReset} disabled={awaitingConfirmations}>
+        <Button onClick={winner == null ? onNextRound : onReset} disabled={waitingFor.length > 0}>
           {winner == null ? t('nextRound') : t('backToTitle')}
         </Button>
-        {awaitingConfirmations && <WaitingNotice role="status">{t('waitingForNextRound')}</WaitingNotice>}
+        {waitingFor.length > 0 && (
+          <WaitingNotice role="status">{t('waitingFor', { avatars: waitingFor.join(' ') })}</WaitingNotice>
+        )}
       </ModalPanel>
     </ModalOverlay>
   )

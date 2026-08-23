@@ -1,12 +1,14 @@
 import React from 'react'
 import { play } from '../engine/scopa'
 import { score } from '../engine/scores'
+import type { PlayerCount } from '../engine/sides'
 import type { Move, State } from '../engine/state'
 import { Alert } from './atoms/Alert'
 import { ModalOverlay, ModalPanel } from './atoms/ModalOverlay'
 import { AvatarPicker } from './molecules/AvatarPicker'
 import { Lobby } from './pages/Lobby'
 import { Scopa } from './pages/Scopa'
+import type { LobbyPlayer } from './useMultiplayerSession'
 import { useMultiplayerSession } from './useMultiplayerSession'
 
 interface ChooseAvatarProps {
@@ -28,15 +30,18 @@ const ChooseAvatar = ({ onChoose, taken = [], error }: ChooseAvatarProps) => (
 interface OnlineModeProps {
   readonly roomId: string
   readonly initialAvatar?: string | null
+  readonly size?: PlayerCount
   readonly onBack: () => void
   readonly onLeave: () => void
   readonly forgetSeat: React.RefObject<(() => void) | null>
 }
 
-export const OnlineMode = ({ roomId, initialAvatar, onBack, onLeave, forgetSeat }: OnlineModeProps) => {
+export const OnlineMode = ({ roomId, initialAvatar, size, onBack, onLeave, forgetSeat }: OnlineModeProps) => {
   const {
     avatar,
-    lobby,
+    seats,
+    size: roomSize,
+    host,
     state,
     seat,
     error,
@@ -47,10 +52,11 @@ export const OnlineMode = ({ roomId, initialAvatar, onBack, onLeave, forgetSeat 
     start,
     confirm,
     sendMove,
-  } = useMultiplayerSession({ roomId, initialAvatar })
+    sit,
+  } = useMultiplayerSession({ roomId, initialAvatar, size })
 
   // A fresh identity re-runs Scopa's opponent-turn effect, orphaning the pending nextMove.
-  const playerProfiles = React.useMemo(() => lobby.map(({ avatar }) => ({ avatar })), [lobby])
+  const playerProfiles = React.useMemo(() => seats.map((player) => ({ avatar: player?.avatar ?? '' })), [seats])
 
   const playAndSend = React.useCallback(
     (move: Move, game: State) => {
@@ -62,7 +68,16 @@ export const OnlineMode = ({ roomId, initialAvatar, onBack, onLeave, forgetSeat 
     [seat, sendMove],
   )
 
-  const awaitingConfirmations = lobby.find((player) => player.avatar === avatar)?.confirmed ?? false
+  const awaitingAvatars = React.useMemo(() => {
+    const hasConfirmedNextRound = seat !== null && seats[seat]?.confirmed === true
+    if (!hasConfirmedNextRound) return []
+
+    return seats
+      .filter((occupant, index): occupant is LobbyPlayer => {
+        return index !== seat && occupant?.connected === true && !occupant.confirmed
+      })
+      .map((occupant) => occupant.avatar)
+  }, [seat, seats])
 
   React.useEffect(() => {
     forgetSeat.current = clearSession
@@ -72,11 +87,28 @@ export const OnlineMode = ({ roomId, initialAvatar, onBack, onLeave, forgetSeat 
   }, [clearSession, forgetSeat])
 
   if (avatar == null) {
-    return <ChooseAvatar onChoose={chooseAvatar} taken={lobby.map((player) => player.avatar)} error={error} />
+    return (
+      <ChooseAvatar
+        onChoose={chooseAvatar}
+        taken={seats.flatMap((player) => (player ? [player.avatar] : []))}
+        error={error}
+      />
+    )
   }
 
   if (!state || seat == null) {
-    return <Lobby players={lobby} isCreator={seat === 0} roomId={roomId} onStart={start} onLeave={onLeave} />
+    return (
+      <Lobby
+        seats={seats}
+        size={roomSize}
+        host={host}
+        isHost={host !== null && host === seat}
+        roomId={roomId}
+        onSit={sit}
+        onStart={start}
+        onLeave={onLeave}
+      />
+    )
   }
 
   return (
@@ -90,7 +122,7 @@ export const OnlineMode = ({ roomId, initialAvatar, onBack, onLeave, forgetSeat 
       onOpponentTurn={nextMove}
       onCancelOpponentTurn={cancelMove}
       onNextRound={confirm}
-      awaitingConfirmations={awaitingConfirmations}
+      waitingFor={awaitingAvatars}
       onScore={score}
     />
   )
