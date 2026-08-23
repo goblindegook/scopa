@@ -988,3 +988,44 @@ test('keeps the visible captured pile in a three player game', () => {
 
   expect(screen.getByTitle('🐵 pile: 1 card')).toBeInTheDocument()
 })
+
+const fourPlayerGame = (): State => ({
+  state: 'play',
+  turn: 0,
+  firstPlayer: 0,
+  pile: [],
+  players: [
+    { id: 0, hand: [denari(1)], pile: [], scope: 0 },
+    { id: 1, hand: [coppe(2)], pile: [], scope: 0 },
+    { id: 2, hand: [bastoni(4)], pile: [], scope: 0 },
+    { id: 3, hand: [spade(5)], pile: [], scope: 0 },
+  ],
+  table: [denari(7)],
+  lastTaken: [],
+  score: [0, 0],
+})
+
+test('seats the partner opposite the player', () => {
+  const avatars = ['🐵', '🐶', '🦊', '🐱']
+
+  render(
+    <Scopa
+      playerId={2}
+      initialState={fourPlayerGame()}
+      playerProfiles={avatars.map((avatar) => ({ avatar }))}
+      onStart={vi.fn()}
+      onPlay={vi.fn()}
+      onOpponentTurn={vi.fn()}
+      onScore={vi.fn(() => [])}
+      onBack={vi.fn()}
+      onReset={vi.fn()}
+    />,
+  )
+
+  expect(screen.getAllByLabelText(/ hand$/).map((element) => element.getAttribute('aria-label'))).toEqual([
+    '🐱 hand',
+    '🐵 hand',
+    '🐶 hand',
+    '🦊 hand',
+  ])
+})

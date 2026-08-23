@@ -20,7 +20,7 @@ test('renders opponent pile', () => {
   assert(
     property(cardSet(10), (pile) => {
       cleanup()
-      render(<Opponent index={1} avatar="🤖" pile={pile} />)
+      render(<Opponent avatar="🤖" pile={pile} />)
       const pileElement = screen.getByTitle(i18n.t('playerPile', { avatar: '🤖', count: pile.length }))
       expect(pileElement.children).toHaveLength(pile.length)
     }),

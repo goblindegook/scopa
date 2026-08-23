@@ -463,34 +463,31 @@ export function Scopa({
           </Header>
         )}
         <Opponents>
-          {game.players
-            .filter(({ id }) => id !== playerId)
-            .map(({ id, hand }) => (
-              <Opponent
-                key={`opponent-${id}`}
-                ref={getPlayerPileRef(id)}
-                index={id}
-                avatar={playerProfiles[id].avatar}
-                pile={getFilteredPile(id)}
-                capturedCount={game.players[id].pile.length}
-                compact={isLayoutCompact}
-                active={game.turn === id}
-              >
-                <HandCards
-                  hand={hand}
-                  previousHand={previousPlayersHandsRef.current[id] ?? []}
-                  keyPrefix={`${id}-`}
-                  renderCard={(card) => (
-                    <OpponentCard
-                      ref={getCardRef(getCardId(card))}
-                      card={card}
-                      faceDown
-                      opacity={animation.phase === 'play' && isSame(animation.playCard, card) ? 0 : 1}
-                    />
-                  )}
-                />
-              </Opponent>
-            ))}
+          {[...game.players.slice(playerId + 1), ...game.players.slice(0, playerId)].map(({ id, hand }) => (
+            <Opponent
+              key={`opponent-${id}`}
+              ref={getPlayerPileRef(id)}
+              avatar={playerProfiles[id].avatar}
+              pile={getFilteredPile(id)}
+              capturedCount={game.players[id].pile.length}
+              compact={isLayoutCompact}
+              active={game.turn === id}
+            >
+              <HandCards
+                hand={hand}
+                previousHand={previousPlayersHandsRef.current[id] ?? []}
+                keyPrefix={`${id}-`}
+                renderCard={(card) => (
+                  <OpponentCard
+                    ref={getCardRef(getCardId(card))}
+                    card={card}
+                    faceDown
+                    opacity={animation.phase === 'play' && isSame(animation.playCard, card) ? 0 : 1}
+                  />
+                )}
+              />
+            </Opponent>
+          ))}
         </Opponents>
         <Table aria-label={t('table')} ref={tableRef}>
           <AnimatePresence mode="popLayout">

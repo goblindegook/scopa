@@ -72,7 +72,6 @@ const OpponentPile = styled(Stack)`
 type OpponentProps = React.PropsWithChildren<{
   pile: readonly CardType[]
   capturedCount?: number
-  index: number
   avatar: string
   compact?: boolean
   active?: boolean
