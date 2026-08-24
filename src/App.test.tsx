@@ -1,4 +1,5 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterAll, afterEach, beforeAll, expect, test, vi } from 'vitest'
@@ -112,7 +113,7 @@ test('shows the title screen on load', async () => {
 test('starts a local game from the title screen', async () => {
   render(<App />)
 
-  fireEvent.click(await screen.findByRole('button', { name: /offline game/i }))
+  await userEvent.click(await screen.findByRole('button', { name: /offline game/i }))
 
   expect(await screen.findByLabelText('Game score')).toBeInTheDocument()
 })
@@ -120,8 +121,8 @@ test('starts a local game from the title screen', async () => {
 test('uses the selected avatar in the local game header', async () => {
   render(<App />)
 
-  fireEvent.click(await screen.findByRole('button', { name: 'Select avatar 🦊' }))
-  fireEvent.click(screen.getByRole('button', { name: /offline game/i }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Select avatar 🦊' }))
+  await userEvent.click(screen.getByRole('button', { name: /offline game/i }))
 
   expect(await screen.findByLabelText('🦊 0')).toBeInTheDocument()
 })
@@ -149,7 +150,7 @@ test('resumes a saved local game from the title screen', async () => {
 
   render(<App />)
 
-  fireEvent.click(await screen.findByRole('button', { name: /resume/i }))
+  await userEvent.click(await screen.findByRole('button', { name: /resume/i }))
 
   expect(await screen.findByLabelText('🦊 4')).toBeInTheDocument()
   expect(screen.getByLabelText('🤖 2')).toBeInTheDocument()
@@ -158,14 +159,14 @@ test('resumes a saved local game from the title screen', async () => {
 test('opens the title screen over a local game and resumes it in place', async () => {
   render(<App />)
 
-  fireEvent.click(await screen.findByRole('button', { name: 'Select avatar 🦊' }))
-  fireEvent.click(screen.getByRole('button', { name: /offline game/i }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Select avatar 🦊' }))
+  await userEvent.click(screen.getByRole('button', { name: /offline game/i }))
   expect(await screen.findByLabelText('🦊 0')).toBeInTheDocument()
 
-  fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Scopa' }))
   expect(await screen.findByRole('button', { name: /offline game/i })).toBeInTheDocument()
 
-  fireEvent.click(screen.getByRole('button', { name: /resume\s*🦊 0 · 🤖 0/i }))
+  await userEvent.click(screen.getByRole('button', { name: /resume\s*🦊 0 · 🤖 0/i }))
 
   expect(screen.getByLabelText('🦊 0')).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /offline game/i })).not.toBeInTheDocument()
@@ -174,13 +175,13 @@ test('opens the title screen over a local game and resumes it in place', async (
 test('starting a offline game from the overlay replaces the game in progress', async () => {
   render(<App />)
 
-  fireEvent.click(await screen.findByRole('button', { name: 'Select avatar 🦊' }))
-  fireEvent.click(screen.getByRole('button', { name: /offline game/i }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Select avatar 🦊' }))
+  await userEvent.click(screen.getByRole('button', { name: /offline game/i }))
   expect(await screen.findByLabelText('🦊 0')).toBeInTheDocument()
 
-  fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
-  fireEvent.click(await screen.findByLabelText('Select player count 1 × 1 × 1'))
-  fireEvent.click(screen.getByRole('button', { name: /offline game/i }))
+  await userEvent.click(screen.getByRole('button', { name: 'Scopa' }))
+  await userEvent.click(await screen.findByLabelText('Select player count 1 × 1 × 1'))
+  await userEvent.click(screen.getByRole('button', { name: /offline game/i }))
 
   expect(await screen.findByLabelText('👾 0')).toBeInTheDocument()
 })
@@ -190,7 +191,7 @@ test('opens the title screen over an online game without touching the URL', asyn
 
   expect(await screen.findByLabelText('Game score')).toBeInTheDocument()
 
-  fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Scopa' }))
 
   expect(await screen.findByRole('button', { name: /offline game/i })).toBeInTheDocument()
   expect(window.location.search).toBe('?room=room')
@@ -201,8 +202,8 @@ test('resumes the online game from the overlay with its state intact', async () 
 
   expect(await screen.findByLabelText('Game score')).toBeInTheDocument()
 
-  fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
-  fireEvent.click(await screen.findByRole('button', { name: /online game · resume\s*🦊 0 · 🐵 0/i }))
+  await userEvent.click(screen.getByRole('button', { name: 'Scopa' }))
+  await userEvent.click(await screen.findByRole('button', { name: /online game · resume\s*🦊 0 · 🐵 0/i }))
 
   expect(screen.getByLabelText('Game score')).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /offline game/i })).not.toBeInTheDocument()
@@ -213,8 +214,8 @@ test('starting a local game from the overlay leaves the online game behind', asy
 
   expect(await screen.findByLabelText('Game score')).toBeInTheDocument()
 
-  fireEvent.click(screen.getByRole('button', { name: 'Scopa' }))
-  fireEvent.click(await screen.findByRole('button', { name: /offline game/i }))
+  await userEvent.click(screen.getByRole('button', { name: 'Scopa' }))
+  await userEvent.click(await screen.findByRole('button', { name: /offline game/i }))
 
   expect(await screen.findAllByLabelText('Game score')).toHaveLength(1)
   expect(window.location.search).toBe('')
@@ -288,7 +289,7 @@ test('starting a offline game ignores the saved running score', async () => {
 
   render(<App />)
 
-  fireEvent.click(await screen.findByRole('button', { name: /offline game/i }))
+  await userEvent.click(await screen.findByRole('button', { name: /offline game/i }))
 
   expect(await screen.findByLabelText('🐵 0')).toBeInTheDocument()
   expect(screen.getByLabelText('🤖 0')).toBeInTheDocument()

@@ -1,4 +1,5 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import '../i18n'
 import { inviteUrl, Lobby } from './Lobby'
@@ -54,7 +55,7 @@ describe('Lobby', () => {
     ).toEqual(['🐶', '🐱'])
   })
 
-  test('offers a vacant seat to sit in', () => {
+  test('offers a vacant seat to sit in', async () => {
     const onSit = vi.fn()
     render(
       <Lobby
@@ -69,12 +70,12 @@ describe('Lobby', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sit in seat 3' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Sit in seat 3' }))
 
     expect(onSit).toHaveBeenCalledWith(2)
   })
 
-  test('offers a disconnected player seat to sit in', () => {
+  test('offers a disconnected player seat to sit in', async () => {
     const onSit = vi.fn()
     render(
       <Lobby
@@ -89,7 +90,7 @@ describe('Lobby', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sit in seat 2' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Sit in seat 2' }))
 
     expect(onSit).toHaveBeenCalledWith(1)
   })
@@ -202,7 +203,7 @@ describe('Lobby', () => {
     Object.assign(navigator, { clipboard: { writeText } })
     renderLobby()
 
-    fireEvent.click(screen.getByRole('button', { name: /copy/i }))
+    await userEvent.click(screen.getByRole('button', { name: /copy/i }))
 
     expect(writeText).toHaveBeenCalledWith(inviteUrl(ROOM))
   })
@@ -249,20 +250,20 @@ describe('Lobby', () => {
     expect(screen.queryByRole('button', { name: /^start$/i })).toBeNull()
   })
 
-  test('the host can start the game', () => {
+  test('the host can start the game', async () => {
     const onStart = vi.fn()
     renderLobby({ isHost: true, seats: [seat('🐵'), seat('🐶')], onStart })
 
-    fireEvent.click(screen.getByRole('button', { name: /^start$/i }))
+    await userEvent.click(screen.getByRole('button', { name: /^start$/i }))
 
     expect(onStart).toHaveBeenCalledOnce()
   })
 
-  test('offers a way back out of the room', () => {
+  test('offers a way back out of the room', async () => {
     const onLeave = vi.fn()
     renderLobby({ onLeave })
 
-    fireEvent.click(screen.getByRole('button', { name: /back to title/i }))
+    await userEvent.click(screen.getByRole('button', { name: /back to title/i }))
 
     expect(onLeave).toHaveBeenCalledOnce()
   })

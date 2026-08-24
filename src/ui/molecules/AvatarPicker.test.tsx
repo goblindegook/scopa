@@ -1,4 +1,5 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import '../i18n'
 import { AvatarPicker } from './AvatarPicker'
@@ -6,12 +7,12 @@ import { AvatarPicker } from './AvatarPicker'
 afterEach(cleanup)
 
 describe('AvatarPicker', () => {
-  test('picks an avatar', () => {
+  test('picks an avatar', async () => {
     const onSelect = vi.fn()
 
     render(<AvatarPicker onSelect={onSelect} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Select avatar 🦊' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Select avatar 🦊' }))
     expect(onSelect).toHaveBeenCalledWith('🦊')
   })
 
@@ -22,7 +23,7 @@ describe('AvatarPicker', () => {
     expect(screen.getByRole('button', { name: 'Select avatar 🐵' })).toHaveAttribute('aria-pressed', 'false')
   })
 
-  test('rules out avatars already taken by other players', () => {
+  test('rules out avatars already taken by other players', async () => {
     const onSelect = vi.fn()
 
     render(<AvatarPicker taken={['🐵']} onSelect={onSelect} />)
@@ -30,7 +31,7 @@ describe('AvatarPicker', () => {
     const taken = screen.getByRole('button', { name: 'Select avatar 🐵' })
     expect(taken).toBeDisabled()
 
-    fireEvent.click(taken)
+    await userEvent.click(taken)
     expect(onSelect).not.toHaveBeenCalled()
   })
 })
