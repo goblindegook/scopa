@@ -3,7 +3,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PlayerCount } from '../../engine/sides'
 import { sideCount, sideOf } from '../../engine/sides'
-import { Button } from '../atoms/Button'
+import { ActionButton, Button } from '../atoms/Button'
 import { ModalOverlay, ModalPanel } from '../atoms/ModalOverlay'
 
 const Title = styled('h1')`
@@ -85,6 +85,11 @@ const SeatButton = styled('button')`
   &:hover {
     color: white;
   }
+
+  &:focus-visible {
+    outline: 2px solid var(--overlay-white-50);
+    outline-offset: 2px;
+  }
 `
 
 const ConfirmedIndicator = styled('span')`
@@ -131,6 +136,14 @@ const InviteLabel = styled('label')`
 const InviteControls = styled('div')`
   display: flex;
   gap: var(--space-2);
+
+  @media (max-width: 420px) {
+    flex-direction: column;
+
+    & > button {
+      width: 100%;
+    }
+  }
 `
 
 const InviteInput = styled('input')`
@@ -143,6 +156,19 @@ const InviteInput = styled('input')`
   padding: var(--space-2) var(--space-2);
   font-size: 0.9rem;
   font-family: inherit;
+  user-select: text;
+
+  &:focus-visible {
+    outline: 2px solid var(--overlay-white-50);
+    outline-offset: 2px;
+  }
+`
+
+const LobbyActions = styled('div')`
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
 `
 
 const TextButton = styled('button')`
@@ -157,6 +183,12 @@ const TextButton = styled('button')`
 
   &:hover {
     color: white;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--overlay-white-50);
+    outline-offset: 2px;
+    border-radius: var(--space-1);
   }
 `
 
@@ -249,15 +281,17 @@ export const Lobby = ({ seats, size, host, isHost, roomId, onSit, onStart, onLea
           </InviteControls>
         </InviteBlock>
 
-        {isHost && (
-          <Button onClick={onStart} disabled={!canStart}>
-            {t('start')}
-          </Button>
-        )}
+        <LobbyActions>
+          {isHost && (
+            <ActionButton onClick={onStart} disabled={!canStart}>
+              {t('start')}
+            </ActionButton>
+          )}
 
-        <TextButton type="button" onClick={onLeave}>
-          {t('backToTitle')}
-        </TextButton>
+          <TextButton type="button" onClick={onLeave}>
+            {t('backToTitle')}
+          </TextButton>
+        </LobbyActions>
       </ModalPanel>
     </ModalOverlay>
   )

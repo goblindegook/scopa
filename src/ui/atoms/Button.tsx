@@ -47,3 +47,11 @@ export const Button = styled('button')`
     font-size: 0.875rem;
   }
 `
+
+export const ActionButton = styled(Button)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3.5rem;
+`

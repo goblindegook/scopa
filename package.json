@@ -6,6 +6,7 @@
     "dev": "concurrently -k -n web,partykit -c blue,green \"npm run dev:vite\" \"npm run dev:partykit\"",
     "dev:partykit": "partykit dev",
     "dev:vite": "vite",
+    "deploy": "partykit deploy",
     "build": "tsc -b && vite build",
     "lint": "biome check .",
     "format": "biome check --write --unsafe .",

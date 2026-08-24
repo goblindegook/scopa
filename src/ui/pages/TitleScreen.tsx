@@ -1,7 +1,7 @@
 import styled from '@emotion/styled'
 import { useTranslation } from 'react-i18next'
 import type { PlayerCount } from '../../engine/sides'
-import { Button } from '../atoms/Button'
+import { ActionButton } from '../atoms/Button'
 import { ModalOverlay, ModalPanel } from '../atoms/ModalOverlay'
 import { AVATARS, AvatarPicker } from '../molecules/AvatarPicker'
 import { OptionPicker } from '../molecules/OptionPicker'
@@ -45,10 +45,12 @@ const ProgressBarContainer = styled('div')`
 
 const ProgressBarFill = styled('div')<{ progress: number }>`
   height: 100%;
-  width: ${(props) => props.progress * 100}%;
+  width: 100%;
   background: var(--color-primary);
   border-radius: var(--space-1);
-  transition: width 0.3s ease;
+  transform: scaleX(${(props) => props.progress});
+  transform-origin: left;
+  transition: transform 0.3s ease;
 `
 
 const ButtonStack = styled('div')`
@@ -57,22 +59,6 @@ const ButtonStack = styled('div')`
   gap: var(--space-2);
   width: 100%;
   align-items: stretch;
-
-  & button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 3.5rem;
-  }
-`
-
-const ResumeSection = styled('div')`
-  display: flex;
-  width: 100%;
-
-  & > button {
-    width: 100%;
-  }
 `
 
 const StartActions = styled('div')`
@@ -161,12 +147,12 @@ const resumeCaption = (resume: ResumableGame): string =>
     : `${resume.avatars.join(' ')} · ${resume.avatars.length}/${resume.size}`
 
 const StackedButton = ({ main, caption, onClick }: { main: string; caption: string; onClick: () => void }) => (
-  <Button onClick={onClick}>
+  <ActionButton onClick={onClick}>
     <StackedButtonContent>
       <StackedButtonMain>{main}</StackedButtonMain>
       <StackedButtonCaption>{caption}</StackedButtonCaption>
     </StackedButtonContent>
-  </Button>
+  </ActionButton>
 )
 
 interface TitleScreenProps {
@@ -215,23 +201,21 @@ export const TitleScreen = ({ loadingProgress, onStart, resume, onStartMultiplay
             />
             <ButtonStack>
               <StartActions>
-                <Button onClick={() => onStart(selectedAvatar, playerCount, difficulty)}>
+                <ActionButton onClick={() => onStart(selectedAvatar, playerCount, difficulty)}>
                   {t('startOfflineGame')}
-                </Button>
+                </ActionButton>
                 {onStartMultiplayer && (
-                  <Button onClick={() => onStartMultiplayer(selectedAvatar, playerCount, difficulty)}>
+                  <ActionButton onClick={() => onStartMultiplayer(selectedAvatar, playerCount, difficulty)}>
                     {t('vsFriends')}
-                  </Button>
+                  </ActionButton>
                 )}
               </StartActions>
               {resume && (
-                <ResumeSection>
-                  <StackedButton
-                    main={resume.kind === 'online' ? `${t('onlineGame')} \u00b7 ${t('resume')}` : t('resume')}
-                    caption={resumeCaption(resume)}
-                    onClick={resume.onResume}
-                  />
-                </ResumeSection>
+                <StackedButton
+                  main={resume.kind === 'online' ? `${t('onlineGame')} \u00b7 ${t('resume')}` : t('resume')}
+                  caption={resumeCaption(resume)}
+                  onClick={resume.onResume}
+                />
               )}
             </ButtonStack>
             <LangRow>
