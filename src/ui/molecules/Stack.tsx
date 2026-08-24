@@ -60,8 +60,17 @@ const PillGroup = styled('span')`
 `
 
 const AvatarPill = styled(Pill)<{ active: boolean }>`
+  position: relative;
   border-color: ${({ active }) => (active ? 'var(--color-accent-translucent)' : 'var(--overlay-white-25)')};
   border-width: ${({ active }) => (active ? '2px' : '1px')};
+`
+
+const AwayBadge = styled('span')`
+  position: absolute;
+  right: calc(var(--space-1) * -1);
+  bottom: calc(var(--space-1) * -1);
+  font-size: 0.75rem;
+  line-height: 1;
 `
 
 interface CapturedCountProps {
@@ -69,15 +78,29 @@ interface CapturedCountProps {
   avatar: string
   count: number
   active: boolean
+  away?: boolean
+}
+
+const seatLabel = (active: boolean, away: boolean): string | null => {
+  if (active && away) return 'seatToPlayAway'
+  if (active) return 'seatToPlay'
+  if (away) return 'seatAway'
+  return null
 }
 
 export const CapturedCount = React.forwardRef<HTMLElement, CapturedCountProps>(
-  ({ className, avatar, count, active }, ref) => {
+  ({ className, avatar, count, active, away = false }, ref) => {
     const { t } = useTranslation()
+    const label = seatLabel(active, away)
     return (
       <PillGroup ref={ref} className={className}>
-        <AvatarPill active={active} aria-label={active ? t('seatToPlay', { avatar }) : avatar}>
+        <AvatarPill active={active} aria-label={label ? t(label, { avatar }) : avatar}>
           {avatar}
+          {away && (
+            <AwayBadge role="img" aria-hidden="true">
+              💤
+            </AwayBadge>
+          )}
         </AvatarPill>
         <Pill aria-label={t('capturedCount', { avatar, count })}>🎴 {count}</Pill>
       </PillGroup>

@@ -1,4 +1,5 @@
 import React from 'react'
+import type { Difficulty } from '../engine/ai'
 import { play } from '../engine/scopa'
 import { score } from '../engine/scores'
 import type { PlayerCount } from '../engine/sides'
@@ -31,12 +32,21 @@ interface OnlineModeProps {
   readonly roomId: string
   readonly initialAvatar?: string | null
   readonly size?: PlayerCount
+  readonly difficulty?: Difficulty
   readonly onBack: () => void
   readonly onLeave: () => void
   readonly forgetSeat: React.RefObject<(() => void) | null>
 }
 
-export const OnlineMode = ({ roomId, initialAvatar, size, onBack, onLeave, forgetSeat }: OnlineModeProps) => {
+export const OnlineMode = ({
+  roomId,
+  initialAvatar,
+  size,
+  difficulty,
+  onBack,
+  onLeave,
+  forgetSeat,
+}: OnlineModeProps) => {
   const {
     avatar,
     seats,
@@ -53,10 +63,13 @@ export const OnlineMode = ({ roomId, initialAvatar, size, onBack, onLeave, forge
     confirm,
     sendMove,
     sit,
-  } = useMultiplayerSession({ roomId, initialAvatar, size })
+  } = useMultiplayerSession({ roomId, initialAvatar, size, difficulty })
 
   // A fresh identity re-runs Scopa's opponent-turn effect, orphaning the pending nextMove.
-  const playerProfiles = React.useMemo(() => seats.map((player) => ({ avatar: player?.avatar ?? '' })), [seats])
+  const playerProfiles = React.useMemo(
+    () => seats.map((player) => ({ avatar: player?.avatar ?? '', away: player?.connected === false })),
+    [seats],
+  )
 
   const playAndSend = React.useCallback(
     (move: Move, game: State) => {

@@ -1,4 +1,5 @@
 import { Err, Ok, type Result } from '@pacote/result'
+import { AI_AVATARS } from '../engine/ai'
 
 export interface LobbyPlayer {
   readonly sid: string
@@ -6,6 +7,7 @@ export interface LobbyPlayer {
   readonly connected: boolean
   readonly confirmed: boolean
   readonly joinedAt: number
+  readonly ai?: boolean
 }
 
 export type Seats = readonly (LobbyPlayer | null)[]
@@ -16,11 +18,16 @@ const isOpen = (seat: LobbyPlayer | null): boolean => seat === null || !seat.con
 
 const isConnected = (seat: LobbyPlayer | null): seat is LobbyPlayer => seat?.connected === true
 
+const MIN_HUMANS = 2
+
+export const isConnectedHuman = (seat: LobbyPlayer | null): seat is LobbyPlayer =>
+  seat?.connected === true && seat.ai !== true
+
 export function canJoin(seats: Seats, avatar: string, sid: string, started: boolean): Result<void, Error> {
   if (seats.some((seat) => seat?.avatar === avatar && seat.sid !== sid)) return Err(new Error('Avatar already taken.'))
   if (seats.some((seat) => seat?.sid === sid)) return Ok(undefined)
-  if (started) return Err(new Error('Game has already started.'))
-  if (!seats.some(isOpen)) return Err(new Error('Room is full.'))
+  if (started && !seats.some((seat) => seat?.ai)) return Err(new Error('Game has already started.'))
+  if (!started && !seats.some(isOpen)) return Err(new Error('Room is full.'))
   return Ok(undefined)
 }
 
@@ -34,7 +41,9 @@ export function canSit(seats: Seats, sid: string, seat: number, started: boolean
 
 export function canStart(seats: Seats, sid: string, hostSid: string): Result<void, Error> {
   if (sid !== hostSid) return Err(new Error('Only the host can start.'))
-  if (!seats.every(isConnected)) return Err(new Error('Every seat must be filled to start.'))
+  if (seats.filter(isConnectedHuman).length < MIN_HUMANS) {
+    return Err(new Error('Two players are needed to start.'))
+  }
   return Ok(undefined)
 }
 
@@ -43,10 +52,12 @@ export function allConfirmed(seats: Seats): boolean {
   return connected.length > 0 && connected.every((seat) => seat.confirmed)
 }
 
-export function seatPlayer(seats: Seats, player: LobbyPlayer): Seats {
+export function seatPlayer(seats: Seats, player: LobbyPlayer, started = false): Seats {
   const held = seats.findIndex((seat) => seat?.sid === player.sid)
+  if (held >= 0) return seats.map((seat, index) => (index === held ? player : seat))
+
   const free = seats.indexOf(null)
-  const target = held >= 0 ? held : free >= 0 ? free : seats.findIndex(isOpen)
+  const target = started ? seats.findIndex((seat) => seat?.ai === true) : free >= 0 ? free : seats.findIndex(isOpen)
   return seats.map((seat, index) => (index === target ? player : seat))
 }
 
@@ -61,7 +72,27 @@ export function sitPlayer(seats: Seats, sid: string, seat: number): Seats {
 export function nextHost(seats: Seats, hostSid: string): string {
   if (seats.some((seat) => seat?.sid === hostSid)) return hostSid
   const longest = seats
-    .filter(isConnected)
+    .filter(isConnectedHuman)
     .reduce<LobbyPlayer | null>((best, seat) => (best === null || seat.joinedAt < best.joinedAt ? seat : best), null)
   return longest?.sid ?? hostSid
+}
+
+// A seat plays itself when nobody is there to play it - whether nobody ever was, or
+// whoever it is has dropped off.
+export const isAutoplayed = (seat: LobbyPlayer | null): boolean => seat === null || seat.ai === true || !seat.connected
+
+export const hasConnectedHuman = (seats: Seats): boolean => seats.some(isConnectedHuman)
+
+// Vacant seats only: a disconnected human's seat is borrowed by the AI for as long as
+// they are away (see isAutoplayed), never confiscated.
+export function fillVacantWithAi(seats: Seats, now: number): Seats {
+  const pool = AI_AVATARS.filter((avatar) => !seats.some((seat) => seat?.avatar === avatar))
+  let taken = 0
+
+  return seats.map((seat) => {
+    if (seat !== null) return seat
+    const avatar = pool[taken]
+    taken += 1
+    return { sid: `ai:${crypto.randomUUID()}`, avatar, connected: true, confirmed: true, joinedAt: now, ai: true }
+  })
 }

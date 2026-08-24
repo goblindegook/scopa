@@ -1,6 +1,19 @@
 import { isErr, isOk } from '@pacote/result'
 import { describe, expect, test } from 'vitest'
-import { allConfirmed, canJoin, canSit, canStart, nextHost, type Seats, seatPlayer, sitPlayer } from './room'
+import { AI_AVATARS } from '../engine/ai'
+import {
+  allConfirmed,
+  canJoin,
+  canSit,
+  canStart,
+  fillVacantWithAi,
+  hasConnectedHuman,
+  isAutoplayed,
+  nextHost,
+  type Seats,
+  seatPlayer,
+  sitPlayer,
+} from './room'
 
 const player = (sid: string, avatar: string, connected = true, confirmed = false, joinedAt = 0) => ({
   sid,
@@ -8,6 +21,15 @@ const player = (sid: string, avatar: string, connected = true, confirmed = false
   connected,
   confirmed,
   joinedAt,
+})
+
+const robot = (sid: string, avatar: string, joinedAt = 0) => ({
+  sid,
+  avatar,
+  connected: true,
+  confirmed: true,
+  joinedAt,
+  ai: true,
 })
 
 const empty = (size: number): Seats => Array.from({ length: size }, () => null)
@@ -37,6 +59,14 @@ describe('canJoin', () => {
 
   test('refuses an avatar another seat already holds', () => {
     expect(isErr(canJoin([player('a', '🐵'), null], '🐵', 'b', false))).toBe(true)
+  })
+
+  test('admits a newcomer into an AI seat after the game has started', () => {
+    expect(isOk(canJoin([player('a', '🐵'), robot('ai:1', '🤖')], '🐶', 'b', true))).toBe(true)
+  })
+
+  test('refuses a newcomer when the only free-looking seat is a disconnected human', () => {
+    expect(isErr(canJoin([player('a', '🐵'), player('b', '🐶', false)], '🦊', 'c', true))).toBe(true)
   })
 })
 
@@ -68,23 +98,33 @@ describe('canSit', () => {
 })
 
 describe('canStart', () => {
-  test('allows the host once every seat is filled and connected', () => {
-    const seats = [player('a', '🐵'), player('b', '🐶'), player('c', '🦊'), player('d', '🐱')]
+  test('refuses anyone who is not the host', () => {
+    expect(isErr(canStart([player('a', '🐵'), player('b', '🐶')], 'b', 'a'))).toBe(true)
+  })
+
+  test('allows the host with two connected humans and empty seats', () => {
+    const seats = [player('a', '🐵'), player('b', '🐶'), null, null, null, null]
     expect(isOk(canStart(seats, 'a', 'a'))).toBe(true)
   })
 
-  test('refuses anyone who is not the host', () => {
-    const seats = [player('a', '🐵'), player('b', '🐶')]
-    expect(isErr(canStart(seats, 'b', 'a'))).toBe(true)
-  })
-
-  test('refuses while a seat is empty', () => {
-    expect(isErr(canStart([player('a', '🐵'), null, null, null], 'a', 'a'))).toBe(true)
-  })
-
-  test('refuses while a seated player is disconnected', () => {
-    const seats = [player('a', '🐵'), player('b', '🐶', false)]
+  test('refuses the host with only one connected human', () => {
+    const seats = [player('a', '🐵'), null, null, null]
     expect(isErr(canStart(seats, 'a', 'a'))).toBe(true)
+  })
+
+  test('refuses the host when the second human is disconnected', () => {
+    const seats = [player('a', '🐵'), player('b', '🐶', false), null, null]
+    expect(isErr(canStart(seats, 'a', 'a'))).toBe(true)
+  })
+
+  test('does not count AI seats towards the human floor', () => {
+    const seats = [player('a', '🐵'), robot('ai:1', '🤖'), robot('ai:2', '👾'), robot('ai:3', '👽')]
+    expect(isErr(canStart(seats, 'a', 'a'))).toBe(true)
+  })
+
+  test('lets a disconnected third human not block the start', () => {
+    const seats = [player('a', '🐵'), player('b', '🐶'), player('c', '🦊', false), null, null, null]
+    expect(isOk(canStart(seats, 'a', 'a'))).toBe(true)
   })
 })
 
@@ -106,6 +146,18 @@ describe('seatPlayer', () => {
   test('evicts a disconnected occupant when no seat is free', () => {
     const seats = [player('a', '🐵'), player('b', '🐶', false)]
     expect(seatPlayer(seats, player('c', '🦊'))).toEqual([player('a', '🐵'), player('c', '🦊')])
+  })
+
+  test('seats a mid-game joiner in the AI seat, not the disconnected human seat', () => {
+    const seats = [player('a', '🐵'), player('b', '🐶', false), robot('ai:1', '🤖')]
+    const seated = seatPlayer(seats, player('c', '🦊'), true)
+    expect(seated.map((seat) => seat?.sid)).toEqual(['a', 'b', 'c'])
+  })
+
+  test('returns a known sid to its own seat rather than an AI seat', () => {
+    const seats = [player('a', '🐵'), player('b', '🐶', false), robot('ai:1', '🤖')]
+    const seated = seatPlayer(seats, player('b', '🐶'), true)
+    expect(seated.map((seat) => seat?.sid)).toEqual(['a', 'b', 'ai:1'])
   })
 })
 
@@ -135,6 +187,11 @@ describe('nextHost', () => {
     const seats = [player('b', '🐶', false, false, 1), player('c', '🦊', true, false, 7)]
     expect(nextHost(seats, 'a')).toBe('c')
   })
+
+  test('never hands the room to an AI seat', () => {
+    const seats = [robot('ai:1', '🤖', 0), player('b', '🐶', true, false, 5)]
+    expect(nextHost(seats, 'gone')).toBe('b')
+  })
 })
 
 describe('allConfirmed', () => {
@@ -149,5 +206,57 @@ describe('allConfirmed', () => {
 
   test('is false in an empty room', () => {
     expect(allConfirmed(empty(4))).toBe(false)
+  })
+})
+
+describe('isAutoplayed', () => {
+  test('classifies a vacant seat, an AI seat and a disconnected human as autoplayed', () => {
+    expect([null, robot('ai:1', '🤖'), player('b', '🐶', false)].map(isAutoplayed)).toEqual([true, true, true])
+  })
+
+  test('leaves a connected human to play for themselves', () => {
+    expect(isAutoplayed(player('a', '🐵'))).toBe(false)
+  })
+})
+
+describe('hasConnectedHuman', () => {
+  test('is true while one human is connected among robots', () => {
+    expect(hasConnectedHuman([player('a', '🐵'), robot('ai:1', '🤖')])).toBe(true)
+  })
+
+  test('is false when every human has dropped and only robots remain', () => {
+    expect(hasConnectedHuman([player('a', '🐵', false), robot('ai:1', '🤖')])).toBe(false)
+  })
+})
+
+describe('fillVacantWithAi', () => {
+  test('fills only vacant seats, leaving a disconnected human their seat', () => {
+    const seats = [player('a', '🐵'), player('b', '🐶', false), null, null]
+    const filled = fillVacantWithAi(seats, 1000)
+    expect(filled.map((seat) => [seat?.ai === true, seat?.sid.startsWith('ai:') === true])).toEqual([
+      [false, false],
+      [false, false],
+      [true, true],
+      [true, true],
+    ])
+  })
+
+  test('gives every filled seat a distinct avatar from the AI pool', () => {
+    const filled = fillVacantWithAi([null, null, null, null], 1000)
+    const avatars = filled.map((seat) => seat?.avatar ?? '')
+    expect([
+      new Set(avatars).size,
+      avatars.every((avatar) => AI_AVATARS.some((candidate) => candidate === avatar)),
+    ]).toEqual([4, true])
+  })
+
+  test('marks filled seats connected and confirmed so they never block a round', () => {
+    const filled = fillVacantWithAi([player('a', '🐵'), null], 1000)
+    expect([filled[1]?.connected, filled[1]?.confirmed, filled[1]?.joinedAt]).toEqual([true, true, 1000])
+  })
+
+  test('leaves a room with no vacancies untouched', () => {
+    const seats = [player('a', '🐵'), player('b', '🐶')]
+    expect(fillVacantWithAi(seats, 1000)).toEqual(seats)
   })
 })

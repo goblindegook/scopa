@@ -26,3 +26,15 @@ test('renders opponent pile', () => {
     }),
   )
 })
+
+test('names an away seat as away', () => {
+  render(<Opponent avatar="🐶" pile={[]} compact away />)
+
+  expect(screen.getByLabelText('🐶 away')).toBeInTheDocument()
+})
+
+test('names an away seat that is also to play', () => {
+  render(<Opponent avatar="🐶" pile={[]} compact active away />)
+
+  expect(screen.getByLabelText('🐶 to play, away')).toBeInTheDocument()
+})

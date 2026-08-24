@@ -1,6 +1,7 @@
 import type { PartySocket } from 'partysocket'
 import { usePartySocket } from 'partysocket/react'
 import React from 'react'
+import type { Difficulty } from '../engine/ai'
 import type { PlayerCount } from '../engine/sides'
 import type { Move, State } from '../engine/state'
 import { useActiveRoom } from './useActiveRoom'
@@ -67,12 +68,13 @@ export interface LobbyPlayer {
   readonly avatar: string
   readonly connected: boolean
   readonly confirmed: boolean
+  readonly ai?: boolean
 }
 
 // Mirrors the Worker's ClientMessage (src/party/scopa.ts) so a mismatch between
 // what this hook sends and what the room accepts is caught at compile time.
 type ClientMessage =
-  | { readonly type: 'join'; readonly avatar: string; readonly size?: PlayerCount }
+  | { readonly type: 'join'; readonly avatar: string; readonly size?: PlayerCount; readonly difficulty?: Difficulty }
   | { readonly type: 'sit'; readonly seat: number }
   | { readonly type: 'start' }
   | { readonly type: 'move'; readonly move: Move }
@@ -95,6 +97,7 @@ interface MultiplayerSessionOptions {
   readonly roomId: string
   readonly initialAvatar?: string | null
   readonly size?: PlayerCount
+  readonly difficulty?: Difficulty
 }
 
 export interface MultiplayerSession {
@@ -123,7 +126,12 @@ function normalizeStoredValue(value: string | null | undefined): string | null {
   return value && value.length > 0 ? value : null
 }
 
-export function useMultiplayerSession({ roomId, initialAvatar, size }: MultiplayerSessionOptions): MultiplayerSession {
+export function useMultiplayerSession({
+  roomId,
+  initialAvatar,
+  size,
+  difficulty,
+}: MultiplayerSessionOptions): MultiplayerSession {
   const [avatar, setAvatar] = React.useState<string | null>(
     () =>
       normalizeStoredValue(initialAvatar) ??
@@ -170,7 +178,9 @@ export function useMultiplayerSession({ roomId, initialAvatar, size }: Multiplay
     query: sid ? { sid } : undefined,
     onOpen() {
       if (!avatar) return
-      socket.send(JSON.stringify(size === undefined ? { type: 'join', avatar } : { type: 'join', avatar, size }))
+      socket.send(
+        JSON.stringify(size === undefined ? { type: 'join', avatar } : { type: 'join', avatar, size, difficulty }),
+      )
     },
     onMessage(event: MessageEvent<string>) {
       const message: ServerMessage = JSON.parse(event.data)

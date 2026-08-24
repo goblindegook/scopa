@@ -84,10 +84,11 @@ type PlayerProps = React.PropsWithChildren<{
   avatar: string
   compact?: boolean
   active?: boolean
+  away?: boolean
 }>
 
 export const Player = React.forwardRef<HTMLElement, PlayerProps>(
-  ({ children, avatar, pile, capturedCount = pile.length, compact, active = false }, ref) => {
+  ({ children, avatar, pile, capturedCount = pile.length, compact, active = false, away = false }, ref) => {
     const { t } = useTranslation()
 
     if (compact) {
@@ -96,7 +97,7 @@ export const Player = React.forwardRef<HTMLElement, PlayerProps>(
           <PlayerHand compact aria-label={t('playerHand', { avatar })}>
             {children}
           </PlayerHand>
-          <CapturedCount ref={ref} avatar={avatar} count={capturedCount} active={active} />
+          <CapturedCount ref={ref} avatar={avatar} count={capturedCount} active={active} away={away} />
         </CompactPlayerArea>
       )
     }

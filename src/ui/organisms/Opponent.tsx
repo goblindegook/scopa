@@ -75,10 +75,11 @@ type OpponentProps = React.PropsWithChildren<{
   avatar: string
   compact?: boolean
   active?: boolean
+  away?: boolean
 }>
 
 export const Opponent = React.forwardRef<HTMLElement, OpponentProps>(
-  ({ children, avatar, pile, capturedCount = pile.length, compact, active = false }, ref) => {
+  ({ children, avatar, pile, capturedCount = pile.length, compact, active = false, away = false }, ref) => {
     const { t } = useTranslation()
     const hand = (
       <OpponentHand aria-label={t('playerHand', { avatar })} compact={compact}>
@@ -90,7 +91,7 @@ export const Opponent = React.forwardRef<HTMLElement, OpponentProps>(
       return (
         <CompactOpponentArea>
           {hand}
-          <CapturedCount ref={ref} avatar={avatar} count={capturedCount} active={active} />
+          <CapturedCount ref={ref} avatar={avatar} count={capturedCount} active={active} away={away} />
         </CompactOpponentArea>
       )
     }

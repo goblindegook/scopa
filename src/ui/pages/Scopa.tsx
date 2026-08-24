@@ -29,6 +29,7 @@ export interface PlayerProfile {
   canCountCards?: boolean
   posture?: number
   worlds?: number
+  away?: boolean
 }
 
 const Header = styled('header')`
@@ -472,6 +473,7 @@ export function Scopa({
               capturedCount={game.players[id].pile.length}
               compact={isLayoutCompact}
               active={game.turn === id}
+              away={playerProfiles[id].away}
             >
               <HandCards
                 hand={hand}
@@ -607,6 +609,7 @@ export function Scopa({
           capturedCount={game.players[playerId].pile.length}
           compact={isLayoutCompact}
           active={game.turn === playerId}
+          away={playerProfiles[playerId].away}
         >
           <HandCards
             hand={game.players[playerId].hand}

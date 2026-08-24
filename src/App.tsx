@@ -5,7 +5,7 @@ import { winner } from './engine/scores'
 import { isPlayerCount, type PlayerCount } from './engine/sides'
 import type { State } from './engine/state'
 import { Alert } from './ui/atoms/Alert'
-import { type Difficulty, OfflineMode, type OfflineSession, startOfflineSession } from './ui/OfflineMode'
+import { DIFFICULTIES, type Difficulty, OfflineMode, type OfflineSession, startOfflineSession } from './ui/OfflineMode'
 import { OnlineMode } from './ui/OnlineMode'
 import { TitleScreen } from './ui/pages/TitleScreen'
 import { preloadCardAssets } from './ui/preload'
@@ -17,6 +17,9 @@ const goTo = (params: Record<string, string>) => {
   const query = new URLSearchParams(params)
   window.location.assign(`${window.location.pathname}?${query}`)
 }
+
+const isDifficulty = (value: string | null): value is Difficulty =>
+  value !== null && (DIFFICULTIES as readonly string[]).includes(value)
 
 function usePreloadedCards(): number {
   const [progress, setProgress] = React.useState(0)
@@ -40,6 +43,7 @@ const App = () => {
   // `size` from the URL, so reading it live on every render would go blank after the
   // first re-render, well before the async websocket onOpen fires and needs it.
   const [requestedSize] = React.useState(() => Number(params.get('size')))
+  const [requestedDifficulty] = React.useState(() => params.get('difficulty'))
   const [isTitleMenuVisible, setIsTitleMenuVisible] = React.useState(false)
   const onlineRoom = useActiveRoom()
   const { savedGameState, clearSavedGame } = useSavedGameStorage(session)
@@ -106,6 +110,7 @@ const App = () => {
           roomId={roomId}
           initialAvatar={avatar}
           size={isPlayerCount(requestedSize) ? requestedSize : undefined}
+          difficulty={isDifficulty(requestedDifficulty) ? requestedDifficulty : undefined}
           onBack={() => setIsTitleMenuVisible(true)}
           onLeave={leaveRoom}
           forgetSeat={forgetSeat}
@@ -136,8 +141,8 @@ const App = () => {
                 : undefined
           }
           onStart={startLocalGame}
-          onStartMultiplayer={(playerOneAvatar, playerCount) =>
-            goTo({ room: crypto.randomUUID(), avatar: playerOneAvatar, size: String(playerCount) })
+          onStartMultiplayer={(playerOneAvatar, playerCount, difficulty) =>
+            goTo({ room: crypto.randomUUID(), avatar: playerOneAvatar, size: String(playerCount), difficulty })
           }
         />
       )}

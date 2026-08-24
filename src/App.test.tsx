@@ -266,6 +266,21 @@ test('a valid ?size survives a re-render after the URL-stripping effect, present
   expect(JSON.parse(mockedSocket.send.mock.calls[0][0])).toEqual({ type: 'join', avatar: '🦊', size: 4 })
 })
 
+test('a valid ?difficulty survives a re-render after the URL-stripping effect', () => {
+  window.history.replaceState({}, '', `/?room=room&avatar=${encodeURIComponent('🦊')}&size=4&difficulty=expert`)
+
+  const { rerender } = render(<App />)
+  rerender(<App />)
+  mockedSocket.options?.onOpen?.()
+
+  expect(JSON.parse(mockedSocket.send.mock.calls[0][0])).toEqual({
+    type: 'join',
+    avatar: '🦊',
+    size: 4,
+    difficulty: 'expert',
+  })
+})
+
 test('starting a offline game ignores the saved running score', async () => {
   window.localStorage.setItem(
     'scopa:saved-game',

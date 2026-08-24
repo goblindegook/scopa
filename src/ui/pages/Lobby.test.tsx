@@ -70,7 +70,7 @@ describe('Lobby', () => {
       />,
     )
 
-    await userEvent.click(screen.getByRole('button', { name: 'Sit in seat 3' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Sit in seat 3, currently an AI player' }))
 
     expect(onSit).toHaveBeenCalledWith(2)
   })
@@ -112,10 +112,10 @@ describe('Lobby', () => {
     expect(screen.getByRole('button', { name: 'Start' })).toBeEnabled()
   })
 
-  test('disables start while a seat is empty', () => {
+  test('disables start while only one human is seated', () => {
     render(
       <Lobby
-        seats={[seat('🐵'), seat('🐶'), seat('🦊'), null]}
+        seats={[seat('🐵'), null, null, null]}
         size={4}
         host={0}
         isHost
@@ -129,10 +129,33 @@ describe('Lobby', () => {
     expect(screen.getByRole('button', { name: 'Start' })).toBeDisabled()
   })
 
-  test('disables start and keeps the waiting status when every seat is filled but one occupant is disconnected', () => {
+  test('enables start for the host with two humans and empty seats', () => {
+    renderLobby({
+      seats: [seat('🐵'), seat('🐶'), null, null, null, null],
+      size: 6,
+      host: 0,
+      isHost: true,
+    })
+
+    expect(screen.getByRole('button', { name: 'Start' })).toBeEnabled()
+  })
+
+  test('disables start for the host with one human', () => {
+    renderLobby({ seats: [seat('🐵'), null, null, null], size: 4, host: 0, isHost: true })
+
+    expect(screen.getByRole('button', { name: 'Start' })).toBeDisabled()
+  })
+
+  test('says how many seats will play as AI', () => {
+    renderLobby({ seats: [seat('🐵'), seat('🐶'), null, null], size: 4, host: 0, isHost: true })
+
+    expect(screen.getByText('Start now and 2 seats play as AI.')).toBeInTheDocument()
+  })
+
+  test('disables start and asks for one more player when only one human is connected', () => {
     render(
       <Lobby
-        seats={[seat('🐵'), seat('🐶'), seat('🦊'), seat('🐱', false)]}
+        seats={[seat('🐵'), seat('🐶', false), null, null]}
         size={4}
         host={0}
         isHost
@@ -144,7 +167,7 @@ describe('Lobby', () => {
     )
 
     expect(screen.getByRole('button', { name: 'Start' })).toBeDisabled()
-    expect(screen.getByText(/waiting for every seat/i)).toBeInTheDocument()
+    expect(screen.getByText(/one more player/i)).toBeInTheDocument()
   })
 
   test('only vacant or disconnected seats are offered as clickable', () => {
@@ -163,7 +186,7 @@ describe('Lobby', () => {
 
     expect(
       screen.getAllByRole('button', { name: /^Sit in seat/ }).map((button) => button.getAttribute('aria-label')),
-    ).toEqual(['Sit in seat 3', 'Sit in seat 2'])
+    ).toEqual(['Sit in seat 3', 'Sit in seat 2, currently an AI player'])
   })
 
   test('lists every player by avatar, including a disconnected one', () => {
@@ -208,16 +231,16 @@ describe('Lobby', () => {
     expect(writeText).toHaveBeenCalledWith(inviteUrl(ROOM))
   })
 
-  test('tells players it is waiting while a seat is still empty', () => {
+  test('asks for one more player while only one human is seated', () => {
     renderLobby({ seats: [seat('🐵'), null] })
 
-    expect(screen.getByText(/waiting for every seat/i)).toBeInTheDocument()
+    expect(screen.getByText(/one more player/i)).toBeInTheDocument()
   })
 
-  test('treats an empty seats array as waiting, not ready to start', () => {
+  test('treats an empty seats array as needing another player, not ready to start', () => {
     renderLobby({ seats: [], isHost: true })
 
-    expect(screen.getByText(/waiting for every seat/i)).toBeInTheDocument()
+    expect(screen.getByText(/one more player/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Start' })).toBeDisabled()
   })
 

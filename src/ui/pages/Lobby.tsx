@@ -164,6 +164,7 @@ export interface LobbyPlayer {
   avatar: string
   connected: boolean
   confirmed: boolean
+  ai?: boolean
 }
 
 interface LobbyProps {
@@ -184,7 +185,9 @@ export function inviteUrl(roomId: string): string {
 export const Lobby = ({ seats, size, host, isHost, roomId, onSit, onStart, onLeave }: LobbyProps) => {
   const { t } = useTranslation()
   const [copied, setCopied] = React.useState(false)
-  const canStart = seats.length > 0 && seats.every((occupant) => occupant?.connected === true)
+  const humans = seats.filter((occupant) => occupant?.connected === true && occupant.ai !== true).length
+  const aiSeats = seats.filter((occupant) => occupant === null || occupant.ai === true).length
+  const canStart = humans >= 2
   const link = inviteUrl(roomId)
 
   const teams = Array.from({ length: sideCount(size) }, (_, side) =>
@@ -212,10 +215,10 @@ export const Lobby = ({ seats, size, host, isHost, roomId, onSit, onStart, onLea
                     <EmptySeat key={`seat-${index}`} data-connected="false">
                       <SeatButton
                         type="button"
-                        aria-label={t('sitHere', { seat: index + 1 })}
+                        aria-label={t(occupant === null ? 'sitHereAi' : 'sitHere', { seat: index + 1 })}
                         onClick={() => onSit(index)}
                       >
-                        {occupant?.avatar ?? ''}
+                        {occupant?.avatar ?? '🤖'}
                       </SeatButton>
                     </EmptySeat>
                   ),
@@ -225,7 +228,9 @@ export const Lobby = ({ seats, size, host, isHost, roomId, onSit, onStart, onLea
           ))}
         </Teams>
 
-        <Status>{canStart ? t('readyToStart') : t('waitingForSeats')}</Status>
+        <Status>
+          {!canStart ? t('needOneMorePlayer') : aiSeats > 0 ? t('readyWithAi', { count: aiSeats }) : t('readyToStart')}
+        </Status>
 
         <InviteBlock>
           <InviteLabel htmlFor="invite-link">{t('inviteFriends')}</InviteLabel>

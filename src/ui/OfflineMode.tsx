@@ -1,11 +1,12 @@
 import { fold, isErr, type Result } from '@pacote/result'
 import { shuffle } from '@pacote/shuffle'
 import React from 'react'
+import { AI_AVATARS, aiOptions, type Difficulty } from '../engine/ai'
 import { deck } from '../engine/cards'
 import { move } from '../engine/opponent'
 import { deal, play, randomFirstPlayer } from '../engine/scopa'
 import { score } from '../engine/scores'
-import { type PlayerCount, sideCount } from '../engine/sides'
+import type { PlayerCount } from '../engine/sides'
 import type { Move, State } from '../engine/state'
 import { type PlayerProfile, Scopa } from './pages/Scopa'
 
@@ -16,7 +17,7 @@ export interface OfflineSession {
   readonly difficulty: Difficulty
 }
 
-const AI_AVATARS = ['🤖', '👾', '👽', '😈', '👻'] as const
+export { DIFFICULTIES, type Difficulty } from '../engine/ai'
 
 const dealShuffledDeck = (score?: readonly number[], players: PlayerCount = 2, previousFirstPlayer?: number) =>
   deal(shuffle(deck()), {
@@ -25,26 +26,6 @@ const dealShuffledDeck = (score?: readonly number[], players: PlayerCount = 2, p
     previousFirstPlayer: previousFirstPlayer ?? randomFirstPlayer(players),
   })
 
-export const DIFFICULTIES = ['easy', 'normal', 'hard', 'expert'] as const
-
-export type Difficulty = (typeof DIFFICULTIES)[number]
-
-const POSTURE: Record<number, number> = { 2: -1, 3: 1 }
-
-function opponentProfile(difficulty: Difficulty, count: number): Omit<PlayerProfile, 'avatar'> {
-  const posture = POSTURE[sideCount(count)]
-  switch (difficulty) {
-    case 'easy':
-      return { posture: 0, canCountCards: false }
-    case 'normal':
-      return { posture: undefined, canCountCards: false }
-    case 'hard':
-      return { posture, canCountCards: false }
-    case 'expert':
-      return { posture, canCountCards: true, worlds: 100 }
-  }
-}
-
 export function createPlayerProfiles(
   playerOneAvatar: string,
   count: number,
@@ -52,7 +33,7 @@ export function createPlayerProfiles(
 ): readonly PlayerProfile[] {
   return [playerOneAvatar, ...AI_AVATARS]
     .slice(0, count)
-    .map((avatar, index) => (index === 0 ? { avatar } : { avatar, ...opponentProfile(difficulty, count) }))
+    .map((avatar, index) => (index === 0 ? { avatar } : { avatar, ...aiOptions(difficulty, count) }))
 }
 
 export function startOfflineSession(

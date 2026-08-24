@@ -173,7 +173,7 @@ interface TitleScreenProps {
   loadingProgress: number
   onStart: (avatar: string, playerCount: PlayerCount, difficulty: Difficulty) => void
   resume?: ResumableGame
-  onStartMultiplayer?: (avatar: string, size: PlayerCount) => void
+  onStartMultiplayer?: (avatar: string, size: PlayerCount, difficulty: Difficulty) => void
 }
 
 export const TitleScreen = ({ loadingProgress, onStart, resume, onStartMultiplayer }: TitleScreenProps) => {
@@ -219,7 +219,9 @@ export const TitleScreen = ({ loadingProgress, onStart, resume, onStartMultiplay
                   {t('startOfflineGame')}
                 </Button>
                 {onStartMultiplayer && (
-                  <Button onClick={() => onStartMultiplayer(selectedAvatar, playerCount)}>{t('vsFriends')}</Button>
+                  <Button onClick={() => onStartMultiplayer(selectedAvatar, playerCount, difficulty)}>
+                    {t('vsFriends')}
+                  </Button>
                 )}
               </StartActions>
               {resume && (

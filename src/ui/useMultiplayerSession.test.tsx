@@ -265,6 +265,17 @@ describe('useMultiplayerSession', () => {
     expect(mockedSocket.send).toHaveBeenCalledWith(JSON.stringify({ type: 'join', avatar: '🐵', size: 4 }))
   })
 
+  test('sends the requested difficulty when creating a room', async () => {
+    renderHook(() => useMultiplayerSession({ roomId: 'r', initialAvatar: '🐵', size: 4, difficulty: 'expert' }))
+
+    await waitFor(() => expect(mockedSocket.options?.enabled).toBe(true))
+    act(() => mockedSocket.options?.onOpen?.())
+
+    expect(mockedSocket.send).toHaveBeenCalledWith(
+      JSON.stringify({ type: 'join', avatar: '🐵', size: 4, difficulty: 'expert' }),
+    )
+  })
+
   test('exposes vacant seats as nulls', async () => {
     const { result } = renderHook(() => useMultiplayerSession({ roomId: 'r', initialAvatar: '🐵' }))
 

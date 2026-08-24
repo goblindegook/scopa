@@ -51,7 +51,19 @@ describe('TitleScreen', () => {
     await userEvent.click(screen.getByLabelText('Select player count 2 × 2'))
     await userEvent.click(screen.getByRole('button', { name: 'Online game' }))
 
-    expect(onStartMultiplayer).toHaveBeenCalledWith('🐵', 4)
+    expect(onStartMultiplayer).toHaveBeenCalledWith('🐵', 4, 'normal')
+  })
+
+  test('starts an online game with the selected difficulty', async () => {
+    const onStartMultiplayer = vi.fn()
+    const user = userEvent.setup()
+    renderTitleScreen({ onStartMultiplayer })
+
+    await user.click(screen.getByLabelText('Select avatar 🐵'))
+    await user.click(screen.getByLabelText('Select difficulty Expert'))
+    await user.click(screen.getByRole('button', { name: 'Online game' }))
+
+    expect(onStartMultiplayer).toHaveBeenCalledWith('🐵', 2, 'expert')
   })
 
   test('places the start actions before the resume action', () => {
