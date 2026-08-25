@@ -1,48 +1,36 @@
 import styled from '@emotion/styled'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Card as CardType } from '../../engine/cards'
-import { CapturedCount, Stack } from '../molecules/Stack'
+import { CapturedCount } from '../molecules/CapturedCount'
 
 const PlayerArea = styled('section')`
-  background-color: var(--color-player-area);
-  display: grid;
-  grid-gap: 0;
-  grid-template-columns: 1fr 20vw;
-  justify-items: center;
-  align-items: center;
-  padding-left: 20vw;
-  flex: 0 0 35vh;
-`
-
-const CompactPlayerArea = styled('section')`
   background-color: var(--color-player-area);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
-  flex: 0 0 35vh;
+  flex: 0 0 auto;
+  padding: var(--space-4) var(--space-2) var(--space-2);
 `
 
-const PlayerHand = styled('div')<{ compact?: boolean }>`
+const PlayerHand = styled('div')`
   min-height: var(--card-height);
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding-bottom: ${({ compact }) => (compact ? '0' : 'var(--space-4)')};
 `
 
 export const FanCard = styled('div')<{ $fanIndex: number; $fanTotal: number }>`
-  margin: 0 -26px;
+  margin: 0 calc(var(--fan-overlap) * -1);
   transform-origin: bottom center;
-  transform: rotate(${({ $fanIndex, $fanTotal }) => ($fanIndex - ($fanTotal - 1) / 2) * 10}deg)
-    translateY(${({ $fanIndex, $fanTotal }) => {
+  transform: rotate(calc(var(--fan-rotation) * ${({ $fanIndex, $fanTotal }) => $fanIndex - ($fanTotal - 1) / 2}))
+    translateY(calc(var(--card-height) * ${({ $fanIndex, $fanTotal }) => {
       if ($fanTotal <= 1) return 0
       const mid = ($fanTotal - 1) / 2
       const norm = ($fanIndex - mid) / mid
-      return (norm ** 2 - 1) * 10
-    }}px);
+      return ((norm ** 2 - 1) * 0.12).toFixed(4)
+    }}));
   transition: transform 0.2s ease-in;
   display: inline-block;
 `
@@ -79,33 +67,20 @@ export const PlayerCard = styled('button')<{ $aimed?: boolean }>`
 `
 
 type PlayerProps = React.PropsWithChildren<{
-  pile: readonly CardType[]
-  capturedCount?: number
+  capturedCount: number
   avatar: string
-  compact?: boolean
   active?: boolean
   away?: boolean
 }>
 
 export const Player = React.forwardRef<HTMLElement, PlayerProps>(
-  ({ children, avatar, pile, capturedCount = pile.length, compact, active = false, away = false }, ref) => {
+  ({ children, avatar, capturedCount, active = false, away = false }, ref) => {
     const { t } = useTranslation()
-
-    if (compact) {
-      return (
-        <CompactPlayerArea>
-          <PlayerHand compact aria-label={t('playerHand', { avatar })}>
-            {children}
-          </PlayerHand>
-          <CapturedCount ref={ref} avatar={avatar} count={capturedCount} active={active} away={away} />
-        </CompactPlayerArea>
-      )
-    }
 
     return (
       <PlayerArea>
         <PlayerHand aria-label={t('playerHand', { avatar })}>{children}</PlayerHand>
-        <Stack ref={ref} pile={pile} title={t('playerPile', { avatar, count: capturedCount })} />
+        <CapturedCount ref={ref} avatar={avatar} count={capturedCount} active={active} away={away} />
       </PlayerArea>
     )
   },

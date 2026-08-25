@@ -260,8 +260,8 @@ test('player piles', async () => {
   })
   render(<Scopa playerId={0} state={state} onPlay={vitest.fn()} onOpponentTurn={vitest.fn()} onScore={vitest.fn()} />)
 
-  expect(screen.getByTitle('🐵 pile: 2 cards')).toBeTruthy()
-  expect(screen.getByTitle('🤖 pile: 3 cards')).toBeTruthy()
+  expect(screen.getByLabelText('🐵 captured 2 cards')).toBeTruthy()
+  expect(screen.getByLabelText('🤖 captured 3 cards')).toBeTruthy()
 })
 
 test('allow playing a card', async () => {
@@ -980,13 +980,13 @@ test('shows a captured count pill for every seat in a six player game', () => {
 test('keeps the visible captured pile in a two player game', () => {
   renderGame({ players: 2, piles: [[denari(7)], []] })
 
-  expect(screen.getByTitle('🐵 pile: 1 card')).toBeInTheDocument()
+  expect(screen.getByLabelText('🐵 captured 1 card')).toBeInTheDocument()
 })
 
 test('keeps the visible captured pile in a three player game', () => {
   renderGame({ players: 3, piles: [[denari(7)], [], []] })
 
-  expect(screen.getByTitle('🐵 pile: 1 card')).toBeInTheDocument()
+  expect(screen.getByLabelText('🐵 captured 1 card')).toBeInTheDocument()
 })
 
 const fourPlayerGame = (): State => ({

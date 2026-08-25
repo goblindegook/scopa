@@ -9,5 +9,6 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
     dir: './src',
+    exclude: ['**/node_modules/**', '**/*.browser.test.tsx'], // geometry runs in a real browser instead
   },
 })

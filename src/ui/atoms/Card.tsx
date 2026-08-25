@@ -18,6 +18,8 @@ export const SUITS: Record<string, string> = {
   [Suit.SPADE]: 'spade',
 }
 
+const BLANK_FACE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+
 const Face = styled('img')`
   height: var(--card-height);
   width: var(--card-width);
@@ -92,7 +94,7 @@ export const Card = ({ className, faceDown, card }: CardProps) => {
   ) : (
     <Face
       className={className}
-      src={src}
+      src={src ?? BLANK_FACE}
       title={cardName}
       alt={cardName}
       draggable={false}

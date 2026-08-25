@@ -1,3 +1,15 @@
+@property --card-width {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --card-height {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
 :root {
   --overlay-black-40: rgba(0, 0, 0, 0.4);
   --overlay-black-60: rgba(0, 0, 0, 0.6);
@@ -32,8 +44,24 @@
   --space-8: 2rem;
   --space-16: 4rem;
 
-  --card-height: min(14vw, 40vh);
-  --card-width: calc(var(--card-height) * 8 / 14);
+  --card-base-width: clamp(3rem, min(8vw, 14vh), 6.5rem);
+  --card-width: var(--card-base-width);
+  --card-height: calc(var(--card-width) * 14 / 8);
+
+  --fan-overlap: calc(var(--card-width) * 0.25);
+  --fan-rotation: 10deg;
+}
+
+@media (orientation: portrait) {
+  :root {
+    --card-base-width: clamp(3.5rem, min(14vw, 9vh), 6.5rem);
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --fan-rotation: 6deg;
+  }
 }
 
 *,

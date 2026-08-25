@@ -72,7 +72,6 @@
     "denari": "Coins",
     "spade": "Swords"
   },
-  "playerPile": "{avatar} pile: {count, plural, one {# card} other {# cards}}",
   "capturedCount": "{avatar} captured {count, plural, one {# card} other {# cards}}",
   "playerHand": "{avatar} hand",
   "scores": {

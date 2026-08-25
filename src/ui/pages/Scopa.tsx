@@ -421,20 +421,10 @@ export function Scopa({
     return []
   }, [animation])
 
-  const getFilteredPile = React.useCallback(
-    (playerId: number) =>
-      game.players[playerId]?.pile.filter(
-        (card) => !hasCard(game.lastTaken, card) && !animatingCardIds.includes(getCardId(card)),
-      ) ?? [],
-    [game.players, game.lastTaken, animatingCardIds],
-  )
-
   const tableCards =
     animation.phase === 'play' && game.lastTaken.length && previousTableRef.current.length && !tableDealOrder.size
       ? previousTableRef.current
       : game.table
-
-  const isLayoutCompact = game.players.length >= 4
 
   return (
     <Container>
@@ -469,9 +459,7 @@ export function Scopa({
               key={`opponent-${id}`}
               ref={getPlayerPileRef(id)}
               avatar={playerProfiles[id].avatar}
-              pile={getFilteredPile(id)}
               capturedCount={game.players[id].pile.length}
-              compact={isLayoutCompact}
               active={game.turn === id}
               away={playerProfiles[id].away}
             >
@@ -557,13 +545,13 @@ export function Scopa({
                   return
                 }
 
-                const animatedW = Math.min(window.innerWidth * 0.08, (window.innerHeight * 0.4) / 1.66)
-                const animatedH = animatedW * 1.66
+                const animatedW = cardSize('--card-width')
+                const animatedH = cardSize('--card-height')
 
                 const pileAreaRect = pileRef.getBoundingClientRect()
                 const targetRect = Array.from(pileRef.children).at(-1)?.getBoundingClientRect() ?? pileAreaRect
                 const baseScale = pileRef.offsetWidth > 0 ? pileAreaRect.width / pileRef.offsetWidth : 1
-                const shrinkFactor = isLayoutCompact ? Math.min(1, targetRect.height / animatedH) : 1
+                const shrinkFactor = Math.min(1, targetRect.height / animatedH)
 
                 setAnimation({
                   phase: 'taking',
@@ -595,7 +583,7 @@ export function Scopa({
                   animate={a.animate}
                   faceDown={false}
                   flip
-                  scaleOnLand={isLayoutCompact}
+                  scaleOnLand
                   onComplete={() => {
                     if (index === filtered.length - 1) setAnimation({ phase: 'idle' })
                   }}
@@ -605,9 +593,7 @@ export function Scopa({
         <Player
           ref={getPlayerPileRef(playerId)}
           avatar={playerProfiles[playerId].avatar}
-          pile={getFilteredPile(playerId)}
           capturedCount={game.players[playerId].pile.length}
-          compact={isLayoutCompact}
           active={game.turn === playerId}
           away={playerProfiles[playerId].away}
         >
@@ -755,6 +741,9 @@ const getPosition = (element?: Element | null): { x: number; y: number } | null 
   const r = element?.getBoundingClientRect()
   return r ? { x: r.left, y: r.top } : null
 }
+
+const cardSize = (token: '--card-width' | '--card-height') =>
+  Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue(token)) || 0
 
 function capturableCards(validCombos: readonly Pile[], selected: readonly Card[]): readonly Card[] {
   const capturable: Card[] = []

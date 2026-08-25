@@ -1,40 +1,25 @@
 import { cleanup, render, screen } from '@testing-library/react'
-import { assert, constantFrom, property, tuple, uniqueArray } from 'fast-check'
 import { afterEach, expect, test } from 'vitest'
-import { Suit, type Value } from '../../engine/cards'
-import i18n from '../i18n'
 import { Opponent } from './Opponent'
 
 afterEach(() => {
   cleanup()
 })
 
-const arbitraryCard = tuple(
-  constantFrom<Value>(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
-  constantFrom(Suit.BASTONI, Suit.COPPE, Suit.DENARI, Suit.SPADE),
-)
+test('shows how many cards the opponent has captured', () => {
+  render(<Opponent avatar="🤖" capturedCount={4} />)
 
-const cardSet = (maxLength: number) => uniqueArray(arbitraryCard, { maxLength, selector: (c) => c.join('-') })
-
-test('renders opponent pile', () => {
-  assert(
-    property(cardSet(10), (pile) => {
-      cleanup()
-      render(<Opponent avatar="🤖" pile={pile} />)
-      const pileElement = screen.getByTitle(i18n.t('playerPile', { avatar: '🤖', count: pile.length }))
-      expect(pileElement.children).toHaveLength(pile.length)
-    }),
-  )
+  expect(screen.getByLabelText('🤖 captured 4 cards')).toBeInTheDocument()
 })
 
 test('names an away seat as away', () => {
-  render(<Opponent avatar="🐶" pile={[]} compact away />)
+  render(<Opponent avatar="🐶" capturedCount={0} away />)
 
   expect(screen.getByLabelText('🐶 away')).toBeInTheDocument()
 })
 
 test('names an away seat that is also to play', () => {
-  render(<Opponent avatar="🐶" pile={[]} compact active away />)
+  render(<Opponent avatar="🐶" capturedCount={0} active away />)
 
   expect(screen.getByLabelText('🐶 to play, away')).toBeInTheDocument()
 })

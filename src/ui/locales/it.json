@@ -72,7 +72,6 @@
     "denari": "denari",
     "spade": "spade"
   },
-  "playerPile": "Mazzo di {avatar}: {count, plural, one {# carta} other {# carte}}",
   "capturedCount": "{avatar} ha catturato {count, plural, one {# carta} other {# carte}}",
   "playerHand": "Mano di {avatar}",
   "scores": {
