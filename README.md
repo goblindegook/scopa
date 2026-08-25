@@ -1,6 +1,6 @@
 <div align="center">
 
-[![Settebello](src/ui/assets/denari/7.jpg)](https://scopa.netlify.app/)
+[![Settebello](src/ui/assets/bergamo/denari/7.jpg)](https://scopa.netlify.app/)
 
 </div>
 
