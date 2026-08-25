@@ -38,7 +38,7 @@ export const FanCard = styled('div')<{ $fanIndex: number; $fanTotal: number }>`
 export const PlayerCard = styled('button')<{ $aimed?: boolean }>`
   background-color: transparent;
   border: none;
-  border-radius: 0.75vw;
+  border-radius: calc(var(--card-width) * var(--card-radius-ratio));
   overflow: hidden;
   transition: transform 0.2s ease-in, box-shadow 0.2s ease-in, opacity 0.2s ease-in;
   touch-action: manipulation;

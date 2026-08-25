@@ -23,7 +23,7 @@ const BLANK_FACE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALA
 const Face = styled('img')`
   height: var(--card-height);
   width: var(--card-width);
-  border-radius: 0.75vw;
+  border-radius: calc(var(--card-width) * var(--card-radius-ratio));
   box-shadow: 1px 1px 5px var(--overlay-black-40);
   -webkit-user-drag: none;
   user-select: none;
@@ -32,7 +32,7 @@ const Face = styled('img')`
 `
 
 const Back = styled('div')`
-  --card-back-pattern-size: 4vw;
+  --card-back-pattern-size: calc(var(--card-width) * var(--card-back-pattern-ratio));
   --card-back-gradient:
     var(--color-card-back-pattern) 0% 5%, var(--color-card-back) 6% 15%,
     var(--color-card-back-pattern) 16% 25%, var(--color-card-back) 26% 35%,
@@ -42,7 +42,7 @@ const Back = styled('div')`
 
   height: var(--card-height);
   width: var(--card-width);
-  border-radius: 0.75vw;
+  border-radius: calc(var(--card-width) * var(--card-radius-ratio));
   box-shadow: 0 2px 5px var(--overlay-black-40);
   background:
     radial-gradient(50% 50% at 100% 0, var(--card-back-gradient)),
@@ -51,9 +51,9 @@ const Back = styled('div')`
     radial-gradient(50% 50%, var(--card-back-gradient)) calc(var(--card-back-pattern-size) / 2)
     calc(var(--card-back-pattern-size) / 2) var(--color-card-back-pattern);
   background-size: var(--card-back-pattern-size) var(--card-back-pattern-size);
-  border: 0.75vw solid var(--color-card-back-pattern);
+  border: calc(var(--card-width) * var(--card-back-border-ratio)) solid var(--color-card-back-pattern);
   outline: 1px solid var(--color-card-back);
-  outline-offset: -0.75vw;
+  outline-offset: calc(var(--card-width) * var(--card-back-border-ratio) * -1);
   position: relative;
   overflow: hidden;
 `

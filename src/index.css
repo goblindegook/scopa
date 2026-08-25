@@ -50,6 +50,10 @@
 
   --fan-overlap: calc(var(--card-width) * 0.25);
   --fan-rotation: 10deg;
+
+  --card-radius-ratio: 0.1;
+  --card-back-border-ratio: 0.1;
+  --card-back-pattern-ratio: 0.5;
 }
 
 @media (orientation: portrait) {
