@@ -44,7 +44,7 @@
   --space-8: 2rem;
   --space-16: 4rem;
 
-  --card-base-width: clamp(3rem, min(8vw, 14vh), 6.5rem);
+  --card-base-width: clamp(3rem, min(8vw, 14vh), 10rem);
   --card-width: var(--card-base-width);
   --card-height: calc(var(--card-width) * 14 / 8);
 

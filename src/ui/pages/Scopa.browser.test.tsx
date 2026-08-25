@@ -87,6 +87,7 @@ const VIEWPORTS = [
   { width: 640, height: 360 },
   { width: 768, height: 1024 },
   { width: 1280, height: 720 },
+  { width: 1920, height: 1200 },
 ] as const
 
 const PLAYER_COUNTS = [2, 3, 4, 6] as const
@@ -105,6 +106,14 @@ test.for(LAYOUTS)('fits a $players-player game inside $width x $height', async (
     tableClipped: table.bottom > height || table.top < 0,
     handClipped: hand.bottom > height,
   }).toEqual({ scrolled: false, tableClipped: false, handClipped: false })
+})
+
+test('cards use the available space at 1920x1200', async () => {
+  await page.viewport(1920, 1200)
+  const { getByLabelText } = renderGame(game(2))
+  const hand = getByLabelText('🐵 hand')
+
+  expect(Math.min(...handCardWidths(hand))).toBeGreaterThanOrEqual(153)
 })
 
 /** Same deal, but with six extra cards on the table so it has to wrap. */
