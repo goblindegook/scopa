@@ -113,7 +113,7 @@ const RunningTotalBox = styled('span')`
   color: white;
   text-align: center;
   font-weight: 600;
-  font-size: 2rem;
+  font-size: 1.25rem;
   line-height: 1;
   padding: var(--space-4);
   background-color: var(--overlay-white-05);
@@ -121,10 +121,10 @@ const RunningTotalBox = styled('span')`
   -webkit-backdrop-filter: blur(5px);
   border: 1px solid var(--overlay-white-25);
   border-radius: var(--space-2);
-  letter-spacing: 0.35rem;
+  white-space: nowrap;
+  letter-spacing: 0.1rem;
 
   @media (max-height: 600px) {
-    font-size: 1.5rem;
     padding: var(--space-2);
   }
 `
