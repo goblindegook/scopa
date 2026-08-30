@@ -5,9 +5,8 @@ import { deck, type Pile } from '../src/engine/cards.ts'
 import { move, type OpponentOptions } from '../src/engine/opponent.ts'
 import { deal, play } from '../src/engine/scopa.ts'
 import { score } from '../src/engine/scores.ts'
+import { isPlayerCount, type PlayerCount, sideCount, sideOf } from '../src/engine/sides.ts'
 import type { Move, State } from '../src/engine/state.ts'
-
-type PlayerCount = 2 | 3
 
 type Policy = (game: State, options: OpponentOptions) => Move
 
@@ -54,7 +53,7 @@ interface ProfileStats {
 function usage(): string {
   return [
     'Usage:',
-    '  node --experimental-strip-types scripts/simulate-matches.ts --matches <N> --p0 [spec] --p1 [spec] [--p2 [spec]]',
+    '  node --experimental-strip-types scripts/simulate-matches.ts --matches <N> --p0 [spec] --p1 [spec] ... --p5 [spec]',
     '',
     'Player spec:',
     '  [variant=<name>][,aggression=<number>][,count][,worlds=<n>][,cheat]',
@@ -67,7 +66,7 @@ function usage(): string {
     `  Registered variants: ${Object.keys(VARIANTS).join(', ')}`,
     '',
     'Optional:',
-    '  --players <2|3>    (if omitted, inferred from configured players)',
+    '  --players <2|3|4|6> (if omitted, inferred from configured players)',
     '  --seed <n>         deterministic deals; the same seed deals the same decks across runs and arms',
     '  --rotate-seats     replay every seat permutation over the same deals and pool the results',
     '  --json             machine-readable output (also how benchmark-matrix.ts consumes runs)',
@@ -150,7 +149,7 @@ function parseArgs(argv: readonly string[]): ParsedArgs | HelpArgs {
   let seed: number | null = null
   let rotateSeats = false
   let format: OutputFormat = 'table'
-  const profiles: Profile[] = Array.from({ length: 3 }, defaultProfile)
+  const profiles: Profile[] = Array.from({ length: 6 }, defaultProfile)
   const configuredPlayers = new Set<number>([0, 1])
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -167,7 +166,7 @@ function parseArgs(argv: readonly string[]): ParsedArgs | HelpArgs {
     if (arg === '--players') {
       if (next == null) throw new Error('--players requires a value')
       const parsedPlayers = parseInteger(next, '--players')
-      if (parsedPlayers !== 2 && parsedPlayers !== 3) throw new Error('--players must be 2 or 3')
+      if (!isPlayerCount(parsedPlayers)) throw new Error('--players must be 2, 3, 4, or 6')
       players = parsedPlayers
       index += 1
       continue
@@ -187,7 +186,7 @@ function parseArgs(argv: readonly string[]): ParsedArgs | HelpArgs {
       continue
     }
 
-    const match = arg.match(/^--p([0-2])$/i)
+    const match = arg.match(/^--p([0-5])$/i)
     if (match != null) {
       const playerId = Number.parseInt(match[1], 10)
       configuredPlayers.add(playerId)
@@ -200,7 +199,9 @@ function parseArgs(argv: readonly string[]): ParsedArgs | HelpArgs {
     throw new Error(`Unknown argument: ${arg}`)
   }
 
-  const inferredPlayers: PlayerCount = configuredPlayers.has(2) ? 3 : 2
+  const highestConfiguredSeat = Math.max(...configuredPlayers)
+  const inferredPlayers: PlayerCount =
+    highestConfiguredSeat <= 1 ? 2 : highestConfiguredSeat === 2 ? 3 : highestConfiguredSeat === 3 ? 4 : 6
   players ??= inferredPlayers
   if (matches <= 0) throw new Error('--matches must be greater than 0')
 
@@ -337,6 +338,7 @@ function runSeating({
   seed,
   seating,
   stats,
+  sideStats,
 }: {
   matches: number
   players: PlayerCount
@@ -344,9 +346,10 @@ function runSeating({
   seed: number | null
   seating: readonly number[]
   stats: readonly ProfileStats[]
+  sideStats: readonly ProfileStats[]
 }): void {
   const seatedProfiles = seating.map((profileId) => profiles[profileId])
-  let matchScore: number[] = Array(players).fill(0)
+  let matchScore: number[] = Array(sideCount(players)).fill(0)
   let previousFirstPlayer = MATCH_OPENING_SEED
   let matchIndex = 0
   let roundIndex = 0
@@ -374,27 +377,47 @@ function runSeating({
     const scopeValues = categoryValues(details, 'Scope')
     const settebelloValues = categoryValues(details, 'Sette Bello')
 
-    for (let seat = 0; seat < players; seat += 1) {
-      const entry = stats[seating[seat]]
+    for (let side = 0; side < sideStats.length; side += 1) {
+      const entry = sideStats[side]
       entry.roundsPlayed += 1
-      if (hasSingleWinner && leaders[0] === seat) entry.roundsWon += 1
-      else if (leaders.includes(seat)) entry.roundsTied += 1
+      if (hasSingleWinner && leaders[0] === side) entry.roundsWon += 1
+      else if (leaders.includes(side)) entry.roundsTied += 1
       else entry.roundsLost += 1
 
-      entry.scope += scopeValues[seat]
-      entry.settebello += settebelloValues[seat]
-      if (cardsLeader === seat) entry.cards += 1
-      if (denariLeader === seat) entry.denari += 1
-      if (primieraLeader === seat) entry.primiera += 1
+      entry.scope += scopeValues[side]
+      entry.settebello += settebelloValues[side]
+      if (cardsLeader === side) entry.cards += 1
+      if (denariLeader === side) entry.denari += 1
+      if (primieraLeader === side) entry.primiera += 1
+    }
+
+    for (let seat = 0; seat < players; seat += 1) {
+      const side = sideOf(seat, players)
+      const entry = stats[seating[seat]]
+      entry.roundsPlayed += 1
+      if (hasSingleWinner && leaders[0] === side) entry.roundsWon += 1
+      else if (leaders.includes(side)) entry.roundsTied += 1
+      else entry.roundsLost += 1
+
+      entry.scope += scopeValues[side]
+      entry.settebello += settebelloValues[side]
+      if (cardsLeader === side) entry.cards += 1
+      if (denariLeader === side) entry.denari += 1
+      if (primieraLeader === side) entry.primiera += 1
     }
 
     const winner = matchWinner(scoreAtRoundEnd)
     if (winner != null) {
-      for (let seat = 0; seat < players; seat += 1) stats[seating[seat]].matchesPlayed += 1
-      stats[seating[winner]].matchesWon += 1
+      for (const entry of sideStats) entry.matchesPlayed += 1
+      sideStats[winner].matchesWon += 1
+      for (let seat = 0; seat < players; seat += 1) {
+        const entry = stats[seating[seat]]
+        entry.matchesPlayed += 1
+        if (sideOf(seat, players) === winner) entry.matchesWon += 1
+      }
       matchIndex += 1
       roundIndex = 0
-      matchScore = Array(players).fill(0)
+      matchScore = Array(sideCount(players)).fill(0)
       previousFirstPlayer = MATCH_OPENING_SEED
     } else {
       roundIndex += 1
@@ -428,6 +451,35 @@ function describeProfile(profile: Profile): string {
     .join(',')
 }
 
+export interface OutcomeReport {
+  roundsPlayed: number
+  roundsWonPct: number
+  roundsWonMoe: number
+  roundsLostPct: number
+  roundsTiedPct: number
+  matchesWonPct: number
+  matchesWonMoe: number
+  scopePerRound: number
+  cardsPointPct: number
+  denariPointPct: number
+  settebelloPct: number
+  primieraPointPct: number
+}
+
+export interface SeatReport extends OutcomeReport {
+  seat: number
+  player: string
+  profile: string
+  variant: string
+  aggression: number | null
+  canCountCards: boolean
+}
+
+export interface SideReport extends OutcomeReport {
+  side: number
+  profiles: readonly string[]
+}
+
 // Exported so benchmark-matrix.ts can type the --json output it parses back.
 export interface Report {
   matches: number
@@ -436,38 +488,52 @@ export interface Report {
   rotateSeats: boolean
   seatings: number
   totalRounds: number
-  profiles: readonly {
-    player: string
-    profile: string
-    variant: string
-    aggression: number | null
-    canCountCards: boolean
-    roundsPlayed: number
-    roundsWonPct: number
-    roundsWonMoe: number
-    roundsLostPct: number
-    roundsTiedPct: number
-    matchesWonPct: number
-    matchesWonMoe: number
-    scopePerRound: number
-    cardsPointPct: number
-    denariPointPct: number
-    settebelloPct: number
-    primieraPointPct: number
-  }[]
+  sides: readonly SideReport[]
+  seats: readonly SeatReport[]
+  /** @deprecated Use seats. Kept so existing report consumers do not break. */
+  profiles: readonly SeatReport[]
+}
+
+function outcomeReport(entry: ProfileStats): OutcomeReport {
+  return {
+    roundsPlayed: entry.roundsPlayed,
+    roundsWonPct: percentage(entry.roundsWon, entry.roundsPlayed),
+    roundsWonMoe: marginOfError(entry.roundsWon, entry.roundsPlayed),
+    roundsLostPct: percentage(entry.roundsLost, entry.roundsPlayed),
+    roundsTiedPct: percentage(entry.roundsTied, entry.roundsPlayed),
+    matchesWonPct: percentage(entry.matchesWon, entry.matchesPlayed),
+    matchesWonMoe: marginOfError(entry.matchesWon, entry.matchesPlayed),
+    scopePerRound: entry.roundsPlayed === 0 ? 0 : entry.scope / entry.roundsPlayed,
+    cardsPointPct: percentage(entry.cards, entry.roundsPlayed),
+    denariPointPct: percentage(entry.denari, entry.roundsPlayed),
+    settebelloPct: percentage(entry.settebello, entry.roundsPlayed),
+    primieraPointPct: percentage(entry.primiera, entry.roundsPlayed),
+  }
 }
 
 function buildReport({
   args,
   stats,
+  sideStats,
   seatings,
   totalRounds,
 }: {
   args: ParsedArgs
   stats: readonly ProfileStats[]
+  sideStats: readonly ProfileStats[]
   seatings: number
   totalRounds: number
 }): Report {
+  const seats = stats.map((entry, seat) => ({
+    seat,
+    player: `p${seat}`,
+    profile: describeProfile(args.profiles[seat]),
+    variant: args.profiles[seat].variant,
+    aggression: args.profiles[seat].options.posture ?? null,
+    canCountCards: args.profiles[seat].options.canCountCards ?? false,
+    ...outcomeReport(entry),
+  }))
+
   return {
     matches: args.matches,
     players: args.players,
@@ -475,25 +541,15 @@ function buildReport({
     rotateSeats: args.rotateSeats,
     seatings,
     totalRounds,
-    profiles: stats.map((entry, playerId) => ({
-      player: `p${playerId}`,
-      profile: describeProfile(args.profiles[playerId]),
-      variant: args.profiles[playerId].variant,
-      aggression: args.profiles[playerId].options.posture ?? null,
-      canCountCards: args.profiles[playerId].options.canCountCards ?? false,
-      roundsPlayed: entry.roundsPlayed,
-      roundsWonPct: percentage(entry.roundsWon, entry.roundsPlayed),
-      roundsWonMoe: marginOfError(entry.roundsWon, entry.roundsPlayed),
-      roundsLostPct: percentage(entry.roundsLost, entry.roundsPlayed),
-      roundsTiedPct: percentage(entry.roundsTied, entry.roundsPlayed),
-      matchesWonPct: percentage(entry.matchesWon, entry.matchesPlayed),
-      matchesWonMoe: marginOfError(entry.matchesWon, entry.matchesPlayed),
-      scopePerRound: entry.roundsPlayed === 0 ? 0 : entry.scope / entry.roundsPlayed,
-      cardsPointPct: percentage(entry.cards, entry.roundsPlayed),
-      denariPointPct: percentage(entry.denari, entry.roundsPlayed),
-      settebelloPct: percentage(entry.settebello, entry.roundsPlayed),
-      primieraPointPct: percentage(entry.primiera, entry.roundsPlayed),
+    sides: sideStats.map((entry, side) => ({
+      side,
+      profiles: args.profiles.flatMap((profile, seat) =>
+        sideOf(seat, args.players) === side ? [describeProfile(profile)] : [],
+      ),
+      ...outcomeReport(entry),
     })),
+    seats,
+    profiles: seats,
   }
 }
 
@@ -503,32 +559,52 @@ function printTable(report: Report): void {
   console.log(`Seatings played: ${report.seatings}${report.rotateSeats ? ' (rotated)' : ''}`)
   console.log(`Total rounds played: ${report.totalRounds}`)
 
+  const showProfiles = report.players <= 3 || report.rotateSeats
   console.table(
-    report.profiles.map((entry) => ({
-      player: entry.player,
-      profile: entry.profile,
-      roundsWon: `${entry.roundsWonPct.toFixed(2)}% ±${entry.roundsWonMoe.toFixed(2)}`,
-      roundsLost: `${entry.roundsLostPct.toFixed(2)}%`,
-      roundsTied: `${entry.roundsTiedPct.toFixed(2)}%`,
-      matchesWon: `${entry.matchesWonPct.toFixed(2)}% ±${entry.matchesWonMoe.toFixed(2)}`,
-    })),
+    showProfiles
+      ? report.profiles.map((entry) => ({
+          player: entry.player,
+          profile: entry.profile,
+          roundsWon: `${entry.roundsWonPct.toFixed(2)}% ±${entry.roundsWonMoe.toFixed(2)}`,
+          roundsLost: `${entry.roundsLostPct.toFixed(2)}%`,
+          roundsTied: `${entry.roundsTiedPct.toFixed(2)}%`,
+          matchesWon: `${entry.matchesWonPct.toFixed(2)}% ±${entry.matchesWonMoe.toFixed(2)}`,
+        }))
+      : report.sides.map((entry) => ({
+          side: entry.side,
+          profiles: entry.profiles.join(' | '),
+          roundsWon: `${entry.roundsWonPct.toFixed(2)}% ±${entry.roundsWonMoe.toFixed(2)}`,
+          roundsLost: `${entry.roundsLostPct.toFixed(2)}%`,
+          roundsTied: `${entry.roundsTiedPct.toFixed(2)}%`,
+          matchesWon: `${entry.matchesWonPct.toFixed(2)}% ±${entry.matchesWonMoe.toFixed(2)}`,
+        })),
   )
 
   console.log('Points won per round, by category:')
   console.table(
-    report.profiles.map((entry) => ({
-      player: entry.player,
-      scope: entry.scopePerRound.toFixed(3),
-      cards: `${entry.cardsPointPct.toFixed(2)}%`,
-      denari: `${entry.denariPointPct.toFixed(2)}%`,
-      settebello: `${entry.settebelloPct.toFixed(2)}%`,
-      primiera: `${entry.primieraPointPct.toFixed(2)}%`,
-    })),
+    showProfiles
+      ? report.profiles.map((entry) => ({
+          player: entry.player,
+          scope: entry.scopePerRound.toFixed(3),
+          cards: `${entry.cardsPointPct.toFixed(2)}%`,
+          denari: `${entry.denariPointPct.toFixed(2)}%`,
+          settebello: `${entry.settebelloPct.toFixed(2)}%`,
+          primiera: `${entry.primieraPointPct.toFixed(2)}%`,
+        }))
+      : report.sides.map((entry) => ({
+          side: entry.side,
+          scope: entry.scopePerRound.toFixed(3),
+          cards: `${entry.cardsPointPct.toFixed(2)}%`,
+          denari: `${entry.denariPointPct.toFixed(2)}%`,
+          settebello: `${entry.settebelloPct.toFixed(2)}%`,
+          primiera: `${entry.primieraPointPct.toFixed(2)}%`,
+        })),
   )
 }
 
 function simulate(args: ParsedArgs): void {
   const stats = args.profiles.map(emptyStats)
+  const sideStats = Array.from({ length: sideCount(args.players) }, emptyStats)
   const seatings = args.rotateSeats
     ? permutations(args.players)
     : [Array.from({ length: args.players }, (_, seat) => seat)]
@@ -541,11 +617,12 @@ function simulate(args: ParsedArgs): void {
       seed: args.seed,
       seating,
       stats,
+      sideStats,
     })
   }
 
-  const totalRounds = stats[0]?.roundsPlayed ?? 0
-  const report = buildReport({ args, stats, seatings: seatings.length, totalRounds })
+  const totalRounds = sideStats[0]?.roundsPlayed ?? 0
+  const report = buildReport({ args, stats, sideStats, seatings: seatings.length, totalRounds })
 
   if (args.format === 'json') console.log(JSON.stringify(report, null, 2))
   else printTable(report)

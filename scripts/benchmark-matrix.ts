@@ -11,6 +11,7 @@
 import { execFile } from 'node:child_process'
 import { cpus } from 'node:os'
 import { promisify } from 'node:util'
+import { isPlayerCount, type PlayerCount, sideCount, sideOf } from '../src/engine/sides.ts'
 import type { Report } from './simulate-matches.ts'
 
 const execFileAsync = promisify(execFile)
@@ -36,12 +37,13 @@ const DEFAULT_CANDIDATES: readonly string[] = [
   'count',
 ]
 
-const resolve = (spec: string, players: 2 | 3): string => (spec === SHIPPED_KEYWORD ? SHIPPED[players] : spec)
+const resolve = (spec: string, players: PlayerCount): string =>
+  spec === SHIPPED_KEYWORD ? SHIPPED[sideCount(players) as 2 | 3] : spec
 
 interface Options {
   matches: number
   seeds: readonly number[]
-  players: readonly (2 | 3)[]
+  players: readonly PlayerCount[]
   control: string
   candidates: readonly string[]
   json: boolean
@@ -49,9 +51,10 @@ interface Options {
 }
 
 interface Run {
-  players: 2 | 3
+  players: PlayerCount
   candidate: string
   seed: number
+  candidateSide: number
   rounds: number
   liftRoundWin: number
   liftMatchWin: number
@@ -62,7 +65,7 @@ interface Run {
 const CATEGORIES = ['scope', 'cards', 'denari', 'settebello', 'primiera'] as const
 type Category = (typeof CATEGORIES)[number]
 
-type ProfileReport = Report['profiles'][number]
+type ProfileReport = Report['sides'][number]
 
 const LIFT_KEY: Record<Category, keyof ProfileReport> = {
   scope: 'scopePerRound',
@@ -80,7 +83,7 @@ function usage(): string {
     'Options:',
     '  --matches <n>        completed matches per seating per run (default 1500)',
     '  --seeds <a,b,c>      independent seeds; spread across seeds is the error bar (default 1,2,3,4)',
-    '  --players <2|3|2,3>  player counts to run (default 2,3)',
+    '  --players <counts>   comma-separated values from 2,3,4,6 (default 2,3)',
     '  --control <spec>     control profile every candidate is measured against (default aggression=0)',
     '  --candidate <spec>   repeatable; replaces the default candidate set',
     '  --concurrency <n>    parallel simulator processes (default: cores - 1)',
@@ -89,8 +92,8 @@ function usage(): string {
     'Profile spec is the same as simulate-matches.ts: [variant=<name>][,aggression=<n>][,count][,worlds=<n>].',
     'An empty spec ("") means dynamic aggression with counting off.',
     '',
-    `--control and --candidate also accept the keyword "${SHIPPED_KEYWORD}", which resolves per player count to what`,
-    `src/ui/OfflineMode.tsx ships: 2p "${SHIPPED[2]}", 3p "${SHIPPED[3]}". Keep the default aggression=0 control to`,
+    `--control and --candidate also accept the keyword "${SHIPPED_KEYWORD}", which resolves by side count to what`,
+    `src/ui/OfflineMode.tsx ships: two sides "${SHIPPED[2]}", three sides "${SHIPPED[3]}". Keep the default aggression=0 control to`,
     `attribute a change; use --control ${SHIPPED_KEYWORD} to decide whether it is worth shipping.`,
     '',
     'Scope lift is in points per round and is unbounded (Scopa scores one point per sweep). The other four',
@@ -129,7 +132,7 @@ function parseArgs(argv: readonly string[]): Options | null {
     else if (arg === '--players') {
       options.players = next.split(',').map((value) => {
         const count = Number.parseInt(value, 10)
-        if (count !== 2 && count !== 3) throw new Error('--players accepts 2, 3, or 2,3')
+        if (!isPlayerCount(count)) throw new Error('--players accepts comma-separated values from 2, 3, 4, and 6')
         return count
       })
     } else throw new Error(`Unknown argument: ${arg}`)
@@ -144,11 +147,13 @@ function simulatorArgs({
   players,
   candidate,
   seed,
+  candidateSide,
   options,
 }: {
-  players: 2 | 3
+  players: PlayerCount
   candidate: string
   seed: number
+  candidateSide: number
   options: Options
 }): string[] {
   const base = [
@@ -160,23 +165,29 @@ function simulatorArgs({
     String(seed),
     '--players',
     String(players),
-    '--rotate-seats',
     '--json',
   ]
   const control = resolve(options.control, players)
   const arm = resolve(candidate, players)
-  // The candidate always takes the last seat; every other seat is a control, so 3p measures one candidate against two.
-  return players === 2
-    ? [...base, '--p0', control, '--p1', arm]
-    : [...base, '--p0', control, '--p1', control, '--p2', arm]
+  // The candidate takes every seat on one side; rotating that side is the only permutation this matrix runs, so a
+  // win is attributable to the policy rather than to a seat.
+  return [
+    ...base,
+    ...Array.from({ length: players }, (_, seat) => [
+      `--p${seat}`,
+      sideOf(seat, players) === candidateSide ? arm : control,
+    ]).flat(),
+  ]
 }
 
-async function runOne(job: { players: 2 | 3; candidate: string; seed: number }, options: Options): Promise<Run> {
+async function runOne(
+  job: { players: PlayerCount; candidate: string; seed: number; candidateSide: number },
+  options: Options,
+): Promise<Run> {
   const { stdout } = await execFileAsync('node', simulatorArgs({ ...job, options }), { maxBuffer: 1 << 26 })
   const report: Report = JSON.parse(stdout)
-  const candidateIndex = job.players - 1
-  const candidate = report.profiles[candidateIndex]
-  const controls = report.profiles.filter((_, index) => index !== candidateIndex)
+  const candidate = report.sides[job.candidateSide]
+  const controls = report.sides.filter(({ side }) => side !== job.candidateSide)
   const controlMean = (key: keyof ProfileReport) =>
     controls.reduce((total, profile) => total + Number(profile[key]), 0) / controls.length
 
@@ -244,26 +255,47 @@ async function main(): Promise<void> {
   }
 
   const jobs = options.players.flatMap((players) =>
-    options.candidates.flatMap((candidate) => options.seeds.map((seed) => ({ players, candidate, seed }))),
+    options.candidates.flatMap((candidate) =>
+      options.seeds.flatMap((seed) =>
+        Array.from({ length: sideCount(players) }, (_, candidateSide) => ({
+          players,
+          candidate,
+          seed,
+          candidateSide,
+        })),
+      ),
+    ),
   )
   const runs = await pool(jobs, options.concurrency, (job) => runOne(job, options))
 
   const rows = options.players.flatMap((players) =>
     options.candidates.map((candidate) => {
       const group = runs.filter((run) => run.players === players && run.candidate === candidate)
-      const roundWin = group.map((run) => run.liftRoundWin)
-      const matchWin = group.map((run) => run.liftMatchWin)
+      const bySeed = options.seeds.map((seed) => {
+        const assignments = group.filter((run) => run.seed === seed)
+        return {
+          roundWin: mean(assignments.map((run) => run.liftRoundWin)),
+          matchWin: mean(assignments.map((run) => run.liftMatchWin)),
+          net: mean(assignments.map((run) => run.netPoints)),
+          lift: Object.fromEntries(
+            CATEGORIES.map((category) => [category, mean(assignments.map((run) => run.lift[category]))]),
+          ) as Record<Category, number>,
+        }
+      })
+      const roundWin = bySeed.map((seed) => seed.roundWin)
+      const matchWin = bySeed.map((seed) => seed.matchWin)
       return {
         mode: `${players}p`,
         candidate: label(candidate, options.control),
+        sideAssignments: sideCount(players),
         roundWin: mean(roundWin),
         sd: standardDeviation(roundWin),
         matchWin: mean(matchWin),
         // §6 calls match win the primary metric, so it needs a spread of its own to be actionable.
         matchSd: standardDeviation(matchWin),
-        net: mean(group.map((run) => run.netPoints)),
+        net: mean(bySeed.map((seed) => seed.net)),
         lift: Object.fromEntries(
-          CATEGORIES.map((category) => [category, mean(group.map((run) => run.lift[category]))]),
+          CATEGORIES.map((category) => [category, mean(bySeed.map((seed) => seed.lift[category]))]),
         ) as Record<Category, number>,
         rounds: group.reduce((total, run) => total + run.rounds, 0),
       }
@@ -281,6 +313,7 @@ async function main(): Promise<void> {
     rows.map((row) => ({
       mode: row.mode,
       candidate: row.candidate,
+      assignments: row.sideAssignments,
       roundWin: `${row.roundWin.toFixed(2)} ±${row.sd.toFixed(2)}`,
       matchWin: `${row.matchWin.toFixed(2)} ±${row.matchSd.toFixed(2)}`,
       net: row.net.toFixed(4),
