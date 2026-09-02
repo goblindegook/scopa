@@ -62,6 +62,12 @@
   }
 }
 
+@media (orientation: landscape) and (max-height: 600px) {
+  :root {
+    --card-base-width: clamp(2.5rem, min(8vw, 11vh), 6rem);
+  }
+}
+
 @media (max-width: 480px) {
   :root {
     --fan-rotation: 6deg;

@@ -5,7 +5,7 @@ export const Table = styled(motion.section)`
   align-content: center;
   display: flex;
   flex-wrap: wrap;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   justify-content: center;
   position: relative;

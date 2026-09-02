@@ -1,7 +1,7 @@
 import styled from '@emotion/styled'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { CapturedCount } from '../molecules/CapturedCount'
+import { PlayerPill } from '../molecules/PlayerPill'
 
 const PlayerArea = styled('section')`
   background-color: var(--color-player-area);
@@ -9,9 +9,13 @@ const PlayerArea = styled('section')`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-1);
+  gap: var(--space-4);
   flex: 0 0 auto;
   padding: var(--space-4) var(--space-2) var(--space-2);
+
+  @media (max-height: 600px) {
+    gap: var(--space-2);
+  }
 `
 
 const PlayerHand = styled('div')`
@@ -67,20 +71,21 @@ export const PlayerCard = styled('button')<{ $aimed?: boolean }>`
 `
 
 type PlayerProps = React.PropsWithChildren<{
-  capturedCount: number
   avatar: string
   active?: boolean
   away?: boolean
+  captured?: number
+  sweeps?: number
 }>
 
 export const Player = React.forwardRef<HTMLElement, PlayerProps>(
-  ({ children, avatar, capturedCount, active = false, away = false }, ref) => {
+  ({ children, avatar, captured = 0, sweeps = 0, active = false, away = false }, ref) => {
     const { t } = useTranslation()
 
     return (
       <PlayerArea>
         <PlayerHand aria-label={t('playerHand', { avatar })}>{children}</PlayerHand>
-        <CapturedCount ref={ref} avatar={avatar} count={capturedCount} active={active} away={away} />
+        <PlayerPill ref={ref} avatar={avatar} captured={captured} sweeps={sweeps} active={active} away={away} />
       </PlayerArea>
     )
   },

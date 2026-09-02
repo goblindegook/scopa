@@ -84,6 +84,25 @@ const Main = styled('main')`
   height: 100%;
 `
 
+const GameRows = styled('div')`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+
+  @media (orientation: portrait) {
+    justify-content: flex-start;
+    gap: var(--space-4);
+    padding-top: var(--space-8);
+
+    > section {
+      flex: 1 1 auto;
+    }
+  }
+`
+
 interface Position {
   x: number
   y: number
@@ -428,104 +447,105 @@ export function Scopa({
 
   return (
     <Container>
-      <Main>
-        {game.state === 'play' && (
-          <Header>
-            <Button onClick={onBack}>Scopa</Button>
-            <Turn aria-label={t('gameScore')} role="list">
-              {sideLabels(playerProfiles.slice(0, game.players.length).map(({ avatar }) => avatar)).map(
-                (label, side) => {
-                  const isActiveSide = sideOf(game.turn, game.players.length) === side
-                  const score = game.score[side] ?? 0
-                  return (
-                    <TurnScore
-                      key={`side-score-${label}`}
-                      role="listitem"
-                      aria-label={t('sideScore', { avatar: label, score })}
-                      active={isActiveSide}
-                      data-active={isActiveSide}
-                    >
-                      {label} {score}
-                    </TurnScore>
-                  )
-                },
-              )}
-            </Turn>
-          </Header>
-        )}
-        <Opponents>
-          {[...game.players.slice(playerId + 1), ...game.players.slice(0, playerId)].map(({ id, hand }) => (
-            <Opponent
-              key={`opponent-${id}`}
-              ref={getPlayerPileRef(id)}
-              avatar={playerProfiles[id].avatar}
-              capturedCount={game.players[id].pile.length}
-              active={game.turn === id}
-              away={playerProfiles[id].away}
-            >
-              <HandCards
-                hand={hand}
-                previousHand={previousPlayersHandsRef.current[id] ?? []}
-                keyPrefix={`${id}-`}
-                renderCard={(card) => (
-                  <OpponentCard
-                    ref={getCardRef(getCardId(card))}
-                    card={card}
-                    faceDown
-                    opacity={animation.phase === 'play' && isSame(animation.playCard, card) ? 0 : 1}
-                  />
-                )}
-              />
-            </Opponent>
-          ))}
-        </Opponents>
-        <Table aria-label={t('table')} ref={tableRef}>
-          <AnimatePresence mode="popLayout">
-            {/* Table cards */}
-            {tableCards.map((card) => {
-              const cardId = getCardId(card)
-              const isTaken = hasCard(game.lastTaken, card)
-              const isAnimating = animatingCardIds.includes(cardId)
-              const order = tableDealOrder.get(cardId)
-              const motion = getTableCardMotion({ isAnimating, order })
-              const activeAimed = aimed ?? (dragValidCombos.length > 1 ? dragAimedCard : null)
-              const activeCapturable = aimed ? capturableSet : dragCapturableSet
-
+      {game.state === 'play' && (
+        <Header>
+          <Button onClick={onBack}>Scopa</Button>
+          <Turn aria-label={t('gameScore')} role="list">
+            {sideLabels(playerProfiles.slice(0, game.players.length).map(({ avatar }) => avatar)).map((label, side) => {
+              const isActiveSide = sideOf(game.turn, game.players.length) === side
+              const score = game.score[side] ?? 0
               return (
-                <TableCard
-                  key={`table-${cardId}`}
-                  id={`table-${cardId}`}
-                  card={card}
-                  checked={hasCard(take, card)}
-                  disabled={
-                    game.turn !== playerId ||
-                    isTaken ||
-                    isAnimating ||
-                    (activeAimed != null && !hasCard(activeCapturable, card) && !hasCard(take, card))
-                  }
-                  onChange={() => toggleTakeTarget(card)}
-                  state={(() => {
-                    if (!activeAimed) return undefined
-                    if (hasCard(take, card)) return undefined
-                    if (hasCard(activeCapturable, card)) return 'capturable'
-                    return 'dimmed'
-                  })()}
-                  layout
-                  onLayoutAnimationComplete={() =>
-                    animatePlayTo(
-                      animation.phase === 'play' ? cardRefs.current.get(getCardId(animation.playCard)) : undefined,
-                    )
-                  }
-                  initial={{ opacity: 0 }}
-                  animate={motion.animate}
-                  exit={{ opacity: 0, scale: 0.3 }}
-                  transition={motion.transition}
-                  style={{ pointerEvents: isAnimating ? 'none' : 'auto' }}
-                />
+                <TurnScore
+                  key={`side-score-${label}`}
+                  role="listitem"
+                  aria-label={t('sideScore', { avatar: label, score })}
+                  active={isActiveSide}
+                  data-active={isActiveSide}
+                >
+                  {label} {score}
+                </TurnScore>
               )
             })}
-          </AnimatePresence>
-        </Table>
+          </Turn>
+        </Header>
+      )}
+      <Main>
+        <GameRows>
+          <Opponents>
+            {[...game.players.slice(playerId + 1), ...game.players.slice(0, playerId)].map(({ id, hand }) => (
+              <Opponent
+                key={`opponent-${id}`}
+                ref={getPlayerPileRef(id)}
+                avatar={playerProfiles[id].avatar}
+                captured={game.players[id].pile.length}
+                sweeps={game.players[id].scope}
+                active={game.turn === id}
+                away={playerProfiles[id].away}
+              >
+                <HandCards
+                  hand={hand}
+                  previousHand={previousPlayersHandsRef.current[id] ?? []}
+                  keyPrefix={`${id}-`}
+                  renderCard={(card) => (
+                    <OpponentCard
+                      ref={getCardRef(getCardId(card))}
+                      card={card}
+                      faceDown
+                      opacity={animation.phase === 'play' && isSame(animation.playCard, card) ? 0 : 1}
+                    />
+                  )}
+                />
+              </Opponent>
+            ))}
+          </Opponents>
+          <Table aria-label={t('table')} ref={tableRef}>
+            <AnimatePresence mode="popLayout">
+              {/* Table cards */}
+              {tableCards.map((card) => {
+                const cardId = getCardId(card)
+                const isTaken = hasCard(game.lastTaken, card)
+                const isAnimating = animatingCardIds.includes(cardId)
+                const order = tableDealOrder.get(cardId)
+                const motion = getTableCardMotion({ isAnimating, order })
+                const activeAimed = aimed ?? (dragValidCombos.length > 1 ? dragAimedCard : null)
+                const activeCapturable = aimed ? capturableSet : dragCapturableSet
+
+                return (
+                  <TableCard
+                    key={`table-${cardId}`}
+                    id={`table-${cardId}`}
+                    card={card}
+                    checked={hasCard(take, card)}
+                    disabled={
+                      game.turn !== playerId ||
+                      isTaken ||
+                      isAnimating ||
+                      (activeAimed != null && !hasCard(activeCapturable, card) && !hasCard(take, card))
+                    }
+                    onChange={() => toggleTakeTarget(card)}
+                    state={(() => {
+                      if (!activeAimed) return undefined
+                      if (hasCard(take, card)) return undefined
+                      if (hasCard(activeCapturable, card)) return 'capturable'
+                      return 'dimmed'
+                    })()}
+                    layout
+                    onLayoutAnimationComplete={() =>
+                      animatePlayTo(
+                        animation.phase === 'play' ? cardRefs.current.get(getCardId(animation.playCard)) : undefined,
+                      )
+                    }
+                    initial={{ opacity: 0 }}
+                    animate={motion.animate}
+                    exit={{ opacity: 0, scale: 0.3 }}
+                    transition={motion.transition}
+                    style={{ pointerEvents: isAnimating ? 'none' : 'auto' }}
+                  />
+                )
+              })}
+            </AnimatePresence>
+          </Table>
+        </GameRows>
         {alert && <Alert role="alert">{alert}</Alert>}
         <AnimatePresence>
           {/* Play animation */}
@@ -593,7 +613,8 @@ export function Scopa({
         <Player
           ref={getPlayerPileRef(playerId)}
           avatar={playerProfiles[playerId].avatar}
-          capturedCount={game.players[playerId].pile.length}
+          captured={game.players[playerId].pile.length}
+          sweeps={game.players[playerId].scope}
           active={game.turn === playerId}
           away={playerProfiles[playerId].away}
         >

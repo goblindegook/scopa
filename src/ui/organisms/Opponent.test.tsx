@@ -7,19 +7,25 @@ afterEach(() => {
 })
 
 test('shows how many cards the opponent has captured', () => {
-  render(<Opponent avatar="🤖" capturedCount={4} />)
+  render(<Opponent avatar="🤖" captured={4} />)
 
   expect(screen.getByLabelText('🤖 captured 4 cards')).toBeInTheDocument()
 })
 
+test('shows how many sweeps the opponent has made', () => {
+  render(<Opponent avatar="🤖" captured={4} sweeps={3} />)
+
+  expect(screen.getByLabelText('🤖 swept 3 times')).toBeInTheDocument()
+})
+
 test('names an away seat as away', () => {
-  render(<Opponent avatar="🐶" capturedCount={0} away />)
+  render(<Opponent avatar="🐶" captured={0} away />)
 
   expect(screen.getByLabelText('🐶 away')).toBeInTheDocument()
 })
 
 test('names an away seat that is also to play', () => {
-  render(<Opponent avatar="🐶" capturedCount={0} active away />)
+  render(<Opponent avatar="🐶" captured={0} active away />)
 
   expect(screen.getByLabelText('🐶 to play, away')).toBeInTheDocument()
 })

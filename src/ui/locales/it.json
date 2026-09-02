@@ -73,6 +73,7 @@
     "spade": "spade"
   },
   "capturedCount": "{avatar} ha catturato {count, plural, one {# carta} other {# carte}}",
+  "sweepCount": "{avatar} ha fatto {count, plural, one {# scopa} other {# scope}}",
   "playerHand": "Mano di {avatar}",
   "scores": {
     "Scope": "Scope",

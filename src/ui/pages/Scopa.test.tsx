@@ -875,10 +875,7 @@ test('highlights the active seat pill at the table using the shared seatToPlay l
 test('non-active seat pills at the table use the plain avatar as their accessible name', () => {
   renderGame({ players: 4, turn: 2, piles: [[], [], [], [bastoni(3)]] })
 
-  const countPill = screen.getByLabelText('👽 captured 1 card')
-  const avatarPill = countPill.previousElementSibling
-
-  expect(avatarPill).toHaveAccessibleName('👽')
+  expect(screen.getByLabelText('👽')).toBeInTheDocument()
 })
 
 test('a capture in a four player game increments the acting seat captured count', () => {

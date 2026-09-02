@@ -73,6 +73,7 @@
     "spade": "Swords"
   },
   "capturedCount": "{avatar} captured {count, plural, one {# card} other {# cards}}",
+  "sweepCount": "{avatar} swept {count, plural, one {# time} other {# times}}",
   "playerHand": "{avatar} hand",
   "scores": {
     "Scope": "Sweeps",
