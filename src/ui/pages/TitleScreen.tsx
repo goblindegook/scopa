@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { PlayerCount } from '../../engine/sides'
 import { ActionButton } from '../atoms/Button'
 import { ModalOverlay, ModalPanel } from '../atoms/ModalOverlay'
+import { shortLandscape } from '../media'
 import { AVATARS, AvatarPicker } from '../molecules/AvatarPicker'
 import { OptionPicker } from '../molecules/OptionPicker'
 import { DIFFICULTIES, type Difficulty } from '../OfflineMode'
@@ -33,6 +34,41 @@ const Title = styled('h1')`
   @media (max-height: 600px) {
     font-size: 4rem;
   }
+
+  ${shortLandscape} {
+    font-size: clamp(1.75rem, 12vh, 3.5rem);
+  }
+`
+
+const Columns = styled('div')`
+  display: contents;
+
+  ${shortLandscape} {
+    display: flex;
+    align-items: stretch;
+    gap: clamp(var(--space-4), 3vw, var(--space-8));
+    width: 100%;
+
+    & > * {
+      flex: 1;
+      min-width: 0;
+    }
+
+    & > :last-child {
+      flex: 1.4;
+    }
+  }
+`
+
+const Column = styled('div')`
+  display: contents;
+
+  ${shortLandscape} {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
 `
 
 const ProgressBarContainer = styled('div')`
@@ -59,6 +95,20 @@ const ButtonStack = styled('div')`
   gap: var(--space-2);
   width: 100%;
   align-items: stretch;
+
+  ${shortLandscape} {
+    flex-direction: row;
+
+    & > * {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* StartActions, the only element child that is not itself a button */
+    & > div {
+      flex: 2;
+    }
+  }
 `
 
 const StartActions = styled('div')`
@@ -81,12 +131,11 @@ const StackedButtonContent = styled('span')`
 `
 
 const StackedButtonMain = styled('span')`
-  font-size: 1rem;
   letter-spacing: 0.05em;
 `
 
 const StackedButtonCaption = styled('span')`
-  font-size: 0.75rem;
+  font-size: 0.75em;
   opacity: 0.8;
   letter-spacing: 0.1em;
 `
@@ -178,27 +227,33 @@ export const TitleScreen = ({ loadingProgress, onStart, resume, onStartMultiplay
           </ProgressBarContainer>
         ) : (
           <>
-            <AvatarPicker selected={selectedAvatar} onSelect={setSelectedAvatar} />
-            <OptionPicker
-              label={t('difficulty')}
-              options={DIFFICULTIES.map((level) => ({
-                value: level,
-                label: t(level),
-                ariaLabel: t('selectDifficulty', { level: t(level) }),
-              }))}
-              selected={difficulty}
-              onSelect={setDifficulty}
-            />
-            <OptionPicker
-              label={t('playerCount')}
-              options={PLAYER_COUNTS.map(({ count, labelKey }) => ({
-                value: count,
-                label: t(labelKey),
-                ariaLabel: t('selectPlayerCount', { playerCount: t(labelKey) }),
-              }))}
-              selected={playerCount}
-              onSelect={setPlayerCount}
-            />
+            <Columns>
+              <Column>
+                <AvatarPicker selected={selectedAvatar} onSelect={setSelectedAvatar} />
+              </Column>
+              <Column>
+                <OptionPicker
+                  label={t('difficulty')}
+                  options={DIFFICULTIES.map((level) => ({
+                    value: level,
+                    label: t(level),
+                    ariaLabel: t('selectDifficulty', { level: t(level) }),
+                  }))}
+                  selected={difficulty}
+                  onSelect={setDifficulty}
+                />
+                <OptionPicker
+                  label={t('playerCount')}
+                  options={PLAYER_COUNTS.map(({ count, labelKey }) => ({
+                    value: count,
+                    label: t(labelKey),
+                    ariaLabel: t('selectPlayerCount', { playerCount: t(labelKey) }),
+                  }))}
+                  selected={playerCount}
+                  onSelect={setPlayerCount}
+                />
+              </Column>
+            </Columns>
             <ButtonStack>
               <StartActions>
                 <ActionButton onClick={() => onStart(selectedAvatar, playerCount, difficulty)}>

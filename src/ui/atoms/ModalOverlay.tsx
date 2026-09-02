@@ -1,4 +1,5 @@
 import styled from '@emotion/styled'
+import { shortLandscape } from '../media'
 
 export const ModalOverlay = styled('main')<{ $absolute?: boolean; $zIndex?: number }>`
   position: ${({ $absolute }) => ($absolute ? 'absolute' : 'fixed')};
@@ -37,5 +38,11 @@ export const ModalPanel = styled('div')`
   @media (max-height: 600px) {
     gap: var(--space-4);
     padding: var(--space-8);
+  }
+
+  ${shortLandscape} {
+    max-width: 760px;
+    padding: clamp(var(--space-2), 5vh, var(--space-8));
+    gap: clamp(var(--space-2), 7vh, var(--space-16));
   }
 `

@@ -48,6 +48,30 @@ test('names the players the round is waiting on', () => {
   expect(screen.getByText('Waiting for 🦊 🐱…')).toBeInTheDocument()
 })
 
+test('groups the running game score by side', () => {
+  render(
+    <GameOver
+      scores={[]}
+      runningScore={[3, 5]}
+      playerAvatars={['🐵', '🤖', '👾', '👽']}
+      onNextRound={vi.fn()}
+      onReset={vi.fn()}
+    />,
+  )
+
+  expect(screen.getByLabelText('Game score')).toBeTruthy()
+  expect(screen.getByText('🐵👾 3')).toBeTruthy()
+  expect(screen.getByText('🤖👽 5')).toBeTruthy()
+})
+
+test('heads the round summary with the end of round title', () => {
+  render(
+    <GameOver scores={[]} runningScore={[0, 0]} playerAvatars={['🐵', '🐶']} onNextRound={vi.fn()} onReset={vi.fn()} />,
+  )
+
+  expect(screen.getByRole('heading')).toHaveTextContent('End of Round')
+})
+
 test('names the whole winning side', () => {
   const fourPlayerScores: Score[] = [
     { sideId: 0, details: [], total: 11 },
