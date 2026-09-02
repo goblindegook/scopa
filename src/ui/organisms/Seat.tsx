@@ -111,8 +111,8 @@ export const PlayerCard = styled('button')<{ $aimed?: boolean }>`
   }
 
   &:not(:disabled):focus {
-    border: 2px solid var(--color-focus-danger);
-    padding: -2px;
+    outline: 2px solid var(--color-focus-danger);
+    outline-offset: -2px;
   }
 
   ${({ $aimed }) =>
