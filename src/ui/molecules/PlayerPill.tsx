@@ -13,7 +13,7 @@ const Pill = styled('span')<{ active: boolean }>`
   align-items: center;
   gap: var(--space-1);
   padding: var(--space-2);
-  border: ${({ active }) => (active ? '2px' : '1px')} solid
+  border: 2px solid
     ${({ active }) => (active ? 'var(--color-accent-translucent)' : 'var(--overlay-white-25)')};
   border-radius: var(--space-2);
   background: var(--overlay-black-40);

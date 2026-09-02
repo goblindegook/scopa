@@ -81,7 +81,7 @@ separate Templates layer; pages own their own layout directly).
     focus/hover/checked styling via CSS sibling selectors, so it must stay adjacent to it in the DOM)
   - **`AvatarPicker.tsx`**, **`DifficultyPicker.tsx`** — selection grids used by `pages/TitleScreen`
 - **`organisms/`** — distinct composed interface sections
-  - **`Player.tsx`** / **`Opponent.tsx`** — hand + pile display (face-up vs. face-down), built on `molecules/Stack`
+  - **`Seat.tsx`** — player and opponent seat
   - **`ScoreBoard.tsx`** — the in-round running score table
 - **`pages/`** — route/full-screen level, orchestrate organisms+molecules+atoms
   - **`Scopa.tsx`** — Shared game surface for both offline and online play. Manages the animation phase machine

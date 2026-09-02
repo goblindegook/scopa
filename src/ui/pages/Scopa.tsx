@@ -16,8 +16,7 @@ import { Table } from '../atoms/Table'
 import { AnimatedCard } from '../molecules/AnimatedCard'
 import { DealtCard } from '../molecules/DealtCard'
 import { TableCard } from '../molecules/TableCard'
-import { OPPONENT_SCALE, Opponent, OpponentCard, Opponents } from '../organisms/Opponent'
-import { FanCard, Player, PlayerCard } from '../organisms/Player'
+import { FanCard, OPPONENT_SCALE, OpponentCard, OpponentSeats, PlayerCard, Seat } from '../organisms/Seat'
 import { sideLabels } from '../sideLabels'
 import { useAlerts } from '../useAlerts'
 import { type DragState, useDragState } from '../useDragState'
@@ -471,9 +470,9 @@ export function Scopa({
       )}
       <Main>
         <GameRows>
-          <Opponents>
+          <OpponentSeats>
             {[...game.players.slice(playerId + 1), ...game.players.slice(0, playerId)].map(({ id, hand }) => (
-              <Opponent
+              <Seat
                 key={`opponent-${id}`}
                 ref={getPlayerPileRef(id)}
                 avatar={playerProfiles[id].avatar}
@@ -495,9 +494,9 @@ export function Scopa({
                     />
                   )}
                 />
-              </Opponent>
+              </Seat>
             ))}
-          </Opponents>
+          </OpponentSeats>
           <Table aria-label={t('table')} ref={tableRef}>
             <AnimatePresence mode="popLayout">
               {/* Table cards */}
@@ -610,7 +609,8 @@ export function Scopa({
                 />
               ))}
         </AnimatePresence>
-        <Player
+        <Seat
+          own
           ref={getPlayerPileRef(playerId)}
           avatar={playerProfiles[playerId].avatar}
           captured={game.players[playerId].pile.length}
@@ -662,7 +662,7 @@ export function Scopa({
               </PlayerCard>
             )}
           />
-        </Player>
+        </Seat>
         <DragOverlay dragState={dragState} onSpringBackComplete={clearDragging} />
       </Main>
       {game.state === 'stop' && (
