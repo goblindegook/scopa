@@ -16,7 +16,7 @@ import { Table } from '../atoms/Table'
 import { AnimatedCard } from '../molecules/AnimatedCard'
 import { DealtCard } from '../molecules/DealtCard'
 import { TableCard } from '../molecules/TableCard'
-import { FanCard, OPPONENT_SCALE, OpponentCard, OpponentSeats, PlayerCard, Seat } from '../organisms/Seat'
+import { FanCard, OPPONENT_SCALE, OpponentCard, OpponentSeats, PLAYER_SCALE, PlayerCard, Seat } from '../organisms/Seat'
 import { sideLabels } from '../sideLabels'
 import { useAlerts } from '../useAlerts'
 import { type DragState, useDragState } from '../useDragState'
@@ -287,7 +287,7 @@ export function Scopa({
             playInitial: {
               ...baseInitial,
               rotate: (cardIndex - (hand.length - 1) / 2) * 10,
-              ...(isOpponentTurn && { scale: OPPONENT_SCALE }),
+              scale: isOpponentTurn ? OPPONENT_SCALE : PLAYER_SCALE,
             },
             playFaceDown: isOpponentTurn,
           })

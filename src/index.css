@@ -58,7 +58,7 @@
 
 @media (orientation: portrait) {
   :root {
-    --card-base-width: clamp(3.5rem, min(14vw, 9vh), 6.5rem);
+    --card-base-width: clamp(3.5rem, min(20vw, 12vh), 8rem);
   }
 }
 

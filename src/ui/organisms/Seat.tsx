@@ -5,6 +5,7 @@ import { Card } from '../atoms/Card'
 import { PlayerPill } from '../molecules/PlayerPill'
 
 export const OPPONENT_SCALE = 2 / 3
+export const PLAYER_SCALE = 1.25
 
 const handCardSize = (scale: number) => `
   --card-width: calc(var(--card-base-width) * ${scale});
@@ -23,7 +24,12 @@ const SeatArea = styled('section')<{ $own: boolean }>`
       ? `
     background-color: var(--color-player-area);
     flex: 0 0 auto;
-    padding: var(--space-4) var(--space-2) var(--space-2);
+    padding: var(--space-4);
+
+    @media (orientation: portrait) {
+      flex: 0 0 35%;
+      padding: var(--space-2);
+    }
   `
       : `
     flex: 1;
@@ -36,7 +42,7 @@ const SeatArea = styled('section')<{ $own: boolean }>`
 `
 
 const SeatHand = styled('div')<{ $own: boolean }>`
-  ${({ $own }) => !$own && handCardSize(OPPONENT_SCALE)}
+  ${({ $own }) => handCardSize($own ? PLAYER_SCALE : OPPONENT_SCALE)}
 
   display: flex;
   justify-content: center;
@@ -44,7 +50,7 @@ const SeatHand = styled('div')<{ $own: boolean }>`
   min-height: var(--card-height);
 
   @media (max-height: 600px) {
-    ${({ $own }) => !$own && handCardSize(OPPONENT_SCALE * 0.6)}
+    ${({ $own }) => handCardSize($own ? 1 : OPPONENT_SCALE * 0.6)}
   }
 `
 
