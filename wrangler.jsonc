@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "scopa-party",
+  "main": "src/party/scopa.ts",
+  "compatibility_date": "2026-05-05",
+  // "Main" kebab-cases to the "main" party that partysocket clients connect to by default.
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "Main",
+        "class_name": "ScopaServer"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["ScopaServer"]
+    }
+  ],
+  "vars": {
+    "ALLOWED_ORIGINS": "https://scopa.netlify.app,http://localhost:4000,http://localhost:5173,http://localhost:5174"
+  }
+}

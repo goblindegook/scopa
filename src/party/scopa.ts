@@ -1,6 +1,6 @@
 import { isErr } from '@pacote/result'
 import { shuffle } from '@pacote/shuffle'
-import type * as Party from 'partykit/server'
+import { type Connection, type ConnectionContext, routePartykitRequest, Server } from 'partyserver'
 import { DIFFICULTIES, type Difficulty } from '../engine/ai'
 import { deck } from '../engine/cards'
 import { deal, play, randomFirstPlayer } from '../engine/scopa'
@@ -19,6 +19,18 @@ import {
   seatPlayer,
   sitPlayer,
 } from './room'
+
+declare global {
+  namespace Cloudflare {
+    interface Env {
+      readonly Main: DurableObjectNamespace<ScopaServer>
+      readonly ALLOWED_ORIGINS?: string
+    }
+    interface GlobalProps {
+      mainModule: typeof import('./scopa')
+    }
+  }
+}
 
 const INACTIVITY_MS = 10 * 60 * 1000
 
@@ -69,7 +81,7 @@ const createRoom = (size: PlayerCount, difficulty: Difficulty, hostSid: string):
   game: null,
 })
 
-const sidOf = (connection: Party.Connection): string => (connection.state as SeatState | null)?.sid ?? ''
+const sidOf = (connection: Connection): string => (connection.state as SeatState | null)?.sid ?? ''
 
 // deal() rejects >2 kings and expects the caller to retry; surfacing it would hang the game.
 function dealRound(players: PlayerCount, previousFirstPlayer: number, score?: readonly number[]): State {
@@ -91,33 +103,31 @@ const lobbyMessage = (store: RoomData): ServerMessage => {
   }
 }
 
-export default class ScopaServer implements Party.Server {
-  constructor(readonly room: Party.Room) {}
+function admit(request: Request, env: Cloudflare.Env): Request | Response {
+  const url = new URL(request.url)
+  // An Origin header carries no trailing slash, so a configured one would match nothing.
+  const allowed = String(env.ALLOWED_ORIGINS ?? '')
+    .split(',')
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
+    .filter(Boolean)
 
+  // Nuisance filter, not a boundary: the room id and sid are what gate access.
+  if (allowed.length && !allowed.includes(request.headers.get('Origin') ?? '')) {
+    return new Response('Forbidden', { status: 403 })
+  }
+  // `ai:` sids are minted server-side for AI seats; a client presenting one would
+  // be claiming a robot's identity and playing its turns.
+  const sid = url.searchParams.get('sid')
+  if (!sid || sid.startsWith('ai:')) return new Response('Unauthorized', { status: 401 })
+  return request
+}
+
+export class ScopaServer extends Server {
   // Safe because nothing lives in instance fields: state is in storage, identity in
   // connection.state, the timeout is an alarm.
-  readonly options = { hibernate: true }
+  static options = { hibernate: true }
 
-  static async onBeforeConnect(request: Party.Request, lobby: Party.Lobby): Promise<Party.Request | Response> {
-    const url = new URL(request.url)
-    // An Origin header carries no trailing slash, so a configured one would match nothing.
-    const allowed = String(lobby.env.ALLOWED_ORIGINS ?? '')
-      .split(',')
-      .map((origin) => origin.trim().replace(/\/+$/, ''))
-      .filter(Boolean)
-
-    // Nuisance filter, not a boundary: the room id and sid are what gate access.
-    if (allowed.length && !allowed.includes(request.headers.get('Origin') ?? '')) {
-      return new Response('Forbidden', { status: 403 })
-    }
-    // `ai:` sids are minted server-side for AI seats; a client presenting one would
-    // be claiming a robot's identity and playing its turns.
-    const sid = url.searchParams.get('sid')
-    if (!sid || sid.startsWith('ai:')) return new Response('Unauthorized', { status: 401 })
-    return request
-  }
-
-  async onConnect(connection: Party.Connection, ctx: Party.ConnectionContext): Promise<void> {
+  async onConnect(connection: Connection, ctx: ConnectionContext): Promise<void> {
     const sid = new URL(ctx.request.url).searchParams.get('sid') ?? ''
     connection.setState({ sid } satisfies SeatState)
     // No arm() here: setAlarm is a storage write, so a bare connect-and-vanish would
@@ -126,7 +136,7 @@ export default class ScopaServer implements Party.Server {
     if (store) this.send(connection, lobbyMessage(store))
   }
 
-  async onMessage(message: string, sender: Party.Connection): Promise<void> {
+  async onMessage(sender: Connection, message: string): Promise<void> {
     await this.arm()
 
     const data = JSON.parse(message) as ClientMessage
@@ -162,7 +172,7 @@ export default class ScopaServer implements Party.Server {
       this.send(sender, { type: 'seated', index: seats.findIndex((seat) => seat?.sid === sid) })
       // Also the sole lockstep repair path: a disconnected client missed every move broadcast.
       if (next.game) this.send(sender, { type: 'state', state: next.game })
-      return this.broadcast(lobbyMessage(next))
+      return this.announce(lobbyMessage(next))
     }
 
     if (existing === null) return
@@ -180,7 +190,7 @@ export default class ScopaServer implements Party.Server {
         // The mover's own client only ever learns its seat from a 'seated' message
         // (mirroring 'join'); without this, its local seat index goes stale.
         this.send(sender, { type: 'seated', index: data.seat })
-        return this.broadcast(lobbyMessage(next))
+        return this.announce(lobbyMessage(next))
       }
 
       case 'start': {
@@ -193,8 +203,8 @@ export default class ScopaServer implements Party.Server {
         const game = dealRound(store.size, randomFirstPlayer(store.size))
         const next = { ...store, seats, game }
         await this.save(next)
-        this.broadcast(lobbyMessage(next))
-        this.broadcast({ type: 'state', state: game })
+        this.announce(lobbyMessage(next))
+        this.announce({ type: 'state', state: game })
         return this.advance(next)
       }
 
@@ -214,7 +224,7 @@ export default class ScopaServer implements Party.Server {
         const next = { ...store, game: result.value }
         await this.save(next)
         // Echoing to the sender would double-apply and skip their animation.
-        this.room.broadcast(JSON.stringify({ type: 'move', move: data.move } satisfies ServerMessage), [sender.id])
+        this.broadcast(JSON.stringify({ type: 'move', move: data.move } satisfies ServerMessage), [sender.id])
         return this.advance(next)
       }
 
@@ -225,7 +235,7 @@ export default class ScopaServer implements Party.Server {
         if (!allConfirmed(seats)) {
           const next = { ...store, seats }
           await this.save(next)
-          return this.broadcast(lobbyMessage(next))
+          return this.announce(lobbyMessage(next))
         }
 
         if (!hasConnectedHuman(seats)) return
@@ -236,13 +246,13 @@ export default class ScopaServer implements Party.Server {
           game,
         }
         await this.save(next)
-        this.broadcast({ type: 'state', state: game })
+        this.announce({ type: 'state', state: game })
         return this.advance(next)
       }
     }
   }
 
-  async onClose(connection: Party.Connection): Promise<void> {
+  async onClose(connection: Connection): Promise<void> {
     const store = await this.load()
     if (store === null) return
 
@@ -254,7 +264,7 @@ export default class ScopaServer implements Party.Server {
     const next = { ...store, seats }
 
     await this.save(next)
-    this.broadcast(lobbyMessage(next))
+    this.announce(lobbyMessage(next))
 
     if (store.game?.state === 'stop' && allConfirmed(seats) && hasConnectedHuman(seats)) {
       const game = dealRound(store.size, store.game.firstPlayer, store.game.score)
@@ -264,18 +274,18 @@ export default class ScopaServer implements Party.Server {
         game,
       }
       await this.save(redealt)
-      this.broadcast({ type: 'state', state: game })
+      this.announce({ type: 'state', state: game })
       await this.advance(redealt)
     }
 
     await this.arm()
   }
 
-  // At-least-once delivery, so this must stay idempotent. room.id throws inside an alarm.
+  // At-least-once delivery, so this must stay idempotent.
   async onAlarm(): Promise<void> {
-    if ([...this.room.getConnections()].length > 0) return this.arm()
-    this.broadcast({ type: 'ended' })
-    await this.room.storage.deleteAll()
+    if ([...this.getConnections()].length > 0) return this.arm()
+    this.announce({ type: 'ended' })
+    await this.ctx.storage.deleteAll()
   }
 
   // Every AI move goes to everyone - unlike a human move, there is no sender to exclude.
@@ -285,29 +295,34 @@ export default class ScopaServer implements Party.Server {
     if (moves.length === 0) return
 
     await this.save({ ...store, game })
-    for (const move of moves) this.broadcast({ type: 'move', move })
+    for (const move of moves) this.announce({ type: 'move', move })
   }
 
   private arm(): Promise<void> {
-    return this.room.storage.setAlarm(Date.now() + INACTIVITY_MS)
+    return this.ctx.storage.setAlarm(Date.now() + INACTIVITY_MS)
   }
 
-  private send(connection: Party.Connection, message: ServerMessage): void {
+  private send(connection: Connection, message: ServerMessage): void {
     connection.send(JSON.stringify(message))
   }
 
-  private broadcast(message: ServerMessage): void {
-    this.room.broadcast(JSON.stringify(message))
+  private announce(message: ServerMessage): void {
+    this.broadcast(JSON.stringify(message))
   }
 
   private async load(): Promise<RoomData | null> {
-    const data = await this.room.storage.get<RoomData>('room')
+    const data = await this.ctx.storage.get<RoomData>('room')
     return Array.isArray(data?.seats) ? data : null
   }
 
   private async save(data: RoomData): Promise<void> {
-    await this.room.storage.put('room', data)
+    await this.ctx.storage.put('room', data)
   }
 }
 
-ScopaServer satisfies Party.Worker
+export default {
+  async fetch(request, env) {
+    const routed = await routePartykitRequest(request, env, { onBeforeConnect: (req) => admit(req, env) })
+    return routed ?? new Response('Not Found', { status: 404 })
+  },
+} satisfies ExportedHandler<Cloudflare.Env>

@@ -9,6 +9,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
     include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts'],
-    exclude: ['**/node_modules/**', '**/*.browser.test.tsx'], // geometry runs in a real browser instead
+    // geometry runs in a real browser instead; the Worker runs in workerd (vitest.workers.config.ts)
+    exclude: ['**/node_modules/**', '**/*.browser.test.tsx', 'src/party/scopa.test.ts'],
   },
 })

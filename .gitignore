@@ -29,8 +29,10 @@ dist-ssr
 *.sw?
 
 /.partykit/
+/.wrangler/
 /.playwright-cli/
 
+/.impact/
 /coverage/
 /.stryker-tmp/
 /reports/

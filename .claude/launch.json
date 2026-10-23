@@ -2,9 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "partykit",
+      "name": "worker",
       "runtimeExecutable": "mise",
-      "runtimeArgs": ["exec", "--", "npx", "partykit", "dev"],
+      "runtimeArgs": ["exec", "--", "npm", "run", "dev:worker"],
       "port": 1999
     },
     {

@@ -8,11 +8,13 @@ Node.js is managed via [mise](https://mise.jdx.dev/). Prefix commands with `mise
 activated:
 
 ```bash
-mise exec -- npm run dev          # Start dev server (Vite)
+mise exec -- npm run dev          # Start dev servers (Vite + `wrangler dev` on :1999)
 mise exec -- npm run build        # Type-check + build for production
 mise exec -- npm run lint         # Check with Biome
 mise exec -- npm run format       # Auto-fix with Biome
-mise exec -- npm run test         # Run tests with Vitest (watch mode)
+mise exec -- npm run test         # Run all tests (jsdom suite, then the Worker suite)
+mise exec -- npm run test:worker  # Run only the Worker tests, inside workerd via @cloudflare/vitest-plugin
+mise exec -- npm run deploy       # Deploy the multiplayer Worker to Cloudflare (wrangler deploy)
 mise exec -- npm run test:mutation  # Run Stryker mutation tests
 ```
 
@@ -106,11 +108,17 @@ Outside the atomic-design tree — orchestration and infra, not UI-tier componen
 
 ### Multiplayer Worker (`src/party/`)
 
-PartyKit Durable Object, deployed as `scopa-party` (see `partykit.json`).
+[PartyServer](https://github.com/cloudflare/partykit/tree/main/packages/partyserver) Durable Object on the user's own
+Cloudflare account, deployed as the `scopa-party` Worker (see `wrangler.jsonc`). The binding is named `Main` so that
+partysocket clients keep connecting to the default `main` party at `/parties/main/<room>`.
 
 - **`scopa.ts`** — Room authority: validates turns against `game.turn`, deals every round (redealing on the engine's
-  >2-kings rejection), broadcasts `move`/`state` messages, uses `storage.setAlarm` for inactivity cleanup
-- **`room.ts`** — Pure lobby guards (`canJoin`, `canStart`, `allConfirmed`, `upsertPlayer`), no PartyKit imports
+  >2-kings rejection), broadcasts `move`/`state` messages, uses `storage.setAlarm` for inactivity cleanup. The default
+  export is the Worker `fetch` handler, which applies the origin/`sid` checks before routing to the room
+- **`room.ts`** — Pure lobby guards (`canJoin`, `canStart`, `allConfirmed`, `upsertPlayer`), no PartyServer imports
+- **`scopa.test.ts`** — Runs inside workerd (`vitest.workers.config.ts`) and drives the Worker over real WebSockets;
+  `testRoom.ts` holds the socket client plus `runInDurableObject` helpers for seeding/reading room storage. It is
+  type-checked by `tsconfig.worker.json` (Workers types, no DOM), not `tsconfig.json`
 
 ### App wiring (`src/App.tsx`)
 
