@@ -3,4 +3,4 @@
   publish = "dist/"
 
 [build.environment]
-  PARTYKIT_HOST = "scopa-party.scopa-party.workers.dev"
+  PARTYKIT_HOST = "scopa-party.goblindegook.workers.dev"
